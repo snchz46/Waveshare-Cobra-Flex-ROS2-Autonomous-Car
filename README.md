@@ -10,18 +10,21 @@ The repository collects:
 - **Visualization assets** for fusing point clouds in RViz.
 - **Documentation templates** to capture hardware configuration, ROS graph design, calibration procedures, and lessons learned as the project matures.
 
-## Hardware Platform
-| Component | Details |
-| --- | --- |
-| Compute | NVIDIA Jetson Orin Nano (8 GB) |
-| Chassis | Waveshare Cobra Flex |
-| Stereo Camera | ZED mini |
-| LiDAR | RPLIDAR A2M8 |
-| IMU / Additional Sensors | ZED mini integrated IMU |
-| Motor Controller | Waveshare Cobra driver board with dual TB6612FNG DC motor bridges and integrated PCA9685 steering servo output |
-| Power System | 2S 18650 lithium battery pack (nominal 7.4 V) feeding on-board 5 V/5 A BEC for Jetson + peripherals |
+## Hardware Platform & Bill of Materials
+Use the table below to capture every confirmed part in the build. Update the vendor links, part numbers, and firmware notes as you source components so other makers can reproduce the platform without guesswork.
 
-> _Fill in the blank rows above with the final bill of materials once confirmed._
+| Component | Details | Vendor / Reference |
+| --- | --- | --- |
+| Compute | NVIDIA Jetson Orin Nano (8 GB) developer kit | [NVIDIA](https://developer.nvidia.com/embedded/jetson-orin-nano-devkit) |
+| Chassis | Waveshare Cobra Flex | [Waveshare](https://www.waveshare.com/wiki/Cobra_Flex) |
+| Stereo Camera | ZED Mini stereo module | [Stereolabs](https://store.stereolabs.com/products/zed-mini) |
+| LiDAR | RPLIDAR A2M8 360° laser scanner | [Slamtec](https://www.slamtec.com/en/Lidar/A2) |
+| IMU / Additional Sensors | ZED Mini integrated IMU | — |
+| Motor Controller | Waveshare Cobra Flex driver (dual TB6612FNG + PCA9685) | [Waveshare board details](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
+| Power System | 2S 18650 lithium battery pack (nominal 7.4 V) with 5 V/5 A BEC | Example: [Adafruit UBEC 5V 3A+](https://www.adafruit.com/product/1385) |
+| Fasteners & Mounts | Custom camera/LiDAR brackets, M2/M3 hardware | Document specific sources as mounts are finalized |
+
+> _Add rows for cables, storage, networking, and calibration tools (checkerboards, levels, etc.) as the build is finalized._
 
 ## ROS 2 Environment
 - **Distribution:** ROS2 Humble on Ubuntu 22.04
@@ -33,6 +36,9 @@ Record any custom workspace overlays, `colcon` packages, or launch files in the 
 
 ## Repository Structure
 ```
+├── assets/
+│   ├── photos/                       # Curated image gallery documenting the build
+│   └── videos/                       # Demo footage and experiment clips
 ├── scripts/
 │   ├── lidar_to_zed_pointcloud.py       # Publishes LiDAR data as a PointCloud2 in the ZED camera frame
 │   ├── lidar_to_zed_projection_debug.py # Projects LiDAR points into the ZED image for visual alignment debugging
@@ -42,10 +48,21 @@ Record any custom workspace overlays, `colcon` packages, or launch files in the 
 │   ├── Lidar_ZED_Distance.png           # Sample comparison plot
 │   └── pointcloud fusion.png            # Example fused point cloud capture
 ├── docs/
-│   └── README.md                        # Template for in-depth documentation (calibration, setup, etc.)
+│   ├── README.md                        # Documentation hub for setup, calibration, and roadmap details
+│   ├── experiments/                     # Session-by-session experiment logs and templates
+│   └── media-log.md                     # Index of photos/videos and hosted mirrors
 ├── LICENSE
 └── README.md (this file)
 ```
+
+## Media Showcase
+Create visual proof points as you progress and link them directly from this repository:
+
+- **Photos:** Store build imagery inside [`assets/photos/`](assets/photos/). Organize by milestone (`assets/photos/2024-setup/`) and add short context notes so others understand what each shot illustrates.
+- **Videos:** Save drive tests and demos in [`assets/videos/`](assets/videos/). Include session summaries (timestamps, highlights, hosted mirrors) in each subfolder.
+- **Media Log:** Update [`docs/media-log.md`](docs/media-log.md) with every new clip or gallery so readers can jump straight to relevant material.
+
+Reference these assets from the sections above—for example, embed before/after shots in the hardware table or link calibration recordings alongside the ROS 2 setup instructions.
 
 ## Key ROS 2 Nodes
 | Script | Purpose | Topics |
@@ -70,7 +87,9 @@ Each node is built with `rclpy`, making it easy to drop into a ROS 2 workspace 
 Use the [`docs/`](docs/) directory to capture:
 - Detailed hardware assembly notes, wiring diagrams, and calibration steps.
 - ROS graph diagrams showing how perception, control, and planning nodes interact.
-- Experiment logs comparing perception algorithms or sensor configurations.
+- Experiment logs comparing perception algorithms or sensor configurations (see [`docs/experiments/`](docs/experiments/)).
 - Future work ideas (e.g., SLAM integration, autonomous navigation stack, machine learning perception).
+
+Pair each experiment with supporting media and vendor references so the workflow is fully reproducible.
 
 Feel free to expand this README with project milestones, demo videos, and personal reflections as the car progresses. This repository is intended to become a comprehensive portfolio piece highlighting your ROS 2 engineering skills.

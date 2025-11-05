@@ -1,12 +1,13 @@
 # Documentation Hub
 
-Use this directory to collect detailed notes, diagrams, and experiments for the Jetson Orin Nano autonomous car project. Suggested subtopics:
+Use this directory to collect detailed notes, diagrams, experiments, and media logs for the Jetson Orin Nano autonomous car project. Suggested subtopics:
 
-## 1. Hardware Assembly
+## 1. Hardware Assembly & Bill of Materials
 - Mechanical layout of the Waveshare Cobra Flex chassis
 - Reference the [Cobra Flex hardware resource pack](https://www.waveshare.com/wiki/Cobra_Flex#Resources) for exploded diagrams, the TB6612FNG motor driver pinout, and recommended servo linkage geometry.
 - Mounting instructions for the ZED camera and RPLIDAR
 - Wiring diagrams and power distribution notes
+- Maintain a table of confirmed components (model numbers, vendor links, firmware revisions) that mirrors the BOM in the root `README.md`
 
 ## 2. Software & ROS 2 Setup
 - JetPack version and OS image
@@ -19,12 +20,17 @@ Use this directory to collect detailed notes, diagrams, and experiments for the 
 - Time synchronization strategies
 - Validation experiments and metrics
 
-## 4. Autonomy Stack
+## 4. Experimentation & Media
+- Record each test session in [`experiments/`](experiments/) using the provided template.
+- Cross-link supporting photos (`../assets/photos/`) and videos (`../assets/videos/`) so future readers can watch the setup in action.
+- Summarize significant demos in `media-log.md` with links to hosted clips when available.
+
+## 5. Autonomy Stack
 - Planned navigation or control architecture
 - Launch files, parameter sets, and ROS graphs
 - Test scenarios and performance results
 
-## 5. Future Work & Lessons Learned
+## 6. Future Work & Lessons Learned
 - Enhancements to pursue next
 - Challenges encountered and how they were addressed
 - Links to demo videos or write-ups
