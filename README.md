@@ -15,16 +15,16 @@ Use the table below to capture every confirmed part in the build. Update the ven
 
 | Component | Details | Vendor / Reference |
 | --- | --- | --- |
-| Compute | NVIDIA Jetson Orin Nano (8 GB) developer kit | [NVIDIA](https://developer.nvidia.com/embedded/jetson-orin-nano-devkit) |
-| Chassis | Waveshare Cobra Flex | [Waveshare](https://www.waveshare.com/wiki/Cobra_Flex) |
+| Compute | NVIDIA Jetson Orin Nano (8 GB) developer kit | [NVIDIA](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/) |
+| Chassis | Waveshare Cobra Flex | [Waveshare](https://www.waveshare.com/product/ai/robots/mobile-robots/cobra-flex.htm?sku=31326) |
 | Stereo Camera | ZED Mini stereo module | [Stereolabs](https://store.stereolabs.com/products/zed-mini) |
 | LiDAR | RPLIDAR A2M8 360° laser scanner | [Slamtec](https://www.slamtec.com/en/Lidar/A2) |
 | IMU / Additional Sensors | ZED Mini integrated IMU | — |
 | Motor Controller | Waveshare Cobra Flex driver (dual TB6612FNG + PCA9685) | [Waveshare board details](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
-| Power System | 2S 18650 lithium battery pack (nominal 7.4 V) with 5 V/5 A BEC | Example: [Adafruit UBEC 5V 3A+](https://www.adafruit.com/product/1385) |
+| Power System | XT-27000DC-AO-PA Power Bank Uninterrupted DC Power Adapter Included - External Battery DC 5V to 24V | [XT-27000DC-AO-PA Power Bank](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/261-0714907-2939417?pd_rd_w=XYwSS&content-id=amzn1.sym.13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_p=13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_r=HJBKMDSMEDR9M3958XXJ&pd_rd_wg=J09o0&pd_rd_r=c8a61ded-40c8-433c-bb0c-52fed8ea14df&pd_rd_i=B09S6F56T4&th=1) |
 | Fasteners & Mounts | Custom camera/LiDAR brackets, M2/M3 hardware | Document specific sources as mounts are finalized |
 
-> _Add rows for cables, storage, networking, and calibration tools (checkerboards, levels, etc.) as the build is finalized._
+> _To Do: rows for cables, storage, networking..._
 
 ## ROS 2 Environment
 - **Distribution:** ROS2 Humble on Ubuntu 22.04
