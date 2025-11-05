@@ -1,22 +1,25 @@
-# Jetson Orin Nano Autonomous Car with Waveshare Cobra Flex Chasis
+# Jetson Orin Nano Autonomous Car with Waveshare Cobra Flex Chassis
 
 > **Status:** Work in progress
 
+![Jetson Orin Nano Cobra Flex build on workbench](assets/photos/Testing%20build.jpg)
+
 ## Project Overview
-This project showcases a ROS 2 development and sensor fusion work while building an autonomous 1:14 car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor agreement, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
+This project showcases ongoing ROS 2 development and sensor fusion work while building an autonomous 1:14 car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor agreement, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
 
 The repository collects:
 - **ROS 2 nodes** for translating LiDAR scans into the ZED camera frame, projecting them onto ZED images for debugging, and numerically comparing depth readings between the sensors.
 - **Visualization assets** for fusing point clouds in RViz.
-- **Documentation templates** to capture hardware configuration, ROS graph design, calibration procedures, and lessons learned as the project matures.
+- **Media-rich documentation** with inline photo galleries to showcase hardware iterations, calibration setups, and experiment highlights.
+
+## Quick Look
+| Prototype highlights | Sensor fusion preview |
+| --- | --- |
+| ![Initial wiring pass with ZED and RPLIDAR mounted](assets/photos/Testing%20build%202.jpg) | ![LiDAR and ZED depth comparison plot](assets/photos/Lidar_ZED_Distance.png) |
+
+> 💡 **Tip:** Every Markdown file now links directly to curated photos inside [`assets/photos/`](assets/photos/). Use relative paths (for example, `![caption](assets/photos/pointcloud%20fusion.png)`) so renders work across GitHub, MkDocs, or PDF exports without extra hosting steps.
 
 ## Hardware Platform & Bill of Materials
-Testing build without Chassis 
-
-<img width="300" height="748" alt="Autonomous Driving with ROS 2(1)" src="https://github.com/user-attachments/assets/6ba8d446-38d1-4a0d-b592-ff4bcf108abe" />
-
-Bill of Materials
-
 | Component | Details | Vendor / Reference |
 | --- | --- | --- |
 | Compute | NVIDIA Jetson Orin Nano (8 GB) developer kit | [NVIDIA](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/) |
@@ -25,18 +28,20 @@ Bill of Materials
 | LiDAR | RPLIDAR A2M8 360° laser scanner | [Slamtec](https://www.slamtec.com/en/Lidar/A2) |
 | IMU / Additional Sensors | ZED Mini integrated IMU | — |
 | Motor Controller | Waveshare Cobra Flex driver (dual TB6612FNG + PCA9685) | [Waveshare board details](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
-| Power System | XT-27000DC-AO-PA Power Bank Uninterrupted DC Power Adapter Included - External Battery DC 5V to 24V | [XT-27000DC-AO-PA Power Bank](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/261-0714907-2939417?pd_rd_w=XYwSS&content-id=amzn1.sym.13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_p=13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_r=HJBKMDSMEDR9M3958XXJ&pd_rd_wg=J09o0&pd_rd_r=c8a61ded-40c8-433c-bb0c-52fed8ea14df&pd_rd_i=B09S6F56T4&th=1) |
+| Power System | XT-27000DC-AO-PA power bank with uninterrupted DC adapter | [XT-27000DC-AO-PA Power Bank](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/261-0714907-2939417?pd_rd_w=XYwSS&content-id=amzn1.sym.13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_p=13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_r=HJBKMDSMEDR9M3958XXJ&pd_rd_wg=J09o0&pd_rd_r=c8a61ded-40c8-433c-bb0c-52fed8ea14df&pd_rd_i=B09S6F56T4&th=1) |
 | Fasteners & Mounts | Custom camera/LiDAR brackets, M2/M3 hardware | Document specific sources as mounts are finalized |
 
-> _To Do: rows for cables, storage, networking..._
+![Side-by-side comparison of early and current sensor mounting plates](assets/photos/Physical%20comparison.jpg)
+
+> _To Do: add rows for cables, storage, and networking accessories as the build matures._
 
 ## ROS 2 Environment
-- **Distribution:** ROS2 Humble on Ubuntu 22.04
+- **Distribution:** ROS 2 Humble on Ubuntu 22.04
 - **ZED SDK:** 5.1
-- **ZED ROS2 Package:** [ZED ROS2 Wrapper](https://github.com/stereolabs/zed-ros2-wrapper)
-- **RPLIDAR Driver:** [RPLIDAR ROS2 Package](https://github.com/Slamtec/rplidar_ros/tree/ros2)
+- **ZED ROS 2 Package:** [ZED ROS 2 Wrapper](https://github.com/stereolabs/zed-ros2-wrapper)
+- **RPLIDAR Driver:** [RPLIDAR ROS 2 Package](https://github.com/Slamtec/rplidar_ros/tree/ros2)
 
-Record any custom workspace overlays, `colcon` packages, or launch files in the [`docs/`](docs/) directory as you refine the system.
+Record any custom workspace overlays, `colcon` packages, or launch files in the [`docs/`](docs/) directory as you refine the system. Supplement textual notes with build photos or RViz screenshots for each milestone.
 
 ## Repository Structure
 ```
@@ -63,7 +68,7 @@ Record any custom workspace overlays, `colcon` packages, or launch files in the 
 ## Media Showcase
 Create visual proof points as you progress and link them directly from this repository:
 
-- **Photos:** Store build imagery inside [`assets/photos/`](assets/photos/). Organize by milestone (`assets/photos/2024-setup/`) and add short context notes so others understand what each shot illustrates.
+- **Photos:** Store build imagery inside [`assets/photos/`](assets/photos/). Organize by milestone (`assets/photos/2024-setup/`) and add a `README.md` or captions section for context. Embed your favorite shots directly into Markdown so updates stand out in Git diffs.
 - **Videos:** Save drive tests and demos in [`assets/videos/`](assets/videos/). Include session summaries (timestamps, highlights, hosted mirrors) in each subfolder.
 - **3D Models:** Collect custom brackets, plates, and printable sensor mounts in [`assets/3d-models/`](assets/3d-models/). Add a brief README alongside each design describing mounting points, print orientation, and any required fasteners so others can replicate your setup.
 - **Media Log:** Update [`docs/media-log.md`](docs/media-log.md) with every new clip or gallery so readers can jump straight to relevant material.
@@ -73,7 +78,7 @@ Reference these assets from the sections above—for example, embed before/after
 ## Key ROS 2 Nodes
 | Script | Purpose | Topics |
 | --- | --- | --- |
-| [`lidar_to_zed_pointcloud.py`](scripts/lidar_to_zed_pointcloud.py) | Converts `/scan` LaserScan data into `sensor_msgs/PointCloud2` aligned with the ZED camera frame. | Subscribes: `/scan`, `/zed/zed_node/left/camera_info`  ·  Publishes: `/lidar_in_camera_frame` |
+| [`lidar_to_zed_pointcloud.py`](scripts/lidar_to_zed_pointcloud.py) | Converts `/scan` LaserScan data into `sensor_msgs/PointCloud2` aligned with the ZED camera frame. | Subscribes: `/scan`, `/zed/zed_node/left/camera_info` · Publishes: `/lidar_in_camera_frame` |
 | [`lidar_to_zed_projection_debug.py`](scripts/lidar_to_zed_projection_debug.py) | Projects LiDAR hits into the rectified ZED image for visual debugging and calibration feedback. | Subscribes: `/scan`, `/zed/zed_node/left/image_rect_color`, `/zed/zed_node/left/camera_info` |
 | [`lidar_zed_distance_comparison.py`](scripts/lidar_zed_distance_comparison.py) | Compares ZED depth measurements to LiDAR ranges to quantify agreement and spot drift. | Subscribes: `/scan`, `/zed/zed_node/depth/depth_registered` |
 
@@ -87,7 +92,7 @@ Each node is built with `rclpy`, making it easy to drop into a ROS 2 workspace 
    ```bash
    ros2 run <your_package> lidar_to_zed_pointcloud.py
    ```
-5. **Visualize results** with RViz using the provided configuration files, and log findings in the [`docs/`](docs/) folder.
+5. **Visualize results** with RViz using the provided configuration files, and log findings in the [`docs/`](docs/) folder. Add inline photos or screenshots whenever they clarify a step.
 
 ## Documentation Roadmap
 Use the [`docs/`](docs/) directory to capture:
