@@ -1,9 +1,9 @@
-# Jetson Orin Nano Autonomous Car Portfolio
+# Jetson Orin Nano Autonomous Car with Waveshare Cobra Flex Chasis
 
 > **Status:** Work in progress — this repository documents the ongoing integration of a ZED stereo camera and an RPLIDAR sensor on a Waveshare Cobra Flex platform powered by an NVIDIA Jetson Orin Nano.
 
 ## Project Overview
-This project showcases my ROS 2 development and sensor fusion work while building an autonomous RC car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor agreement, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
+This project showcases a ROS 2 development and sensor fusion work while building an autonomous 1:14 car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor agreement, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
 
 The repository collects:
 - **ROS 2 nodes** for translating LiDAR scans into the ZED camera frame, projecting them onto ZED images for debugging, and numerically comparing depth readings between the sensors.
@@ -15,19 +15,19 @@ The repository collects:
 | --- | --- |
 | Compute | NVIDIA Jetson Orin Nano (8 GB) |
 | Chassis | Waveshare Cobra Flex |
-| Stereo Camera | ZED ___ (model TBD) |
-| LiDAR | RPLIDAR ___ (model TBD) |
-| IMU / Additional Sensors | _Add details here_ |
+| Stereo Camera | ZED mini |
+| LiDAR | RPLIDAR A2M8 |
+| IMU / Additional Sensors | ZED mini integrated IMU |
 | Motor Controller | _Add details here_ |
 | Power System | _Add details here_ |
 
 > _Fill in the blank rows above with the final bill of materials once confirmed._
 
 ## ROS 2 Environment
-- **Distribution:** _ROS 2 ___ (e.g., Humble, Iron — specify exact release)_
-- **Middleware:** _CycloneDDS / FastDDS — confirm configuration_
-- **ZED SDK:** _Version TBD_
-- **RPLIDAR SDK / Driver:** _Version TBD_
+- **Distribution:** ROS2 Humble on Ubuntu 22.04
+- **ZED SDK:** 5.1
+- **ZED ROS2 Package:** [ZED ROS2 Wrapper](https://github.com/stereolabs/zed-ros2-wrapper)
+- **RPLIDAR Driver:** [RPLIDAR ROS2 Package](https://github.com/Slamtec/rplidar_ros/tree/ros2)
 
 Record any custom workspace overlays, `colcon` packages, or launch files in the [`docs/`](docs/) directory as you refine the system.
 
