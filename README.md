@@ -1,6 +1,6 @@
 # Jetson Orin Nano Autonomous Car with Waveshare Cobra Flex Chasis
 
-> **Status:** Work in progress — this repository documents the ongoing integration of a ZED stereo camera and an RPLIDAR sensor on a Waveshare Cobra Flex platform powered by an NVIDIA Jetson Orin Nano.
+> **Status:** Work in progress
 
 ## Project Overview
 This project showcases a ROS 2 development and sensor fusion work while building an autonomous 1:14 car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor agreement, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
@@ -11,7 +11,11 @@ The repository collects:
 - **Documentation templates** to capture hardware configuration, ROS graph design, calibration procedures, and lessons learned as the project matures.
 
 ## Hardware Platform & Bill of Materials
-Use the table below to capture every confirmed part in the build. Update the vendor links, part numbers, and firmware notes as you source components so other makers can reproduce the platform without guesswork.
+Testing build without Chassis 
+
+<img width="300" height="748" alt="Autonomous Driving with ROS 2(1)" src="https://github.com/user-attachments/assets/6ba8d446-38d1-4a0d-b592-ff4bcf108abe" />
+
+Bill of Materials
 
 | Component | Details | Vendor / Reference |
 | --- | --- | --- |
