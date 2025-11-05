@@ -37,6 +37,7 @@ Record any custom workspace overlays, `colcon` packages, or launch files in the 
 ## Repository Structure
 ```
 ├── assets/
+│   ├── 3d-models/                    # Mounting hardware and chassis accessory CAD files
 │   ├── photos/                       # Curated image gallery documenting the build
 │   └── videos/                       # Demo footage and experiment clips
 ├── scripts/
@@ -60,6 +61,7 @@ Create visual proof points as you progress and link them directly from this repo
 
 - **Photos:** Store build imagery inside [`assets/photos/`](assets/photos/). Organize by milestone (`assets/photos/2024-setup/`) and add short context notes so others understand what each shot illustrates.
 - **Videos:** Save drive tests and demos in [`assets/videos/`](assets/videos/). Include session summaries (timestamps, highlights, hosted mirrors) in each subfolder.
+- **3D Models:** Collect custom brackets, plates, and printable sensor mounts in [`assets/3d-models/`](assets/3d-models/). Add a brief README alongside each design describing mounting points, print orientation, and any required fasteners so others can replicate your setup.
 - **Media Log:** Update [`docs/media-log.md`](docs/media-log.md) with every new clip or gallery so readers can jump straight to relevant material.
 
 Reference these assets from the sections above—for example, embed before/after shots in the hardware table or link calibration recordings alongside the ROS 2 setup instructions.
