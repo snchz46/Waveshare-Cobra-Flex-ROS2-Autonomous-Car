@@ -4,6 +4,7 @@ Use this directory to collect detailed notes, diagrams, and experiments for the 
 
 ## 1. Hardware Assembly
 - Mechanical layout of the Waveshare Cobra Flex chassis
+- Reference the [Cobra Flex hardware resource pack](https://www.waveshare.com/wiki/Cobra_Flex#Resources) for exploded diagrams, the TB6612FNG motor driver pinout, and recommended servo linkage geometry.
 - Mounting instructions for the ZED camera and RPLIDAR
 - Wiring diagrams and power distribution notes
 
@@ -11,6 +12,7 @@ Use this directory to collect detailed notes, diagrams, and experiments for the 
 - JetPack version and OS image
 - ROS 2 distribution, DDS configuration, and workspace layout
 - ZED SDK, RPLIDAR drivers, and other dependencies
+- Capture steps used to clone and build the [Stereolabs ROS 2 examples](https://github.com/stereolabs/zed-ros2-examples) alongside the [Slamtec ROS 2 driver](https://github.com/Slamtec/rplidar_ros/tree/ros2) so future rebuilds are reproducible.
 
 ## 3. Calibration & Sensor Fusion
 - Camera–LiDAR extrinsic calibration steps

@@ -18,8 +18,8 @@ The repository collects:
 | Stereo Camera | ZED mini |
 | LiDAR | RPLIDAR A2M8 |
 | IMU / Additional Sensors | ZED mini integrated IMU |
-| Motor Controller | _Add details here_ |
-| Power System | _Add details here_ |
+| Motor Controller | Waveshare Cobra driver board with dual TB6612FNG DC motor bridges and integrated PCA9685 steering servo output |
+| Power System | 2S 18650 lithium battery pack (nominal 7.4 V) feeding on-board 5 V/5 A BEC for Jetson + peripherals |
 
 > _Fill in the blank rows above with the final bill of materials once confirmed._
 
