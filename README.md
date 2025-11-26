@@ -13,13 +13,14 @@ The repository collects:
 - **Media-rich documentation** with inline photo galleries to showcase hardware iterations, calibration setups, and experiment highlights.
 
 ## Quick Look
-| Target HW  | Prototype |
-| --- | --- |
-| <img width="550" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="550" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | 
+| Target HW  | Prototype | CAD Design |
+| --- | --- | --- |
+| <img width="400" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="400" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | <img width="600" src="https://github.com/user-attachments/assets/6a24ed11-6818-480a-b357-16dd035ad9d1" /> |
 
-| Mockup V1  |
-| --- |
-| <img width="400" src="https://github.com/user-attachments/assets/5f203f15-f4a1-439f-a37f-48e47d5ea7ec" /> |
+| Mockup V1 Front | Mockup V1 Back | Mockup V1 Side |
+| --- | --- | --- |
+| <img width="400" src="https://github.com/user-attachments/assets/c1dc343b-1485-454d-9837-50ce3d58a315" /> | <img width="400" src="https://github.com/user-attachments/assets/71097125-85c4-4252-9535-4a9d16df210c" /> | <img width="600" src="https://github.com/user-attachments/assets/f956686e-bfde-4c18-b917-eff0c08b677e" /> |
+
 
 ## Hardware Platform & Bill of Materials
 | Component | Details | Vendor / Reference |
