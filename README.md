@@ -13,9 +13,13 @@ The repository collects:
 - **Media-rich documentation** with inline photo galleries to showcase hardware iterations, calibration setups, and experiment highlights.
 
 ## Quick Look
-| Target HW  | Prototype | Mockup V1  |
-| --- | --- | --- |
-| <img width="550" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="550" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | <img width="400" src="https://github.com/user-attachments/assets/5f203f15-f4a1-439f-a37f-48e47d5ea7ec" /> |
+| Target HW  | Prototype |
+| --- | --- |
+| <img width="550" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="550" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | 
+
+| Mockup V1  |
+| --- |
+| <img width="400" src="https://github.com/user-attachments/assets/5f203f15-f4a1-439f-a37f-48e47d5ea7ec" /> |
 
 ## Hardware Platform & Bill of Materials
 | Component | Details | Vendor / Reference |
