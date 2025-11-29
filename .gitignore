@@ -1,0 +1,8 @@
+# ROS 2 workspace build outputs
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Python cache
+__pycache__/
+*.pyc
