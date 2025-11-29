@@ -60,6 +60,9 @@ Record any custom workspace overlays, `colcon` packages, or launch files in the 
 │   ├── README.md                        # Documentation hub for setup, calibration, and roadmap details
 │   ├── experiments/                     # Session-by-session experiment logs and templates
 │   └── media-log.md                     # Index of photos/videos and hosted mirrors
+├── ros2_ws/                             # ROS 2 Humble workspace with starter packages and launch scaffolding
+│   ├── src/cobraflex/                   # Placeholder control node that logs a startup message
+│   └── src/cobraflex_bringup/           # Launch/config package to start LiDAR, ZED, and the cobraflex node together
 ├── LICENSE
 └── README.md (this file)
 ```
@@ -89,6 +92,15 @@ Each node is built with `rclpy`, making it easy to drop into a ROS 2 workspace 
    ros2 run <your_package> lidar_to_zed_pointcloud.py
    ```
 5. **Visualize results** with RViz using the provided configuration files, and log findings in the [`docs/`](docs/) folder. Add inline photos or screenshots whenever they clarify a step.
+6. **Build the ROS 2 workspace** in [`ros2_ws/`](ros2_ws/) if you want to test the packaged launch setup:
+   ```bash
+   cd ros2_ws
+   source /opt/ros/humble/setup.bash
+   colcon build --symlink-install
+   source install/setup.bash
+   ros2 launch cobraflex_bringup cobraflex.launch.xml
+   ```
+   The launch file starts the RPLIDAR driver, the ZED wrapper, and the placeholder `cobraflex` node. Adjust the launch arguments and node entry point as you add real control logic.
 
 ## Documentation Roadmap
 
