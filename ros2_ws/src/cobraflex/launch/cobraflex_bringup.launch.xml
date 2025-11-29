@@ -1,0 +1,27 @@
+<launch>
+
+    <!-- ========================= -->
+    <!-- ARGS GENERALES            -->
+    <!-- ========================= -->
+    <arg name="serial_port" default="/dev/ttyACM2"/>
+    <arg name="baudrate" default="115200"/>
+    <arg name="lidar_frame" default="laser"/>
+    <arg name="zed_model" default="zed2"/>
+
+    <!-- ========================= -->
+    <!-- SENSORES: LIDAR + ZED     -->
+    <!-- ========================= -->
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_sensors.launch.xml">
+        <arg name="lidar_frame" value="$(var lidar_frame)"/>
+        <arg name="zed_model" value="$(var zed_model)"/>
+    </include>
+
+    <!-- ========================= -->
+    <!-- DRIVER + AVOIDANCE        -->
+    <!-- ========================= -->
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml">
+        <arg name="serial_port" value="$(var serial_port)"/>
+        <arg name="baudrate" value="$(var baudrate)"/>
+    </include>
+
+</launch>
