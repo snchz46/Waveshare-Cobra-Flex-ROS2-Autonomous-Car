@@ -1,0 +1,27 @@
+<launch>
+
+    <!-- ========================= -->
+    <!-- ARGS SENSORES             -->
+    <!-- ========================= -->
+    <arg name="lidar_frame" default="laser"/>
+    <arg name="zed_model" default="zed2"/>  <!-- zed2, zed2i, zedm, etc. -->
+
+    <!-- ========================= -->
+    <!-- Lidar RPLIDAR A2M8        -->
+    <!-- ========================= -->
+    <include file="$(find-pkg-share rplidar_ros)/launch/view_rplidar_a2m8_launch.py">
+        <arg name="frame_id" value="$(var lidar_frame)"/>
+    </include>
+
+    <!-- ========================= -->
+    <!-- ZED Camera (ZED2/ZED Mini)-->
+    <!-- ========================= -->
+    <include file="$(find-pkg-share zed_wrapper)/launch/zed2.launch.py">
+        <!-- Puedes personalizar según tu setup -->
+        <!-- <arg name="camera_name" value="$(var zed_model)"/> -->
+        <!-- <arg name="resolution" value="HD720"/> -->
+        <!-- <arg name="frame_rate" value="30"/> -->
+        <!-- <arg name="publish_tf" value="true"/> -->
+    </include>
+
+</launch>
