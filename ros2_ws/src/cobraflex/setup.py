@@ -20,6 +20,7 @@ setup(
     entry_points={
         'console_scripts': [
             'cobraflex_node = cobraflex.cobraflex_node:main',
+            'lidar_avoidance_node = cobraflex.lidar_avoidance_node:main',
         ],
     },
 )
