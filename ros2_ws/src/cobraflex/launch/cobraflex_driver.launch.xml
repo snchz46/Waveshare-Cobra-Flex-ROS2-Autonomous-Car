@@ -1,0 +1,39 @@
+<launch>
+
+    <!-- ========================= -->
+    <!-- ARGS (opcionales)         -->
+    <!-- ========================= -->
+    <arg name="serial_port" default="/dev/ttyACM2"/>
+    <arg name="baudrate" default="115200"/>
+
+    <!-- ========================= -->
+    <!-- CobraFlex JSON Driver     -->
+    <!-- ========================= -->
+    <node
+        pkg="cobraflex"
+        exec="cobraflex_cmdvel_driver"
+        name="cobraflex_cmdvel_driver"
+        output="screen">
+
+        <param name="port" value="$(var serial_port)"/>
+        <param name="baud" value="$(var baudrate)"/>
+        <param name="max_speed_value" value="100"/>
+        <param name="max_linear" value="1.0"/>
+        <param name="max_angular" value="1.0"/>
+    </node>
+
+    <!-- ========================= -->
+    <!-- Lidar Avoidance PID Node  -->
+    <!-- ========================= -->
+    <node
+        pkg="cobraflex"
+        exec="lidar_avoidance_pid"
+        name="lidar_avoidance_pid"
+        output="screen">
+        <!-- Aquí podrías pasar params si quieres:
+        <param name="front_angle_deg" value="12.0"/>
+        <param name="safe_distance" value="0.6"/>
+        -->
+    </node>
+
+</launch>
