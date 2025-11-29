@@ -4,7 +4,7 @@ package_name = 'cobraflex'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.0',
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages', [f'resource/{package_name}']),
@@ -13,7 +13,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Samuel',
-    maintainer_email='maintainer@example.com',
+    maintainer_email='sanchezmorenosamuel23@gmail.com',
     description='ROS 2 control nodes for the Cobra chassis.',
     license='MIT',
     tests_require=['pytest'],
