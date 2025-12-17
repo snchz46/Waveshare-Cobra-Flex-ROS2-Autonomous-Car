@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="zed_m" params="parent xyz rpy">
+
+    <link name="zedm_camera_link"/>
+
+    <joint name="base_to_zed" type="fixed">
+      <parent link="${parent}"/>
+      <child link="zedm_camera_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <!-- Optical frames -->
+    <link name="zedm_left_camera_optical_frame"/>
+    <link name="zedm_right_camera_optical_frame"/>
+
+    <joint name="zedm_left_optical_joint" type="fixed">
+      <parent link="zedm_camera_link"/>
+      <child link="zedm_left_camera_optical_frame"/>
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    </joint>
+
+    <joint name="zedm_right_optical_joint" type="fixed">
+      <parent link="zedm_camera_link"/>
+      <child link="zedm_right_camera_optical_frame"/>
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>

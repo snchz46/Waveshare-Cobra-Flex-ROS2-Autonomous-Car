@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<robot name="mav1" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Base -->
+  <xacro:include filename="$(find cobraflex)/urdf/mav1_base.urdf.xacro"/>
+
+  <!-- Sensors -->
+  <xacro:include filename="$(find cobraflex)/urdf/rplidar_a2.urdf.xacro"/>
+  <xacro:include filename="$(find cobraflex)/urdf/zed_m.urdf.xacro"/>
+
+  <!-- RPLidar A2 -->
+  <xacro:rplidar_a2
+      parent="base_link"
+      xyz="0.0 0.0 0.16"
+      rpy="0 0 0"/>
+
+  <!-- ZED Mini -->
+  <xacro:zed_m
+      parent="base_link"
+      xyz="0.10 0.0 0.13"
+      rpy="0 0 0"/>
+
+    <!-- ================= GAZEBO DIFF DRIVE ================= -->
+    <gazebo>
+        <plugin 
+            name="gz::sim::systems::DiffDrive" 
+            filename="gz-sim-diff-drive-system">
+
+            <!-- Wheels -->
+            <left_joint>wheel_fl_joint</left_joint>
+            <left_joint>wheel_rl_joint</left_joint>
+            <right_joint>wheel_fr_joint</right_joint>
+            <right_joint>wheel_rr_joint</right_joint>
+
+            <!-- Geometry -->
+            <wheel_separation>0.145</wheel_separation>
+            <wheel_diameter>0.0745</wheel_diameter>
+
+            <!-- Motion -->
+            <command_topic>cmd_vel</command_topic>
+            <odometry_topic>odom</odometry_topic>
+            <odometry_frame>odom</odometry_frame>
+            <robot_base_frame>base_footprint</robot_base_frame>
+            <frame_id>odom</frame_id>
+            <child_frame_id>base_footprint</child_frame_id>
+
+            <!-- Update -->
+            <update_rate>50</update_rate>
+            <publish_odom>true</publish_odom>
+            <publish_wheel_tf>false</publish_wheel_tf>
+            <publish_tf>true</publish_tf>
+
+        </plugin>
+    </gazebo>
+
+
+    <!-- ================= JOINT STATE PUBLISHER ================= -->
+    <gazebo>
+        <plugin
+            name="gz::sim::systems::JointStatePublisher"
+            filename="gz-sim-joint-state-publisher-system">
+            <joint_name>wheel_fl_joint</joint_name>
+            <joint_name>wheel_fr_joint</joint_name>
+            <joint_name>wheel_rl_joint</joint_name>
+            <joint_name>wheel_rr_joint</joint_name>
+        </plugin>
+    </gazebo>
+
+    <!-- ================= WHEEL FRICTION ================= -->
+    <gazebo reference="wheel_fl_link">
+    <mu1>3.0</mu1>
+    <mu2>3.0</mu2>
+    <kp>100000</kp>
+    <kd>1</kd>
+    </gazebo>
+
+    <gazebo reference="wheel_fr_link">
+    <mu1>3.0</mu1>
+    <mu2>3.0</mu2>
+    <kp>100000</kp>
+    <kd>1</kd>
+    </gazebo>
+
+    <gazebo reference="wheel_rl_link">
+    <mu1>3.0</mu1>
+    <mu2>3.0</mu2>
+    <kp>100000</kp>
+    <kd>1</kd>
+    </gazebo>
+
+    <gazebo reference="wheel_rr_link">
+    <mu1>3.0</mu1>
+    <mu2>3.0</mu2>
+    <kp>100000</kp>
+    <kd>1</kd>
+    </gazebo>       
+
+
+</robot>
