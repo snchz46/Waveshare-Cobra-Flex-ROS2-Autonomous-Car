@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<robot name="mav1">
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <box size="0.228 0.130 0.1"/>
+            </geometry>
+            
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+
+            <material name="blue">
+                <color rgba="0 0 1 1"/>
+            </material>
+        </visual>
+</robot>
