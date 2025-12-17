@@ -1,39 +1,31 @@
 <launch>
 
     <!-- ========================= -->
-    <!-- ARGS (opcionales)         -->
+    <!-- ARGS                      -->
     <!-- ========================= -->
-    <arg name="serial_port" default="/dev/ttyACM2"/>
+    <arg name="serial_port" default="/dev/ttyACM1"/>
     <arg name="baudrate" default="115200"/>
+    <arg name="max_linear" default="0.53"/>
+    <arg name="max_angular" default="6.0"/>
+    <arg name="turn_threshold" default="0.3"/>
+ 
 
     <!-- ========================= -->
     <!-- CobraFlex JSON Driver     -->
     <!-- ========================= -->
     <node
         pkg="cobraflex"
-        exec="cobraflex_cmdvel_driver"
-        name="cobraflex_cmdvel_driver"
+        exec="cobraflex_ros_driver"
+        name="cobraflex_driver"
         output="screen">
 
         <param name="port" value="$(var serial_port)"/>
         <param name="baud" value="$(var baudrate)"/>
-        <param name="max_speed_value" value="100"/>
-        <param name="max_linear" value="1.0"/>
-        <param name="max_angular" value="1.0"/>
+
+        <param name="max_linear" value="$(var max_linear)"/>
+        <param name="max_angular" value="$(var max_angular)"/>
+        <param name="turn_threshold" value="$(var turn_threshold)"/>
     </node>
 
-    <!-- ========================= -->
-    <!-- Lidar Avoidance PID Node  -->
-    <!-- ========================= -->
-    <node
-        pkg="cobraflex"
-        exec="lidar_avoidance_pid"
-        name="lidar_avoidance_pid"
-        output="screen">
-        <!-- Aquí podrías pasar params si quieres:
-        <param name="front_angle_deg" value="12.0"/>
-        <param name="safe_distance" value="0.6"/>
-        -->
-    </node>
 
 </launch>

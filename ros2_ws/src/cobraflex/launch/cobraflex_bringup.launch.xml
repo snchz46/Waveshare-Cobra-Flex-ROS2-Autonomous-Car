@@ -1,27 +1,25 @@
 <launch>
 
-    <!-- ========================= -->
-    <!-- ARGS GENERALES            -->
-    <!-- ========================= -->
-    <arg name="serial_port" default="/dev/ttyACM2"/>
-    <arg name="baudrate" default="115200"/>
-    <arg name="lidar_frame" default="laser"/>
-    <arg name="zed_model" default="zed2"/>
+    <!-- Launch arguments -->
+    <arg name="use_rviz" default="true"/>
 
-    <!-- ========================= -->
-    <!-- SENSORES: LIDAR + ZED     -->
-    <!-- ========================= -->
-    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_sensors.launch.xml">
-        <arg name="lidar_frame" value="$(var lidar_frame)"/>
-        <arg name="zed_model" value="$(var zed_model)"/>
+
+
+    <!-- Load robot model -->
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_description.launch.xml">
+        <arg name="use_rviz" value="$(var use_rviz)"/>
     </include>
 
-    <!-- ========================= -->
-    <!-- DRIVER + AVOIDANCE        -->
-    <!-- ========================= -->
-    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml">
-        <arg name="serial_port" value="$(var serial_port)"/>
-        <arg name="baudrate" value="$(var baudrate)"/>
+    <!-- Load ZED Mini model -->
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_zed_description.launch.py" />
+
+    <!-- ZED Camera (ZED Mini)-->
+    <include file="$(find-pkg-share zed_wrapper)/launch/zed_camera.launch.py">
+        <arg name="camera_model" value="zedm"/>
     </include>
+
+    <!-- Load driver -->
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml" />
 
 </launch>
+
