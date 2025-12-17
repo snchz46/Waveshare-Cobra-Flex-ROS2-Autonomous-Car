@@ -1,0 +1,39 @@
+<launch>
+
+    <!-- =========================================== -->
+    <!-- Arguments                                    -->
+    <!-- =========================================== -->
+    <arg name="use_rviz" default="true"/>
+    <arg name="urdf_file" default="$(find-pkg-share cobraflex)/urdf/mav1.urdf.xacro"/>
+
+    <!-- =========================================== -->
+    <!-- robot_state_publisher                        -->
+    <!-- =========================================== -->
+    <node pkg="robot_state_publisher"
+          exec="robot_state_publisher"
+          name="robot_description"
+          output="screen">
+
+        <param name="robot_description" value="$(command 'xacro $(var urdf_file)')"/>
+    </node>
+
+    <!-- =========================================== -->
+    <!-- joint_state_publisher                        -->
+    <!-- =========================================== -->
+    <node pkg="joint_state_publisher"
+          exec="joint_state_publisher"
+          name="joint_state_publisher"
+          output="screen"/>
+
+    <!-- =========================================== -->
+    <!-- RViz (optional)                              -->
+    <!-- =========================================== -->
+    <group if="$(var use_rviz)">
+        <node pkg="rviz2"
+              exec="rviz2"
+              name="rviz2"
+              output="screen"
+              args="-d $(find-pkg-share cobraflex)/rviz/mav1_description.rviz"/>
+    </group>
+
+</launch>

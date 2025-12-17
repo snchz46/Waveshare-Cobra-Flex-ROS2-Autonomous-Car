@@ -1,0 +1,14 @@
+<launch>
+
+    <!-- SENSORS: LiDAR + ZED -->
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_sensors.launch.xml"/>
+
+    <!-- AUTOMATIC AVOIDANCE -->
+    <node
+        pkg="cobraflex"
+        exec="lidar_avoidance_pid_node"
+        name="lidar_avoidance"
+        output="screen">
+    </node>
+
+</launch>
