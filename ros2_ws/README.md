@@ -1,9 +1,11 @@
 # ROS 2 Workspace Skeleton
 
-This folder provides a ROS 2 Humble workspace layout for adding your own packages. Two starter packages live under [`src/`](src/):
+This folder provides a ROS 2 Humble workspace layout for adding your own packages. The current stack centers on the [`cobraflex`](src/cobraflex/) package, which includes:
 
-- [`cobraflex`](src/cobraflex/) – placeholder control node that currently spins and logs a startup message.
-- [`cobraflex_bringup`](src/cobraflex_bringup/) – launch and config scaffolding to start LiDAR, ZED, and the cobraflex node together.
+- Python nodes for serial driving and LiDAR-based avoidance (`src/cobraflex/cobraflex/`)
+- Launch files for sensing-only, manual, autonomous, and Gazebo profiles (`src/cobraflex/launch/`)
+- URDF/Xacro descriptions of the MAV1 chassis, RPLIDAR A2M8, and ZED Mini (`src/cobraflex/urdf/`)
+- RViz configs and ament tests to visualize and lint the package
 
 ## How to use
 1. Ensure ROS 2 Humble is sourced (`source /opt/ros/humble/setup.bash`).

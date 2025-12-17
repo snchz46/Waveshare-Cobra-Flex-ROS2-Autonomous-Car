@@ -45,6 +45,7 @@ Record any custom workspace overlays, `colcon` packages, or launch files in the 
 ## Repository Structure
 ```
 ├── assets/
+│   ├── README.md                     # Media/model index and contribution tips
 │   ├── 3d-models/                    # Mounting hardware and chassis accessory CAD files
 │   ├── photos/                       # Curated image gallery documenting the build
 │   └── videos/                       # Demo footage and experiment clips
@@ -61,11 +62,26 @@ Record any custom workspace overlays, `colcon` packages, or launch files in the 
 │   ├── experiments/                     # Session-by-session experiment logs and templates
 │   └── media-log.md                     # Index of photos/videos and hosted mirrors
 ├── ros2_ws/                             # ROS 2 Humble workspace with starter packages and launch scaffolding
-│   ├── src/cobraflex/                   # Placeholder control node that logs a startup message
-│   └── src/cobraflex_bringup/           # Launch/config package to start LiDAR, ZED, and the cobraflex node together
+│   ├── README.md
+│   └── src/
+│       └── cobraflex/                   # ROS 2 package for the Cobra Flex chassis (drivers, URDF, launch)
+│           ├── README.md                # Node descriptions and launch overview
+│           ├── cobraflex/               # Python nodes: cmd_vel driver, LiDAR avoidance PID, helpers
+│           ├── launch/                  # Bringup, description, teleop, and Gazebo launch files
+│           ├── config/                  # Parameter files (e.g., Gazebo bridge)
+│           ├── urdf/                    # MAV1 base + sensor Xacro/URDF assets
+│           ├── rviz/                    # RViz profiles for visualization
+│           └── test/                    # ament/pytest + lint checks
 ├── LICENSE
 └── README.md (this file)
 ```
+
+### Cobra Flex package highlights
+
+- **Python nodes:** Serial driver (`cobraflex_cmdvel_driver.py`), LiDAR-based obstacle avoidance (`lidar_avoidance_pid_node.py`), and ROS driver helpers live in `ros2_ws/src/cobraflex/cobraflex/`.
+- **Launch entries:** Bringup profiles under `ros2_ws/src/cobraflex/launch/` cover sensing-only, manual teleop, autonomous avoidance, and Gazebo simulation (`mav1_gazebo.launch.xml`).
+- **Robot description:** URDF/Xacro sources under `ros2_ws/src/cobraflex/urdf/` model the MAV1 base, RPLIDAR A2M8, and ZED Mini/ ZED2 mounting with a pre-generated `mav1.urdf` for quick visualization.
+- **Visualization & tests:** RViz setup (`ros2_ws/src/cobraflex/rviz/mav1_description.rviz`) and ament test suite (`ros2_ws/src/cobraflex/test/`) keep the package linted and verifiable.
 
 ## Media Showcase
 
