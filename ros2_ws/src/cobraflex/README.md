@@ -1,13 +1,8 @@
-# Cobraflex ROS2
+# Cobraflex ROS 2
 
-Integración ROS2 para el chasis Cobraflex 4WD con:
+Integración ROS 2 para el chasis Cobra Flex 4WD. Incluye driver sobre serial, nodos de evitación basados en LIDAR, y descripciones URDF con RPLIDAR A2M8 y cámara ZED (ZED Mini/ZED2).
 
-- Driver JSON sobre serial
-- Nodo de evitación de obstáculos basado en LIDAR (PID + ramping)
-- RPLIDAR A2M8
-- Cámara ZED (ZED2 / ZED Mini)
-
-## Instalación
+## Instalación rápida
 
 ```bash
 cd ~/ros2_ws
@@ -15,9 +10,7 @@ colcon build
 source install/setup.bash
 ```
 
-## Guide
-
-Asegúrate de tener instalado pyserial:
+Requisitos: `pyserial` para el driver serial.
 
 ```bash
 sudo apt install python3-serial
@@ -25,52 +18,36 @@ sudo apt install python3-serial
 python3 -m pip install pyserial
 ```
 
-Nodos
-cobraflex_cmdvel_driver
+## Nodos principales
 
-Convierte /cmd_vel en comandos JSON para el chasis Cobraflex.
+- **`cobraflex_cmdvel_driver`** (`cobraflex_cmdvel_driver.py`): Convierte `/cmd_vel` en comandos JSON para el microcontrolador del chasis. Parámetros clave: `port`, `baud`, `max_speed_value`, `max_linear`, `max_angular`.
+- **`lidar_avoidance_pid`** (`lidar_avoidance_pid_node.py`): Escucha `/scan` y publica `/cmd_vel` aplicando correcciones PID para mantener distancia de seguridad (`front_angle_deg`, `safe_distance`, `forward_speed`).
+- **`cobraflex_ros_driver`**: Complemento para publicar estados y facilitar la integración del driver serial con el stack ROS 2.
+
+### Ejecutar
 
 ```bash
 ros2 run cobraflex cobraflex_cmdvel_driver
-```
-
-Parámetros:
-
-- port (string): puerto serial, ej. /dev/ttyACM2
-- baud (int): baudrate, por defecto 115200
-- max_speed_value (int): escala de potencia para L/R (ej. 100)
-- max_linear (float): velocidad lineal máxima esperada [m/s]
-- max_angular (float): velocidad angular máxima esperada [rad/s]
-
-lidar_avoidance_pid
-
-Nodo que escucha /scan y publica /cmd_vel con evitación de obstáculos.
-
-```bash
 ros2 run cobraflex lidar_avoidance_pid
 ```
 
-Parámetros principales:
+## Launch files destacados
 
-- front_angle_deg (float): ángulo frontal ± en grados
-- safe_distance (float): distancia mínima segura [m]
-- forward_speed (float): velocidad lineal máxima [m/s]
+- `cobraflex_sensors.launch.xml`: Sólo sensores (RPLIDAR + ZED) para calibración y pruebas en RViz.
+- `cobraflex_driver.launch.xml`: Driver de chasis para teleoperación.
+- `cobraflex_bringup.launch.xml` / `.py`: Stack completo (sensores + driver + evasión).
+- `cobraflex_manual.launch.xml`: Perfil de teleoperación manual.
+- `cobraflex_automatic.launch.xml`: Perfil de navegación autónoma con evasión.
+- `cobraflex_description.launch.xml` / `cobraflex_zed_description.launch.py`: Publica el URDF y el árbol TF.
+- `mav1_gazebo.launch.xml`: Simulación en Gazebo del MAV1.
 
-Launch files
-Sensores solamente
+## Descripción del paquete
 
-```bash
-ros2 launch cobraflex cobraflex_sensors.launch.xml
-```
+- Código Python en [`cobraflex/`](cobraflex/)
+- Parámetros y bridges en [`config/`](config/)
+- URDF/Xacro en [`urdf/`](urdf/)
+- Configuración de RViz en [`rviz/`](rviz/)
+- Pruebas ament en [`test/`](test/)
+- Archivos de lanzamiento en [`launch/`](launch/)
 
-Chasis + evitación
-
-```bash
-ros2 launch cobraflex cobraflex_driver.launch.xml
-```
-
-Bringup completo (sensores + driver + evitación)
-
-```bash
-ros2 launch cobraflex cobraflex_bringup.launch.xml
-```
+Mantén estos directorios actualizados al agregar nodos, sensores o cambios de frames para que el resto del equipo pueda usarlos desde los launch files existentes.
