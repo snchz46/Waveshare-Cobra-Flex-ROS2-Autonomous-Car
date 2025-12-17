@@ -9,69 +9,69 @@ import json
 
 class CobraFlexDriver(Node):
     """
-    Nodo basado en tu plantilla original, pero adaptado
-    para convertir /cmd_vel -> JSON para el Cobraflex.
+    Node based on your original template, adapted to
+    convert /cmd_vel -> JSON for the Cobraflex.
     """
 
     def __init__(self):
         super().__init__("cobraflex_cmdvel_driver")
 
         # -----------------------------
-        # Parámetros configurables
+        # Configurable parameters
         # -----------------------------
         self.declare_parameter("port", "/dev/ttyACM1")
         self.declare_parameter("baud", 115200)
-        self.declare_parameter("max_speed_value", 100)   # rango [0–100]
+        self.declare_parameter("max_speed_value", 100)   # range [0–100]
         self.declare_parameter("max_linear", 1.0)        # m/s
         self.declare_parameter("max_angular", 1.0)       # rad/s
 
         port = self.get_parameter("port").value
         baud = self.get_parameter("baud").value
 
-        # Escalas de normalización
+        # Normalization scales
         self.max_speed_val = float(self.get_parameter("max_speed_value").value)
         self.max_lin = float(self.get_parameter("max_linear").value)
         self.max_ang = float(self.get_parameter("max_angular").value)
 
         # -----------------------------
-        # Abrir puerto serie
+        # Open serial port
         # -----------------------------
         self.ser = serial.Serial(port, baud, timeout=0.05)
 
         # -----------------------------
-        # Subscripción a /cmd_vel
+        # Subscribe to /cmd_vel
         # -----------------------------
         self.create_subscription(Twist, "/cmd_vel", self.cmd_vel_callback, 10)
 
-        self.get_logger().info("Cobraflex driver inicializado y escuchando /cmd_vel.")
+        self.get_logger().info("Cobraflex driver initialized and listening on /cmd_vel.")
 
 
     # ---------------------------------------------------------------------
-    # Normalización de velocidades
+    # Velocity normalization
     # ---------------------------------------------------------------------
     def scale_to_motor(self, lin_x, ang_z):
         """
-        Convierte velocidades ROS2 -> escala Cobraflex.
+        Convert ROS 2 velocities -> Cobraflex scale.
         lin_x: m/s
         ang_z: rad/s
 
-        Devuelve L y R entre [-max_speed_val, max_speed_val].
+        Returns L and R within [-max_speed_val, max_speed_val].
         """
 
-        # Normalizar lineal y angular
+        # Normalize linear and angular inputs
         lin_norm = max(-1.0, min(1.0, lin_x / self.max_lin))
         ang_norm = max(-1.0, min(1.0, ang_z / self.max_ang))
 
-        # Mezcla diferencial (estilo tank-drive)
+        # Differential mix (tank-drive style)
         left = lin_norm - ang_norm
         right = lin_norm + ang_norm
 
-        # Normalizar mezcla a [-1, 1]
+        # Normalize mix to [-1, 1]
         max_abs = max(abs(left), abs(right), 1)
         left /= max_abs
         right /= max_abs
 
-        # Escalar al rango del Cobraflex
+        # Scale to Cobraflex range
         L_val = int(left * self.max_speed_val)
         R_val = int(right * self.max_speed_val)
 
@@ -79,16 +79,16 @@ class CobraFlexDriver(Node):
 
 
     # ---------------------------------------------------------------------
-    # Callback de /cmd_vel
+    # /cmd_vel callback
     # ---------------------------------------------------------------------
     def cmd_vel_callback(self, msg):
         lin = msg.linear.x
         ang = msg.angular.z
 
-        # Convertir velocidades
+        # Convert velocities
         L, R = self.scale_to_motor(lin, ang)
 
-        # Armar JSON final según tu plantilla
+        # Build final JSON according to the template
         data = {
             "T": 1,
             "L": L,
@@ -99,16 +99,16 @@ class CobraFlexDriver(Node):
 
         try:
             self.ser.write(json_data)
-            self.get_logger().info(f"Enviado: {json_data}")
+            self.get_logger().info(f"Sent: {json_data}")
         except Exception as e:
-            self.get_logger().error(f"ERROR enviando al Cobraflex: {e}")
+            self.get_logger().error(f"ERROR sending to the Cobraflex: {e}")
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = CobraFlexDriver()
 
-    # Igual que tu plantilla: spin_once para garantizar timers / callbacks
+    # Matches your template: spin to ensure timers / callbacks run
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
