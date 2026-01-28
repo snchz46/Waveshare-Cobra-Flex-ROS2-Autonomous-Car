@@ -1,28 +1,43 @@
 <launch>
-    <let name="urdf_path" 
-         value="$(find-pkg-share cobraflex)/urdf/mav1.urdf.xacro" />
 
-    <let name="gazebo_config_path"
-         value="$(find-pkg-share cobraflex)/config/gazebo_bridge.yaml" />  
+    
+    <arg name="use_sim_time" default="true"/>
+    <let name="urdf_path" value="$(find-pkg-share cobraflex)/urdf/my_robot.urdf.xacro" />
+    <let name="gazebo_config_path" value="$(find-pkg-share cobraflex)/config/gazebo_bridge.yaml" />  
+    <let name="rviz_config_path" value="$(find-pkg-share cobraflex)/rviz/mav1_description.rviz" />
+    <let name="ekf_config_path" value="$(find-pkg-share cobraflex)/config/ekf.yaml" />
 
-    <let name="rviz_config_path"
-         value="$(find-pkg-share cobraflex)/rviz/mav1_description.rviz" />
 
     <node pkg="robot_state_publisher" exec="robot_state_publisher">
-        <param name="robot_description"
-               value="$(command 'xacro $(var urdf_path)')" />
+        <param name="robot_description" value="$(command 'xacro $(var urdf_path)')" />
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
     <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
-        <arg name="gz_args" value="empty.sdf -r" />
+        <arg name="gz_args" value="$(find-pkg-share cobraflex)/worlds/test_world.sdf -r" />
+        <!-- <arg name="gz_args" value="empty.sdf -r" /> -->
     </include>
 
     <node pkg="ros_gz_sim" exec="create" args="-topic robot_description" />
 
     <node pkg="ros_gz_bridge" exec="parameter_bridge">
         <param name="config_file" value="$(var gazebo_config_path)" />
+        <param name="use_sim_time" value="true"/>
     </node>
 
+    <node pkg="robot_localization" exec="ekf_node" name="ekf_filter_node" output="screen">
+        <param from="$(var ekf_config_path)" />
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
+
+    <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
+        <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    </include>
+
+    <include file="$(find-pkg-share nav2_bringup)/launch/navigation_launch.py">
+        <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    </include>
+    
     <node pkg="rviz2" exec="rviz2" output="screen" 
           args="-d $(var rviz_config_path)" />
           

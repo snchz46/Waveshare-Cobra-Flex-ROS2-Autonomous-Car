@@ -1,7 +1,5 @@
 <launch>
-
-
-    <!-- Lidar RPLIDAR A2M8        -->
+    <!-- ================= Lidar RPLIDAR A2M8 ================= -->
     <include file="$(find-pkg-share rplidar_ros)/launch/view_rplidar_a2m8_launch.py">
         <arg name="frame_id" value="base_laser"/>
         <arg name="scan_frequency" value="10"/>

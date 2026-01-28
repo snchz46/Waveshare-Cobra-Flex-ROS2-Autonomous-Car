@@ -1,6 +1,6 @@
 <launch>
 
-    <!-- SENSORS: LiDAR + ZED -->
+    <!-- SENSORS: LiDAR + ZED (already launched) -->
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_sensors.launch.xml"/>
 
     <!-- AUTOMATIC AVOIDANCE -->

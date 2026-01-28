@@ -75,9 +75,7 @@ class AvoidanceWithLights(Node):
         # -------------------------
         # ROS I/O
         # -------------------------
-        self.scan_sub = self.create_subscription(
-            LaserScan, "/scan", self.scan_callback, 10
-        )
+        self.scan_sub = self.create_subscription(LaserScan, "/scan", self.scan_callback, 10)
         self.cmd_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.cmd_timer = self.create_timer(1.0 / self.cmd_rate, self.cmd_timer_cb)
 

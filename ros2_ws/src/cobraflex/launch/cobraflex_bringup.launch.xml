@@ -1,9 +1,13 @@
 <launch>
 
+    <!-- =======================================     README    ========================================== -->
+    <!-- =======================================               ========================================== -->
+    <!-- This launch file brings up the entire robot system ready to drive                                -->
+    <!-- After launching this file, launch "cobraflex.launch.xml" with either manual or automatic control -->
+    <!-- ================================================================================================ -->
+
     <!-- Launch arguments -->
     <arg name="use_rviz" default="true"/>
-
-
 
     <!-- Load robot model -->
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_description.launch.xml">
