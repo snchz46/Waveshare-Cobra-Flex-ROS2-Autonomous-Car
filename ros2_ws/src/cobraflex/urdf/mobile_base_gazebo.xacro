@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <gazebo>
+        <plugin 
+            name="gz::sim::systems::DiffDrive" 
+            filename="gz-sim-diff-drive-system">
+
+            <left_joint>wheel_fl_joint</left_joint>
+            <left_joint>wheel_rl_joint</left_joint>
+            <right_joint>wheel_fr_joint</right_joint>
+            <right_joint>wheel_rr_joint</right_joint>
+
+            <wheel_separation>0.154</wheel_separation>
+            <wheel_diameter>0.0745</wheel_diameter>
+
+            <topic>cmd_vel</topic>
+            <odom_topic>odom</odom_topic>
+            <frame_id>odom</frame_id>
+            <child_frame_id>base_footprint</child_frame_id>
+            
+            <update_rate>50</update_rate>
+            <publish_odom>true</publish_odom>
+            <odom_publish_frequency>50</odom_publish_frequency>
+            
+            <publish_tf>false</publish_tf>
+            <publish_wheel_tf>true</publish_wheel_tf>
+
+        </plugin>
+    </gazebo>
+
+    <gazebo>
+        <plugin
+            name="gz::sim::systems::JointStatePublisher"
+            filename="gz-sim-joint-state-publisher-system">
+            <topic>joint_states</topic>
+            <update_rate>50</update_rate>
+            <joint_name>wheel_fl_joint</joint_name>
+            <joint_name>wheel_fr_joint</joint_name>
+            <joint_name>wheel_rl_joint</joint_name>
+            <joint_name>wheel_rr_joint</joint_name>
+        </plugin>
+    </gazebo>
+
+    <xacro:macro name="wheel_friction" params="name">
+        <gazebo reference="${name}">
+            <mu1>1.5</mu1> <mu2>0.1</mu2> <kp>1000000.0</kp>
+            <kd>10.0</kd>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:wheel_friction name="wheel_fl_link"/>
+    <xacro:wheel_friction name="wheel_fr_link"/>
+    <xacro:wheel_friction name="wheel_rl_link"/>
+    <xacro:wheel_friction name="wheel_rr_link"/>
+
+    <gazebo>
+      <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"></plugin>
+      <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+        <render_engine>ogre2</render_engine>
+      </plugin>
+    </gazebo>
+
+</robot>

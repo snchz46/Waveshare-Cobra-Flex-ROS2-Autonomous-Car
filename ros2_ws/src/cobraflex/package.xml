@@ -20,6 +20,8 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
@@ -29,18 +31,18 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>xacro</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>navigation2</exec_depend> 
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
   
   <exec_depend>rplidar_ros</exec_depend>
   <exec_depend>zed_wrapper</exec_depend>
 
-  <exec_depend>tf2_ros</exec_depend>
-  <exec_depend>xacro</exec_depend>
-
-
   <exec_depend>ament_index_python</exec_depend>
-
   <export>
     <build_type>ament_python</build_type>
   </export>
