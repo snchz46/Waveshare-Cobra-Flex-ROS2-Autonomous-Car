@@ -7,6 +7,28 @@ Integración ROS2 para el chasis Cobraflex 4WD con:
 - RPLIDAR A2M8
 - Cámara ZED (ZED2 / ZED Mini)
 
+## Estructura del paquete
+
+Resumen rápido de carpetas y archivos principales:
+
+```
+ros2_ws/src/cobraflex
+├── cobraflex/          # Nodo(s) Python y utilidades del paquete
+├── config/             # Parámetros y archivos YAML de configuración
+├── launch/             # Launch files (sensores, driver, bringup, simulación)
+├── resource/           # Marcador ament_index para instalación del paquete
+├── rviz/               # Perfiles RViz para visualización rápida
+├── test/               # Tests de estilo y salud del paquete
+├── urdf/               # Descripciones URDF/Xacro del robot y sensores
+├── worlds/             # Mundos de simulación (Gazebo)
+├── package.xml         # Metadata del paquete ROS 2
+├── setup.py            # Entrada a nodos Python (`ros2 run cobraflex <node>`)
+├── setup.cfg           # Configuración de estilo/instalación
+└── mav1.urdf           # URDF generado (ver `urdf/README.md`)
+```
+
+Para detalles específicos, consulta los README en cada subcarpeta (por ejemplo `launch/README.md`, `urdf/README.md`, `cobraflex/README.md`).
+
 ## Instalación
 
 ```bash
