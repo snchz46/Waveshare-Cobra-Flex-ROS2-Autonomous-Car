@@ -9,19 +9,19 @@ class CobraFlexOdom(Node):
     def __init__(self):
         super().__init__('cobraflex_odom')
         
-        # Parámetros físicos (Ajustar según tu robot real)
-        self.wheel_base = 0.154  # Distancia entre ruedas en metros
+        # Physical parameters (adjust to match your robot)
+        self.wheel_base = 0.154  # Distance between wheels in meters
         
-        # Estado del robot
+        # Robot state
         self.x = 0.0
         self.y = 0.0
         self.th = 0.0
         self.last_time = self.get_clock().now()
 
-        # Suscriptor a las velocidades del driver
+        # Subscriber for driver speeds
         self.subscription = self.create_subscription(Twist, '/cobraflex/wheel_speeds', self.calc_odom, 10)
         
-        # Publicadores
+        # Publishers
         self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
@@ -29,15 +29,15 @@ class CobraFlexOdom(Node):
         current_time = self.get_clock().now()
         dt = (current_time - self.last_time).nanoseconds / 1e9
         
-        # mdl y mdr de tu driver [cite: 10]
+        # mdl and mdr from your driver [cite: 10]
         v_left = msg.linear.x
         v_right = msg.linear.y
 
-        # Cinemática diferencial
+        # Differential kinematics
         v = (v_right + v_left) / 2.0
         w = (v_right - v_left) / self.wheel_base
 
-        # Actualizar posición
+        # Update position
         delta_x = (v * math.cos(self.th)) * dt
         delta_y = (v * math.sin(self.th)) * dt
         delta_th = w * dt
@@ -46,7 +46,7 @@ class CobraFlexOdom(Node):
         self.y += delta_y
         self.th += delta_th
 
-        # Publicar Transformación TF (Odom -> Base_footprint)
+        # Publish TF transform (Odom -> Base_footprint)
         t = TransformStamped()
         t.header.stamp = current_time.to_msg()
         t.header.frame_id = 'odom'
@@ -57,7 +57,7 @@ class CobraFlexOdom(Node):
         t.transform.rotation.w = math.cos(self.th / 2.0)
         self.tf_broadcaster.sendTransform(t)
 
-        # Publicar mensaje Odometry
+        # Publish Odometry message
         odom = Odometry()
         odom.header.stamp = current_time.to_msg()
         odom.header.frame_id = 'odom'
