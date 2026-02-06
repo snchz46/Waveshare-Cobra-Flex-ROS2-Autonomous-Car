@@ -15,7 +15,7 @@ The repository collects:
 ## Quick Look
 | Target HW  | Prototype | CAD Design |
 | --- | --- | --- |
-| <img width="400" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="400" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | <img width="600" src="https://github.com/user-attachments/assets/6a24ed11-6818-480a-b357-16dd035ad9d1" /> |
+| <img width="400" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="400" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | <img width="600" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/CAD%20Design%20V2.png?raw=true" /> |
 
 | Mockup V2 Front | Mockup V2 Back | Mockup V2 Side |
 | --- | --- | --- |
@@ -36,6 +36,8 @@ The repository collects:
 | Fasteners & Mounts | Custom camera/LiDAR brackets, M2/M3 hardware | Document specific sources as mounts are finalized |
 
 ## Car Assembly
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/ca54d491-3687-4d44-8996-11447ce79a86" />
 
 ## ROS 2 Environment
 - **Distribution:** ROS 2 Humble on Ubuntu 22.04
