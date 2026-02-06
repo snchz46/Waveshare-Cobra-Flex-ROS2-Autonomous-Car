@@ -1,12 +1,12 @@
 # Python Nodes
 
-ROS 2 Python nodes for the Cobra Flex chassis live here. Esta carpeta es el paquete Python instalado por `setup.py`.
+ROS 2 Python nodes for the Cobra Flex chassis live here. This folder is the Python package installed by `setup.py`.
 
-Archivos principales:
+Key files:
 
-- `cobraflex_cmdvel_driver.py`: Traduce mensajes de `/cmd_vel` a comandos JSON para el microcontrolador vía serial, con parámetros de puerto, baudrate y escalas.
-- `cobraflex_ros_driver.py`: Puentea feedback del chasis y publica tópicos de estado junto con la interfaz de comando.
-- `lidar_avoidance_pid_node.py`: Nodo de evitación de obstáculos; escucha `/scan`, aplica corrección tipo PID y publica velocidades seguras.
-- `__init__.py`: Define el paquete Python y facilita imports internos.
+- `cobraflex_cmdvel_driver.py`: Translates `/cmd_vel` messages into JSON commands for the microcontroller over serial, with port, baudrate, and scaling parameters.
+- `cobraflex_ros_driver.py`: Bridges chassis feedback and publishes status topics alongside the command interface.
+- `lidar_avoidance_pid_node.py`: Obstacle avoidance node; listens to `/scan`, applies PID-style correction, and publishes safe velocities.
+- `__init__.py`: Defines the Python package and enables internal imports.
 
-Para añadir nuevos nodos (telemetría, diagnósticos, etc.), crea el archivo aquí y registra el entry point en `setup.py` para que `ros2 run cobraflex <node>` lo encuentre.
+To add new nodes (telemetry, diagnostics, etc.), create the file here and register the entry point in `setup.py` so `ros2 run cobraflex <node>` can find it.

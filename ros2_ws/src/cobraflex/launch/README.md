@@ -10,10 +10,10 @@ Launch descriptions for the Cobra Flex stack. Common entry points include:
 - `cobraflex_description.launch.xml` / `cobraflex_zed_description.launch.py`: Publish the URDF and TF tree for visualization.
 - `mav1_gazebo.launch.xml`: Spawn the MAV1 URDF into Gazebo for simulation.
 
-Además:
+Additional notes:
 
-- Estos launch files suelen consumir parámetros de `../config/`.
-- Las descripciones URDF viven en `../urdf/`.
-- Los perfiles de visualización RViz están en `../rviz/`.
+- These launch files typically consume parameters from `../config/`.
+- URDF descriptions live in `../urdf/`.
+- RViz visualization profiles are stored in `../rviz/`.
 
-Actualiza estas descripciones cuando añadas nodos o parámetros, y mantén la documentación sincronizada con el README principal para que el equipo pueda elegir el entry point correcto rápidamente.
+Update these descriptions when you add nodes or parameters, and keep the documentation in sync with the main README so the team can quickly choose the correct entry point.
