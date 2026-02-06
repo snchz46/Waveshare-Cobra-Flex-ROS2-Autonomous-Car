@@ -1,4 +1,4 @@
-# Jetson Orin Nano Autonomous Car with Waveshare Cobra Flex Chassis
+# 1:14 Scaled Autonomous Car with Waveshare Cobra Flex Chassis
 
 > **Status:** Work in progress
 
