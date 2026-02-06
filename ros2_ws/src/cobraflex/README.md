@@ -1,35 +1,35 @@
 # Cobraflex ROS2
 
-Integración ROS2 para el chasis Cobraflex 4WD con:
+ROS 2 integration for the Cobra Flex 4WD chassis with:
 
-- Driver JSON sobre serial
-- Nodo de evitación de obstáculos basado en LIDAR (PID + ramping)
+- JSON driver over serial
+- LIDAR-based obstacle avoidance node (PID + ramping)
 - RPLIDAR A2M8
-- Cámara ZED (ZED2 / ZED Mini)
+- ZED camera (ZED2 / ZED Mini)
 
-## Estructura del paquete
+## Package structure
 
-Resumen rápido de carpetas y archivos principales:
+Quick overview of the main folders and files:
 
 ```
 ros2_ws/src/cobraflex
-├── cobraflex/          # Nodo(s) Python y utilidades del paquete
-├── config/             # Parámetros y archivos YAML de configuración
-├── launch/             # Launch files (sensores, driver, bringup, simulación)
-├── resource/           # Marcador ament_index para instalación del paquete
-├── rviz/               # Perfiles RViz para visualización rápida
-├── test/               # Tests de estilo y salud del paquete
-├── urdf/               # Descripciones URDF/Xacro del robot y sensores
-├── worlds/             # Mundos de simulación (Gazebo)
-├── package.xml         # Metadata del paquete ROS 2
-├── setup.py            # Entrada a nodos Python (`ros2 run cobraflex <node>`)
-├── setup.cfg           # Configuración de estilo/instalación
-└── mav1.urdf           # URDF generado (ver `urdf/README.md`)
+├── cobraflex/          # Python nodes and package utilities
+├── config/             # Configuration parameters and YAML files
+├── launch/             # Launch files (sensors, driver, bringup, simulation)
+├── resource/           # ament_index marker for package installation
+├── rviz/               # RViz profiles for quick visualization
+├── test/               # Package style and health checks
+├── urdf/               # Robot/sensor URDF/Xacro descriptions
+├── worlds/             # Simulation worlds (Gazebo)
+├── package.xml         # ROS 2 package metadata
+├── setup.py            # Python node entry points (`ros2 run cobraflex <node>`)
+├── setup.cfg           # Style/installation configuration
+└── mav1.urdf           # Generated URDF (see `urdf/README.md`)
 ```
 
-Para detalles específicos, consulta los README en cada subcarpeta (por ejemplo `launch/README.md`, `urdf/README.md`, `cobraflex/README.md`).
+For specific details, see the README files in each subfolder (for example `launch/README.md`, `urdf/README.md`, `cobraflex/README.md`).
 
-## Instalación
+## Installation
 
 ```bash
 cd ~/ros2_ws
@@ -39,59 +39,59 @@ source install/setup.bash
 
 ## Guide
 
-Asegúrate de tener instalado pyserial:
+Make sure pyserial is installed:
 
 ```bash
 sudo apt install python3-serial
-# o
+# or
 python3 -m pip install pyserial
 ```
 
-Nodos
+Nodes
 cobraflex_cmdvel_driver
 
-Convierte /cmd_vel en comandos JSON para el chasis Cobraflex.
+Converts /cmd_vel into JSON commands for the Cobra Flex chassis.
 
 ```bash
 ros2 run cobraflex cobraflex_cmdvel_driver
 ```
 
-Parámetros:
+Parameters:
 
-- port (string): puerto serial, ej. /dev/ttyACM2
-- baud (int): baudrate, por defecto 115200
-- max_speed_value (int): escala de potencia para L/R (ej. 100)
-- max_linear (float): velocidad lineal máxima esperada [m/s]
-- max_angular (float): velocidad angular máxima esperada [rad/s]
+- port (string): serial port, e.g. /dev/ttyACM2
+- baud (int): baudrate, default 115200
+- max_speed_value (int): power scaling for L/R (e.g. 100)
+- max_linear (float): expected max linear velocity [m/s]
+- max_angular (float): expected max angular velocity [rad/s]
 
 lidar_avoidance_pid
 
-Nodo que escucha /scan y publica /cmd_vel con evitación de obstáculos.
+Node that listens to /scan and publishes /cmd_vel with obstacle avoidance.
 
 ```bash
 ros2 run cobraflex lidar_avoidance_pid
 ```
 
-Parámetros principales:
+Main parameters:
 
-- front_angle_deg (float): ángulo frontal ± en grados
-- safe_distance (float): distancia mínima segura [m]
-- forward_speed (float): velocidad lineal máxima [m/s]
+- front_angle_deg (float): front angle ± in degrees
+- safe_distance (float): minimum safe distance [m]
+- forward_speed (float): max linear speed [m/s]
 
 Launch files
-Sensores solamente
+Sensors only
 
 ```bash
 ros2 launch cobraflex cobraflex_sensors.launch.xml
 ```
 
-Chasis + evitación
+Chassis + avoidance
 
 ```bash
 ros2 launch cobraflex cobraflex_driver.launch.xml
 ```
 
-Bringup completo (sensores + driver + evitación)
+Full bringup (sensors + driver + avoidance)
 
 ```bash
 ros2 launch cobraflex cobraflex_bringup.launch.xml
