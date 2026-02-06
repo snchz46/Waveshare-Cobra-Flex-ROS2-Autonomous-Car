@@ -2,4 +2,4 @@
 
 This directory contains the `cobraflex` marker file used by `ament_index` to locate package resources at runtime. Do not remove it—`ros2` tooling relies on this path to resolve launch files, parameters, and installed assets.
 
-Si añades recursos instalables (por ejemplo, nuevos launch files o YAML), asegúrate de que el paquete se instala correctamente con `setup.py` y que `ament_index` pueda encontrarlos desde aquí.
+If you add installable resources (for example, new launch files or YAML), make sure the package installs correctly with `setup.py` and that `ament_index` can find them from here.
