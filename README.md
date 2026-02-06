@@ -17,9 +17,10 @@ The repository collects:
 | --- | --- | --- |
 | <img width="400" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="400" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | <img width="600" src="https://github.com/user-attachments/assets/6a24ed11-6818-480a-b357-16dd035ad9d1" /> |
 
-| Mockup V1 Front | Mockup V1 Back | Mockup V1 Side |
+| Mockup V2 Front | Mockup V2 Back | Mockup V2 Side |
 | --- | --- | --- |
-| <img width="400" src="https://github.com/user-attachments/assets/c1dc343b-1485-454d-9837-50ce3d58a315" /> | <img width="400" src="https://github.com/user-attachments/assets/71097125-85c4-4252-9535-4a9d16df210c" /> | <img width="600" src="https://github.com/user-attachments/assets/f956686e-bfde-4c18-b917-eff0c08b677e" /> |
+| <img width="400" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/Mockup%20V2%20Front.jpg?raw=true" /> | <img width="400" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/Mockup%20V2%20Back.jpg?raw=true" /> | <img width="600" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/Mockup%20V2%20Side%201.jpg?raw=true" /> |
+
 
 
 ## Hardware Platform & Bill of Materials
@@ -33,6 +34,8 @@ The repository collects:
 | Motor Controller | Waveshare Cobra Flex driver (dual TB6612FNG + PCA9685) | [Waveshare board details](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
 | Power System | XT-27000DC-AO-PA power bank with uninterrupted DC adapter | [XT-27000DC-AO-PA Power Bank](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/261-0714907-2939417?pd_rd_w=XYwSS&content-id=amzn1.sym.13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_p=13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_r=HJBKMDSMEDR9M3958XXJ&pd_rd_wg=J09o0&pd_rd_r=c8a61ded-40c8-433c-bb0c-52fed8ea14df&pd_rd_i=B09S6F56T4&th=1) |
 | Fasteners & Mounts | Custom camera/LiDAR brackets, M2/M3 hardware | Document specific sources as mounts are finalized |
+
+## Car Assembly
 
 ## ROS 2 Environment
 - **Distribution:** ROS 2 Humble on Ubuntu 22.04
