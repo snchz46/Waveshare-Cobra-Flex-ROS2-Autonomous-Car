@@ -5,12 +5,12 @@
 
 
 ## Project Overview
-This project showcases ongoing ROS 2 development and sensor fusion work while building an autonomous 1:14 car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor agreement, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
+This project showcases ongoing ROS 2 development and sensor fusion work while building an autonomous 1:14 car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor data, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
 
 The repository collects:
-- **ROS 2 nodes** for translating LiDAR scans into the ZED camera frame, projecting them onto ZED images for debugging, and numerically comparing depth readings between the sensors.
-- **Visualization assets** for fusing point clouds in RViz.
-- **Media-rich documentation** with inline photo galleries to showcase hardware iterations, calibration setups, and experiment highlights.
+- **ROS 2 workspace**
+- **Visualization assets**
+- **Mechanical design documentation**
 
 ## Quick Look
 | Target HW  | Prototype | CAD Design |
@@ -23,21 +23,27 @@ The repository collects:
 
 
 
-## Hardware Platform & Bill of Materials
+## Hardware Platform Assembly & Bill of Materials
+
+### Car Assembly
+
+| Video | Fully Disassembled |
+| --- | --- |
+|  ![Assembly Video Mockup V2](https://github.com/user-attachments/assets/c94c223c-4e67-47d3-86a8-d937709e0f95) | <img width="450" src="https://github.com/user-attachments/assets/ca54d491-3687-4d44-8996-11447ce79a86" /> |
+
+### BOM
+
 | Component | Details | Vendor / Reference |
 | --- | --- | --- |
-| Compute | NVIDIA Jetson Orin Nano (8 GB) developer kit | [NVIDIA](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/) |
-| Chassis | Waveshare Cobra Flex | [Waveshare](https://www.waveshare.com/product/ai/robots/mobile-robots/cobra-flex.htm?sku=31326) |
-| Stereo Camera | ZED Mini stereo module | [Stereolabs](https://store.stereolabs.com/products/zed-mini) |
-| LiDAR | RPLIDAR A2M8 360° laser scanner | [Slamtec](https://www.slamtec.com/en/Lidar/A2) |
+| Host Computer | NVIDIA Jetson Orin Nano (8 GB) developer kit | [NVIDIA Jetson Orin Nano](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/) |
+| Chassis | Waveshare Cobra Flex | [Waveshare Cobraflex](https://www.waveshare.com/product/ai/robots/mobile-robots/cobra-flex.htm?sku=31326) |
+| Stereo Camera | ZED Mini stereo module | [Stereolabs Zed Mini](https://store.stereolabs.com/products/zed-mini) |
+| LiDAR | RPLIDAR A2M8 360° laser scanner | [Slamtec RPLIDAR A2](https://www.slamtec.com/en/Lidar/A2) |
 | IMU / Additional Sensors | ZED Mini integrated IMU | — |
 | Motor Controller | Waveshare Cobra Flex driver (dual TB6612FNG + PCA9685) | [Waveshare board details](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
-| Power System | XT-27000DC-AO-PA power bank with uninterrupted DC adapter | [XT-27000DC-AO-PA Power Bank](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/261-0714907-2939417?pd_rd_w=XYwSS&content-id=amzn1.sym.13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_p=13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_r=HJBKMDSMEDR9M3958XXJ&pd_rd_wg=J09o0&pd_rd_r=c8a61ded-40c8-433c-bb0c-52fed8ea14df&pd_rd_i=B09S6F56T4&th=1) |
+| Host Computer Power System | XT-27000DC-AO-PA power-bank (19v) with DC adapter | [XT-27000DC-AO-PA Power Bank](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/261-0714907-2939417?pd_rd_w=XYwSS&content-id=amzn1.sym.13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_p=13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_r=HJBKMDSMEDR9M3958XXJ&pd_rd_wg=J09o0&pd_rd_r=c8a61ded-40c8-433c-bb0c-52fed8ea14df&pd_rd_i=B09S6F56T4&th=1) |
+| Chasis Power System | 3S2P Li-Ion 7000mAh (12v) Battery with DC adapter | [3S1P Li-ion Battery](https://www.conrad.de/de/p/ansmann-3s1p-akkupack-3x-18650-kabel-li-ion-10-8-v-3500-mah-3345348.html) |
 | Fasteners & Mounts | Custom camera/LiDAR brackets, M2/M3 hardware | Document specific sources as mounts are finalized |
-
-## Car Assembly
-
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/ca54d491-3687-4d44-8996-11447ce79a86" />
 
 ## ROS 2 Environment
 - **Distribution:** ROS 2 Humble on Ubuntu 22.04
