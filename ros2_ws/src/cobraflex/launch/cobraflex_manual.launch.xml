@@ -1,0 +1,11 @@
+<launch>
+
+    <!-- TELEOP KEYBOARD -->
+    <node
+        pkg="teleop_twist_keyboard"
+        exec="teleop_twist_keyboard"
+        output="screen">
+        <remap from="/cmd_vel" to="/cmd_vel"/>
+    </node>
+
+</launch>

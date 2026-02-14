@@ -1,0 +1,14 @@
+<launch>
+
+    <arg name="manual" default="true"/>
+    <arg name="auto" default="false"/>
+
+    <group if="$(var manual)">
+        <include file="$(find-pkg-share cobraflex)/launch/cobraflex_manual.launch.xml"/>
+    </group>
+
+    <group if="$(var auto)">
+        <include file="$(find-pkg-share cobraflex)/launch/cobraflex_automatic.launch.xml"/>
+    </group>
+
+</launch>
