@@ -1,0 +1,70 @@
+### ekf config file ###
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    publish_acceleration: false
+    publish_tf: true
+
+    # --- FRAMES ---
+    # map_frame: map  <-- No es necesario para el EKF local (odom->base_link)
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+
+    # --- INPUT 1: VELOCIDAD DE RUEDAS (Desde cobraflex_ros_driver.py) ---
+    # Cambiamos odom0 por twist0 porque ahora recibimos geometry_msgs/Twist
+    twist0: /cobraflex/vel_raw
+    
+    # Configuración de matriz (True = se usa esa variable):
+    # [x, y, z, 
+    #  roll, pitch, yaw, 
+    #  vx, vy, vz, 
+    #  vroll, vpitch, vyaw, 
+    #  ax, ay, az]
+    
+    # Solo usamos vx (velocidad lineal).
+    # NO usamos vyaw (giro) de las ruedas porque en robots skid-steer resbalan mucho.
+    # Dejamos que la IMU se encargue del giro.
+    twist0_config: [false, false, false,
+                    false, false, false,
+                    true,  false, false,  # vx (SI), vy, vz
+                    false, false, false,  # vroll, vpitch, vyaw (NO, usamos IMU)
+                    false, false, false]
+
+    # --- INPUT 2: IMU (Giroscopio y Acelerómetro) ---
+    imu0: /imu/data
+    
+    # Usamos la velocidad angular (giroscopio) para el giro.
+    # Usamos la aceleración lineal para ayudar al filtro en los arranques.
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,   # vroll, vpitch, vyaw (SI, Giroscopio Z)
+                  true,  false, false]  # ax (SI), ay, az
+
+    # Configuración IMU
+    imu0_differential: false
+    imu0_relative: true  # Reinicia la orientación a 0 al iniciar el nodo
+    use_control: false
+
+    # --- COVARIANZAS ---
+    # Esto define qué tan "ruidoso" espera el filtro que sea el movimiento.
+    # Para un robot skid-steer, aumentamos el ruido en Yaw (giro) porque vibra.
+    process_noise_covariance: [0.05, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.05, 0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.06, 0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.03, 0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.03, 0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.1,  0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, # Yaw noise subido a 0.1
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.025, 0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.025, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.04, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.01, 0.0,    0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.01, 0.0,    0.0,    0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.1,  0.0,    0.0,    0.0, # Vyaw noise subido a 0.1
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.01, 0.0,    0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.01, 0.0,
+                               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.015]
+
+    initial_estimate_covariance: [1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9]
