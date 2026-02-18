@@ -1,137 +1,226 @@
-# 1:14 Scaled Autonomous Car with Waveshare Cobra Flex Chassis
+<div align="center">
 
-> **Status:** Work in progress
+# Waveshare Cobra Flex ROS 2 Autonomous Car
 
+### 1:14 Scaled Autonomous Vehicle Platform with Jetson Orin Nano, ZED Stereo Vision, and RPLIDAR
 
+[![ROS 2 Humble](https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros&logoColor=white)](#software-stack)
+[![Ubuntu 22.04](https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white)](#software-stack)
+[![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-F4B400)](#project-status)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Project Overview
-This project showcases ongoing ROS 2 development and sensor fusion work while building an autonomous 1:14 car. The primary goal is to create a reproducible reference for deploying a Jetson Orin Nano with stereo vision (ZED) and 2D LiDAR (RPLIDAR) to perceive the environment, validate sensor data, and provide the foundation for autonomous navigation on the Waveshare Cobra Flex chassis.
+</div>
 
-The repository collects:
-- **ROS 2 workspace**
-- **Visualization assets**
-- **Mechanical design documentation**
+---
 
-## Quick Look
-| Target HW  | Prototype | CAD Design |
-| --- | --- | --- |
-| <img width="400" src="https://github.com/user-attachments/assets/92dc7a90-735e-49da-8929-ca9caafde27a" /> | <img width="400" src="https://github.com/user-attachments/assets/dc1b9e0a-17d3-4226-a762-4d1e7e633125" /> | <img width="600" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/CAD%20Design%20V2.png?raw=true" /> |
+## 📌 Table of Contents
+- [🚗 Project Overview](#-project-overview)
+- [🎯 Objectives](#-objectives)
+- [📷 Media Gallery (Placeholders)](#-media-gallery-placeholders)
+- [🧰 Hardware Setup](#-hardware-setup)
+- [💻 Software Stack](#-software-stack)
+- [🗂️ Repository Structure](#️-repository-structure)
+- [⚙️ Installation](#️-installation)
+- [▶️ Usage](#️-usage)
+- [🧪 Core ROS 2 Scripts](#-core-ros-2-scripts)
+- [🛣️ Roadmap](#️-roadmap)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
 
-| Mockup V2 Front | Mockup V2 Back | Mockup V2 Side |
-| --- | --- | --- |
-| <img width="400" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/Mockup%20V2%20Front.jpg?raw=true" /> | <img width="400" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/Mockup%20V2%20Back.jpg?raw=true" /> | <img width="600" src="https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/photos/Mockup%20V2%20Side%201.jpg?raw=true" /> |
+---
 
+## 🚗 Project Overview
+This repository documents the development of an autonomous 1:14-scale car based on the **Waveshare Cobra Flex** chassis.
 
+The platform is designed to validate and iterate on:
+- ROS 2 integration on embedded compute (Jetson Orin Nano)
+- Sensor fusion between **ZED stereo depth** and **2D LiDAR**
+- Perception-to-control pipelines for future autonomous navigation
 
-## Hardware Platform Assembly & Bill of Materials
+The repo combines ROS 2 packages, experiment scripts, media artifacts, and mechanical references so the full process stays reproducible.
 
-### Car Assembly
+---
 
-| Video | Fully Disassembled |
-| --- | --- |
-|  ![Assembly Video Mockup V2](https://github.com/user-attachments/assets/c94c223c-4e67-47d3-86a8-d937709e0f95) | <img width="450" src="https://github.com/user-attachments/assets/ca54d491-3687-4d44-8996-11447ce79a86" /> |
+## 🎯 Objectives
+- Build a reproducible baseline for the Cobra Flex + Jetson stack
+- Align LiDAR and camera frames for consistent fused perception
+- Compare ZED depth vs. LiDAR measurements for calibration confidence
+- Prepare the platform for navigation, SLAM, and planning experiments
 
-### BOM
+---
 
-| Component | Details | Vendor / Reference |
-| --- | --- | --- |
-| Host Computer | NVIDIA Jetson Orin Nano (8 GB) developer kit | [NVIDIA Jetson Orin Nano](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/) |
-| Chassis | Waveshare Cobra Flex | [Waveshare Cobraflex](https://www.waveshare.com/product/ai/robots/mobile-robots/cobra-flex.htm?sku=31326) |
-| Stereo Camera | ZED Mini stereo module | [Stereolabs Zed Mini](https://store.stereolabs.com/products/zed-mini) |
-| LiDAR | RPLIDAR A2M8 360° laser scanner | [Slamtec RPLIDAR A2](https://www.slamtec.com/en/Lidar/A2) |
-| IMU / Additional Sensors | ZED Mini integrated IMU | — |
-| Motor Controller | Waveshare Cobra Flex driver (dual TB6612FNG + PCA9685) | [Waveshare board details](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
-| Host Computer Power System | XT-27000DC-AO-PA power-bank (19v) with DC adapter | [XT-27000DC-AO-PA Power Bank](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/261-0714907-2939417?pd_rd_w=XYwSS&content-id=amzn1.sym.13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_p=13dbab83-f61c-4000-b9ab-184f02ce8fa2&pf_rd_r=HJBKMDSMEDR9M3958XXJ&pd_rd_wg=J09o0&pd_rd_r=c8a61ded-40c8-433c-bb0c-52fed8ea14df&pd_rd_i=B09S6F56T4&th=1) |
-| Chasis Power System | 3S2P Li-Ion 7000mAh (12v) Battery with DC adapter | [3S1P Li-ion Battery](https://www.conrad.de/de/p/ansmann-3s1p-akkupack-3x-18650-kabel-li-ion-10-8-v-3500-mah-3345348.html) |
-| Fasteners & Mounts | Custom camera/LiDAR brackets, M2/M3 hardware | Document specific sources as mounts are finalized |
+## 📷 Media Gallery (Placeholders)
 
-## ROS 2 Environment
-- **Distribution:** ROS 2 Humble on Ubuntu 22.04
+> Replace the placeholders below with your final photos/videos/diagrams.
+
+### Hero Media
+- **Project Hero Image:** `<<PLACEHOLDER_HERO_IMAGE>>`
+- **Project Demo GIF/Video:** `<<PLACEHOLDER_HERO_DEMO>>`
+
+### Hardware Build
+- **Chassis Front View:** `<<PLACEHOLDER_CHASSIS_FRONT>>`
+- **Chassis Rear View:** `<<PLACEHOLDER_CHASSIS_REAR>>`
+- **Side Profile:** `<<PLACEHOLDER_CHASSIS_SIDE>>`
+- **Electronics Layout:** `<<PLACEHOLDER_ELECTRONICS_LAYOUT>>`
+
+### Perception & Results
+- **RViz Fusion Screenshot:** `<<PLACEHOLDER_RVIZ_FUSION>>`
+- **LiDAR Projection Debug View:** `<<PLACEHOLDER_LIDAR_PROJECTION>>`
+- **Distance Comparison Plot:** `<<PLACEHOLDER_DISTANCE_COMPARISON>>`
+
+### Assembly
+- **Assembly Time-lapse / Video:** `<<PLACEHOLDER_ASSEMBLY_VIDEO>>`
+- **Exploded / Disassembled View:** `<<PLACEHOLDER_DISASSEMBLED_VIEW>>`
+
+---
+
+## 🧰 Hardware Setup
+
+| Component | Specification | Reference |
+|---|---|---|
+| Host Computer | NVIDIA Jetson Orin Nano (8 GB) | [NVIDIA Jetson Orin Nano](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/) |
+| Chassis | Waveshare Cobra Flex | [Waveshare Cobra Flex](https://www.waveshare.com/product/ai/robots/mobile-robots/cobra-flex.htm?sku=31326) |
+| Stereo Camera | ZED Mini | [Stereolabs ZED Mini](https://store.stereolabs.com/products/zed-mini) |
+| LiDAR | RPLIDAR A2M8 | [Slamtec RPLIDAR A2](https://www.slamtec.com/en/Lidar/A2) |
+| Motor Driver Board | Dual TB6612FNG + PCA9685 (Cobra Flex driver board) | [Driver board info](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
+| Host Power | XT-27000DC-AO-PA power bank (19V) | [Power bank reference](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/) |
+| Chassis Power | 3S battery pack (~12V class) | `<<PLACEHOLDER_BATTERY_REFERENCE>>` |
+| Mounting Hardware | Custom brackets + M2/M3 fasteners | `<<PLACEHOLDER_MOUNTING_NOTES>>` |
+
+---
+
+## 💻 Software Stack
+
+- **OS:** Ubuntu 22.04
+- **ROS 2 Distribution:** Humble
 - **ZED SDK:** 5.1
-- **ZED ROS 2 Package:** [ZED ROS 2 Wrapper](https://github.com/stereolabs/zed-ros2-wrapper)
-- **RPLIDAR Driver:** [RPLIDAR ROS 2 Package](https://github.com/Slamtec/rplidar_ros/tree/ros2)
+- **ZED ROS 2 Wrapper:** [stereolabs/zed-ros2-wrapper](https://github.com/stereolabs/zed-ros2-wrapper)
+- **RPLIDAR ROS 2 Driver:** [Slamtec/rplidar_ros (ros2)](https://github.com/Slamtec/rplidar_ros/tree/ros2)
+- **Workspace Model:** Colcon + Python nodes (`rclpy`)
 
-Record any custom workspace overlays, `colcon` packages, or launch files in the [`docs/`](docs/) directory as you refine the system. Supplement textual notes with build photos or RViz screenshots for each milestone.
+---
 
-## Repository Structure
-```
+## 🗂️ Repository Structure
+
+```text
+.
 ├── assets/
-│   ├── README.md                     # Media/model index and contribution tips
-│   ├── 3d-models/                    # Mounting hardware and chassis accessory CAD files
-│   ├── photos/                       # Curated image gallery documenting the build
-│   └── videos/                       # Demo footage and experiment clips
-├── scripts/
-│   ├── lidar_to_zed_pointcloud.py       # Publishes LiDAR data as a PointCloud2 in the ZED camera frame
-│   ├── lidar_to_zed_projection_debug.py # Projects LiDAR points into the ZED image for visual alignment debugging
-│   ├── lidar_zed_distance_comparison.py # Compares ZED depth output against LiDAR ranges for accuracy checks
-│   ├── windows_yolov8_cam_sub_ZED.py    # Windows-side YOLOv8 subscriber for ZED video (experiment)
-│   ├── Pointcloud_Fusion.rviz           # RViz configuration for visualizing fused sensor data
-│   ├── Lidar_ZED_Distance.png           # Sample comparison plot
-│   └── pointcloud fusion.png            # Example fused point cloud capture
+│   ├── README.md
+│   ├── 3d-models/
+│   ├── photos/
+│   └── videos/
 ├── docs/
-│   ├── README.md                        # Documentation hub for setup, calibration, and roadmap details
-│   ├── experiments/                     # Session-by-session experiment logs and templates
-│   └── media-log.md                     # Index of photos/videos and hosted mirrors
-├── ros2_ws/                             # ROS 2 Humble workspace with starter packages and launch scaffolding
+│   ├── README.md
+│   ├── experiments/
+│   └── media-log.md
+├── ros2_ws/
 │   ├── README.md
 │   └── src/
-│       └── cobraflex/                   # ROS 2 package for the Cobra Flex chassis (drivers, URDF, launch)
-│           ├── README.md                # Node descriptions and launch overview
-│           ├── cobraflex/               # Python nodes: cmd_vel driver, LiDAR avoidance PID, helpers
-│           ├── launch/                  # Bringup, description, teleop, and Gazebo launch files
-│           ├── config/                  # Parameter files (e.g., Gazebo bridge)
-│           ├── urdf/                    # MAV1 base + sensor Xacro/URDF assets
-│           ├── rviz/                    # RViz profiles for visualization
-│           └── test/                    # ament/pytest + lint checks
+│       └── cobraflex/
+├── scripts/
+│   ├── lidar_to_zed_pointcloud.py
+│   ├── lidar_to_zed_projection_debug.py
+│   ├── lidar_zed_distance_comparison.py
+│   └── windows_yolov8_cam_sub_ZED.py
 ├── LICENSE
-└── README.md (this file)
+└── README.md
 ```
 
-### Cobra Flex package highlights
+---
 
-- **Python nodes:** Serial driver (`cobraflex_cmdvel_driver.py`), LiDAR-based obstacle avoidance (`lidar_avoidance_pid_node.py`), and ROS driver helpers live in `ros2_ws/src/cobraflex/cobraflex/`.
-- **Launch entries:** Bringup profiles under `ros2_ws/src/cobraflex/launch/` cover sensing-only, manual teleop, autonomous avoidance, and Gazebo simulation (`mav1_gazebo.launch.xml`).
-- **Robot description:** URDF/Xacro sources under `ros2_ws/src/cobraflex/urdf/` model the MAV1 base, RPLIDAR A2M8, and ZED Mini/ ZED2 mounting with a pre-generated `mav1.urdf` for quick visualization.
-- **Visualization & tests:** RViz setup (`ros2_ws/src/cobraflex/rviz/mav1_description.rviz`) and ament test suite (`ros2_ws/src/cobraflex/test/`) keep the package linted and verifiable.
+## ⚙️ Installation
 
-## Media Showcase
+### 1) System Preparation
+```bash
+sudo apt update
+sudo apt install -y python3-colcon-common-extensions python3-rosdep
+```
 
-- **Photos:** Store build imagery inside [`assets/photos/`](assets/photos/). Organize by milestone (`assets/photos/2024-setup/`) and add a `README.md` or captions section for context. Embed your favorite shots directly into Markdown so updates stand out in Git diffs.
-- **Videos:** Save drive tests and demos in [`assets/videos/`](assets/videos/). Include session summaries (timestamps, highlights, hosted mirrors) in each subfolder.
-- **3D Models:** Collect custom brackets, plates, and printable sensor mounts in [`assets/3d-models/`](assets/3d-models/). Add a brief README alongside each design describing mounting points, print orientation, and any required fasteners so others can replicate your setup.
-- **Media Log:** Update [`docs/media-log.md`](docs/media-log.md) with every new clip or gallery so readers can jump straight to relevant material.
+### 2) ROS 2 Environment
+```bash
+source /opt/ros/humble/setup.bash
+```
 
-## Key ROS 2 Nodes
-| Script | Purpose | Topics |
-| --- | --- | --- |
-| [`lidar_to_zed_pointcloud.py`](scripts/lidar_to_zed_pointcloud.py) | Converts `/scan` LaserScan data into `sensor_msgs/PointCloud2` aligned with the ZED camera frame. | Subscribes: `/scan`, `/zed/zed_node/left/camera_info` · Publishes: `/lidar_in_camera_frame` |
-| [`lidar_to_zed_projection_debug.py`](scripts/lidar_to_zed_projection_debug.py) | Projects LiDAR hits into the rectified ZED image for visual debugging and calibration feedback. | Subscribes: `/scan`, `/zed/zed_node/left/image_rect_color`, `/zed/zed_node/left/camera_info` |
-| [`lidar_zed_distance_comparison.py`](scripts/lidar_zed_distance_comparison.py) | Compares ZED depth measurements to LiDAR ranges to quantify agreement and spot drift. | Subscribes: `/scan`, `/zed/zed_node/depth/depth_registered` |
+### 3) Clone Repository
+```bash
+git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git
+cd Waveshare-Cobra-Flex-ROS2-Autonomous-Car
+```
 
-Each node is built with `rclpy`, making it easy to drop into a ROS 2 workspace and extend with additional publishers, diagnostics, or transforms.
+### 4) Build Workspace
+```bash
+cd ros2_ws
+colcon build --symlink-install
+source install/setup.bash
+```
 
-## Getting Started
-1. **Provision the Jetson Orin Nano** with the desired JetPack release and install the ROS 2 distribution noted above.
-2. **Install vendor SDKs** (ZED, RPLIDAR) and confirm their ROS drivers publish the expected topics.
-3. **Clone this repository** into your ROS 2 workspace and mark the scripts as executable (`chmod +x scripts/*.py`).
-4. **Run the nodes** using `ros2 run` or `ros2 launch` with your preferred packaging convention. Example:
-   ```bash
-   ros2 run <your_package> lidar_to_zed_pointcloud.py
-   ```
-5. **Visualize results** with RViz using the provided configuration files, and log findings in the [`docs/`](docs/) folder. Add inline photos or screenshots whenever they clarify a step.
-6. **Build the ROS 2 workspace** in [`ros2_ws/`](ros2_ws/) if you want to test the packaged launch setup:
-   ```bash
-   cd ros2_ws
-   source /opt/ros/humble/setup.bash
-   colcon build --symlink-install
-   source install/setup.bash
-   ros2 launch cobraflex_bringup cobraflex.launch.xml
-   ```
-   The launch file starts the RPLIDAR driver, the ZED wrapper, and the placeholder `cobraflex` node. Adjust the launch arguments and node entry point as you add real control logic.
+### 5) Permissions for Scripts (if needed)
+```bash
+chmod +x ../scripts/*.py
+```
 
-## Documentation Roadmap
+---
 
-- Detailed hardware assembly notes, wiring diagrams, and calibration steps.
-- ROS graph diagrams showing how perception, control, and planning nodes interact.
-- Experiment logs comparing perception algorithms or sensor configurations (see [`docs/experiments/`](docs/experiments/)).
-- Future work ideas (e.g., SLAM integration, autonomous navigation stack, machine learning perception).
+## ▶️ Usage
+
+### Bringup (example)
+```bash
+cd ros2_ws
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch cobraflex_bringup cobraflex.launch.xml
+```
+
+### Run individual perception scripts (example)
+```bash
+ros2 run <your_package> lidar_to_zed_pointcloud.py
+ros2 run <your_package> lidar_to_zed_projection_debug.py
+ros2 run <your_package> lidar_zed_distance_comparison.py
+```
+
+> Replace `<your_package>` with your actual package name or integrate these scripts into your package entry points.
+
+---
+
+## 🧪 Core ROS 2 Scripts
+
+| Script | Purpose | I/O Topics |
+|---|---|---|
+| `scripts/lidar_to_zed_pointcloud.py` | Converts `/scan` LaserScan data to `PointCloud2` in camera-aligned coordinates | Sub: `/scan`, `/zed/zed_node/left/camera_info` • Pub: `/lidar_in_camera_frame` |
+| `scripts/lidar_to_zed_projection_debug.py` | Projects LiDAR points into ZED image for extrinsic sanity checks | Sub: `/scan`, `/zed/zed_node/left/image_rect_color`, `/zed/zed_node/left/camera_info` |
+| `scripts/lidar_zed_distance_comparison.py` | Compares ZED depth readings against LiDAR ranges | Sub: `/scan`, `/zed/zed_node/depth/depth_registered` |
+
+---
+
+## 🛣️ Roadmap
+
+- [ ] Replace placeholders with final media assets
+- [ ] Finalize complete wiring diagram and power distribution map
+- [ ] Add reproducible calibration procedure (camera ↔ LiDAR extrinsics)
+- [ ] Publish benchmark logs for depth-vs-LiDAR comparison
+- [ ] Integrate localization + navigation stack
+- [ ] Add simulation parity checks with Gazebo scenes
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome.
+
+If you plan to contribute:
+1. Fork the repository
+2. Create a feature branch
+3. Keep experiments documented in `docs/experiments/`
+4. Submit a pull request with clear test/validation notes
+
+---
+
+## 📄 License
+
+This project is distributed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Project Status
+
+**Work in progress** — architecture, calibration workflow, and autonomy stack are actively evolving.
