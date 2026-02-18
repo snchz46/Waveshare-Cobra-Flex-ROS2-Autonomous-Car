@@ -1,226 +1,440 @@
+# Waveshare Cobraflex 4WD Autonomous Mobile Robot
+
 <div align="center">
+<img src="images/Portada.gif" width="85%"/>
+</div>
 
-# Waveshare Cobra Flex ROS 2 Autonomous Car
+</br>
 
-### 1:14 Scaled Autonomous Vehicle Platform with Jetson Orin Nano, ZED Stereo Vision, and RPLIDAR
+<div align="center" width="70%">
 
-[![ROS 2 Humble](https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros&logoColor=white)](#software-stack)
-[![Ubuntu 22.04](https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white)](#software-stack)
-[![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-F4B400)](#project-status)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![C++](https://img.shields.io/badge/C++-17-blue)](#)
+[![Python](https://img.shields.io/badge/Python-3.8+-yellow?logo=python)](#)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu)](#)
+[![ROS2 Humble](https://img.shields.io/badge/ROS2-Humble-22314E?logo=ros)](#)
+[![Gazebo Harmonic](https://img.shields.io/badge/Gazebo-Harmonic-orange)](#)
+[![Nav2](https://img.shields.io/badge/Nav2-Humble-00599C)](#)
+[![SLAM Toolbox](https://img.shields.io/badge/SLAM-Toolbox-green)](#)
+[![License](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-MrDavidAlv-181717?logo=github)](https://github.com/snchz46)
+![Visitors](https://komarev.com/ghpvc/?username=snchz46&repo=Waveshare-Cobra-Flex-ROS2-Autonomous-Car&label=Visitors&color=brightgreen)
 
 </div>
 
 ---
 
-## 📌 Table of Contents
-- [🚗 Project Overview](#-project-overview)
-- [🎯 Objectives](#-objectives)
-- [📷 Media Gallery (Placeholders)](#-media-gallery-placeholders)
-- [🧰 Hardware Setup](#-hardware-setup)
-- [💻 Software Stack](#-software-stack)
-- [🗂️ Repository Structure](#️-repository-structure)
-- [⚙️ Installation](#️-installation)
-- [▶️ Usage](#️-usage)
-- [🧪 Core ROS 2 Scripts](#-core-ros-2-scripts)
-- [🛣️ Roadmap](#️-roadmap)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+## Quick Start
+
+```bash
+# 1. Install ROS2 Humble (Ubuntu 22.04)
+sudo apt update && sudo apt install ros-humble-desktop
+
+# 2. Install project dependencies
+sudo apt install -y python3-colcon-common-extensions python3-rosdep python3-argcomplete \
+                     ros-humble-ros-gz ros-humble-navigation2 ros-humble-nav2-bringup \
+                     ros-humble-robot-state-publisher ros-humble-joint-state-publisher \
+                     ros-humble-slam-toolbox ros-humble-teleop-twist-keyboard \
+                     ros-humble-rviz2 ros-humble-xacro ros-humble-tf2-tools
+
+# 3. Clone and build
+mkdir -p ~/ros2__ws/src
+cd ~/ros2_ws/src
+git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git .
+cd ~/ros2_ws
+colcon build --symlink-install
+source install/setup.bash
+
+# 4. Launch Robot (Gazebo)
+ros2 launch cobraflex gazebo.launch.py
+
+# 5. Launch SLAM (mapping)
+ros2 launch cobraflex mapping.launch.py
+
+# Or launch autonomous navigation (requires a saved map)
+ros2 launch cobraflex navigation.launch.py
+```
+
+See [Installation](#installation) and [Usage](#usage) for detailed instructions.
 
 ---
 
-## 🚗 Project Overview
-This repository documents the development of an autonomous 1:14-scale car based on the **Waveshare Cobra Flex** chassis.
+## Table of Contents
 
-The platform is designed to validate and iterate on:
-- ROS 2 integration on embedded compute (Jetson Orin Nano)
-- Sensor fusion between **ZED stereo depth** and **2D LiDAR**
-- Perception-to-control pipelines for future autonomous navigation
-
-The repo combines ROS 2 packages, experiment scripts, media artifacts, and mechanical references so the full process stays reproducible.
-
----
-
-## 🎯 Objectives
-- Build a reproducible baseline for the Cobra Flex + Jetson stack
-- Align LiDAR and camera frames for consistent fused perception
-- Compare ZED depth vs. LiDAR measurements for calibration confidence
-- Prepare the platform for navigation, SLAM, and planning experiments
+- [Quick Start](#quick-start)
+- [Description](#description)
+- [Features](#features)
+- [Robot Gallery](#robot-gallery)
+- [Video Demonstrations](#video-demonstrations)
+- [System Architecture](#system-architecture)
+- [Mathematical Model](#mathematical-model)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Build](#build)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Contact](#contact)
 
 ---
 
-## 📷 Media Gallery (Placeholders)
+## Description
 
-> Replace the placeholders below with your final photos/videos/diagrams.
+This project implements autonomous navigation software using ROS2 for the **Cobraflex** mobile robot platform. The system integrates SLAM (Simultaneous Localization and Mapping) for real-time map construction, AMCL (Adaptive Monte Carlo Localization) for pose estimation, and Nav2 for trajectory planning and obstacle avoidance. The robot is designed for autonomous material transport in industrial production lines.
 
-### Hero Media
-- **Project Hero Image:** `<<PLACEHOLDER_HERO_IMAGE>>`
-- **Project Demo GIF/Video:** `<<PLACEHOLDER_HERO_DEMO>>`
+### Objectives
 
-### Hardware Build
-- **Chassis Front View:** `<<PLACEHOLDER_CHASSIS_FRONT>>`
-- **Chassis Rear View:** `<<PLACEHOLDER_CHASSIS_REAR>>`
-- **Side Profile:** `<<PLACEHOLDER_CHASSIS_SIDE>>`
-- **Electronics Layout:** `<<PLACEHOLDER_ELECTRONICS_LAYOUT>>`
+- Design a 3D simulation environment that replicates real workspaces with static and dynamic obstacles
+- Equip the simulated robot with navigation sensors (LiDAR, encoders, IMU)
+- Implement the ROS2 ecosystem for localization (AMCL), control (differential drive), and navigation (Nav2)
+- Develop trajectory planning under kinematic constraints and obstacle avoidance
+- Integrate the software stack with the physical Axioma.io robot
 
-### Perception & Results
-- **RViz Fusion Screenshot:** `<<PLACEHOLDER_RVIZ_FUSION>>`
-- **LiDAR Projection Debug View:** `<<PLACEHOLDER_LIDAR_PROJECTION>>`
-- **Distance Comparison Plot:** `<<PLACEHOLDER_DISTANCE_COMPARISON>>`
+### Keywords
 
-### Assembly
-- **Assembly Time-lapse / Video:** `<<PLACEHOLDER_ASSEMBLY_VIDEO>>`
-- **Exploded / Disassembled View:** `<<PLACEHOLDER_DISASSEMBLED_VIEW>>`
+Mobile robot, autonomous navigation, industrial logistics, trajectory planning, ROS2 Humble, Gazebo Harmonic, Nav2, SLAM, differential drive, skid-steering
 
 ---
 
-## 🧰 Hardware Setup
+## Features
 
-| Component | Specification | Reference |
-|---|---|---|
-| Host Computer | NVIDIA Jetson Orin Nano (8 GB) | [NVIDIA Jetson Orin Nano](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-orin/nano-super-developer-kit/) |
-| Chassis | Waveshare Cobra Flex | [Waveshare Cobra Flex](https://www.waveshare.com/product/ai/robots/mobile-robots/cobra-flex.htm?sku=31326) |
-| Stereo Camera | ZED Mini | [Stereolabs ZED Mini](https://store.stereolabs.com/products/zed-mini) |
-| LiDAR | RPLIDAR A2M8 | [Slamtec RPLIDAR A2](https://www.slamtec.com/en/Lidar/A2) |
-| Motor Driver Board | Dual TB6612FNG + PCA9685 (Cobra Flex driver board) | [Driver board info](https://www.waveshare.com/wiki/Cobra_Flex#Driver_Board) |
-| Host Power | XT-27000DC-AO-PA power bank (19V) | [Power bank reference](https://www.amazon.de/XTPower-XT-27000DC-AO-PA-Uninterrupted-Adapter-Included/dp/B09S6F56T4/) |
-| Chassis Power | 3S battery pack (~12V class) | `<<PLACEHOLDER_BATTERY_REFERENCE>>` |
-| Mounting Hardware | Custom brackets + M2/M3 fasteners | `<<PLACEHOLDER_MOUNTING_NOTES>>` |
+<div align="center">
 
----
+| Feature | Description |
+|---------|-------------|
+| **Real-time SLAM** | Simultaneous mapping and localization using SLAM Toolbox in asynchronous mode |
+| **Autonomous Navigation** | Full Nav2 stack with global planner (NavFn/Dijkstra) and local controller (DWB) |
+| **Obstacle Avoidance** | Real-time detection and evasion using 360-degree RPLidar A1 LiDAR |
+| **Teleoperation GUI** | PyQt5 graphical interface with keyboard, virtual joystick, and slider control modes |
+| **Keyboard Teleoperation** | Standard teleop_twist_keyboard support for manual control during mapping |
+| **Full Visualization** | RViz2 with dynamic costmaps, planned trajectories, and AMCL particle clouds |
+| **4WD Differential Robot** | Robust odometry from 1000 PPR encoders with skid-steering kinematics |
+| **Gazebo Harmonic Simulation** | Modern Gazebo Sim with ros_gz bridge for all sensor and actuator interfaces |
+| **Configurable Parameters** | All Nav2, AMCL, SLAM, and DWB parameters tunable per application |
+| **Open Source** | BSD license, free for academic, research, and commercial use |
 
-## 💻 Software Stack
-
-- **OS:** Ubuntu 22.04
-- **ROS 2 Distribution:** Humble
-- **ZED SDK:** 5.1
-- **ZED ROS 2 Wrapper:** [stereolabs/zed-ros2-wrapper](https://github.com/stereolabs/zed-ros2-wrapper)
-- **RPLIDAR ROS 2 Driver:** [Slamtec/rplidar_ros (ros2)](https://github.com/Slamtec/rplidar_ros/tree/ros2)
-- **Workspace Model:** Colcon + Python nodes (`rclpy`)
+</div>
 
 ---
 
-## 🗂️ Repository Structure
+## Robot Gallery
 
-```text
-.
-├── assets/
-│   ├── README.md
-│   ├── 3d-models/
-│   ├── photos/
-│   └── videos/
-├── docs/
-│   ├── README.md
-│   ├── experiments/
-│   └── media-log.md
-├── ros2_ws/
-│   ├── README.md
-│   └── src/
-│       └── cobraflex/
-├── scripts/
-│   ├── lidar_to_zed_pointcloud.py
-│   ├── lidar_to_zed_projection_debug.py
-│   ├── lidar_zed_distance_comparison.py
-│   └── windows_yolov8_cam_sub_ZED.py
-├── LICENSE
+<div align="center">
+<table>
+  <tr>
+    <td><img src="images/robot1.jpg" width="400"/></td>
+    <td><img src="images/robot2.jpg" width="400"/></td>
+  </tr>
+  <tr>
+    <td><img src="images/robot3.jpg" width="400"/></td>
+    <td><img src="images/robot4.jpg" width="400"/></td>
+  </tr>
+  <tr>
+    <td><img src="images/robot5.png" width="400"/></td>
+    <td><img src="images/robot6.jpg" width="400"/></td>
+  </tr>
+</table>
+</div>
+
+---
+
+## Video Demonstrations
+
+<div align="center">
+
+
+
+*Complete walkthrough: real-time SLAM, map saving, and autonomous Nav2 navigation*
+
+</div>
+
+> **Note:** The videos below correspond to an earlier version built with ROS2 Foxy. The core functionality remains the same in the current Humble release with improvements in performance and stability.
+
+<div align="center">
+
+| **Autonomous Navigation** | **SLAM and Mapping** |
+|:------------------------:|:-----------------:|
+|  |  |
+| *Navigation in a mapped environment* | *Real-time mapping with LiDAR* |
+
+| **Sensors and TF Frames** | **Mechanical Assembly** |
+|:---------------------:|:-----------------:|
+|  |  |
+| *RViz visualization and odometry* | *CAD design in Autodesk Inventor* |
+
+| **Mercury Robotics Competition** | **Teleoperation** |
+|:-----------------------------:|:--------------------------:|
+
+
+</div>
+
+---
+
+## System Architecture
+
+### Transform Tree (TF)
+
+<div align="center">
+<img src="images/URDF-TF.png" width="800"/>
+</div>
+
+Spatial transform tree: `map -> odom -> base_footprint -> base_link -> sensors`. The `odom_to_tf` node publishes the `odom -> base_link` transform from Gazebo odometry. AMCL publishes `map -> odom` to correct odometric drift during navigation.
+
+### SLAM System
+
+<div align="center">
+<img src="images/SLAM.png" width="800"/>
+</div>
+
+SLAM Toolbox runs in asynchronous mode, building graph-based 2D occupancy grid maps in real time. It processes LiDAR scans at 10 Hz and odometry at 50 Hz with pose-graph optimization and loop closure detection.
+
+### Navigation System
+
+<div align="center">
+<img src="images/Navigation.png" width="800"/>
+</div>
+
+The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local controller (Dynamic Window Approach), dynamic costmaps with inflation and obstacle layers, and recovery behaviors (spin, backup, wait).
+
+---
+
+## Mathematical Model
+
+<div align="center">
+<img src="images/modelo-matematico.png" width="800"/>
+</div>
+
+Complete differential 4WD skid-steering kinematic model. The diagram shows the robot geometry, control equations, Nav2 integration, and dynamic specifications.
+
+### Key Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| Wheel radius | $r = 0.03725$ m |
+| Wheel separation | $W = 0.154$ m |
+| Total mass | $m = 5.525$ kg |
+| Max linear velocity | $v_{max} = 0.56$ m/s |
+| Max angular velocity | $\omega_{max} = 6.0$ rad/s |
+| Max linear acceleration | $a_{max} = 2.5$ m/s² |
+| Max angular acceleration | $\alpha_{max} = 3.2$ rad/s² |
+
+**Differential kinematics:**
+
+$$v = \frac{r(\omega_R + \omega_L)}{2}, \quad \omega = \frac{r(\omega_R - \omega_L)}{W}$$
+
+---
+
+## Requirements
+
+### Software
+
+- **Operating System**: Ubuntu 22.04 LTS
+- **ROS2**: Humble Hawksbill
+- **Gazebo**: Harmonic (gz-sim 8)
+- **Python**: 3.8+
+- **CMake**: 3.16+
+
+### ROS2 Dependencies
+
+```
+ros-humble-ros-gz                  # Gazebo Harmonic integration
+ros-humble-navigation2             # Full Nav2 stack
+ros-humble-slam-toolbox            # SLAM mapping
+ros-humble-rviz2                   # Visualization
+ros-humble-teleop-twist-keyboard   # Keyboard teleoperation
+ros-humble-robot-state-publisher   # URDF TF publishing
+ros-humble-tf2-tools               # TF debugging utilities
+```
+
+
+---
+
+## Installation
+
+### 1. Install ROS2 Humble
+
+```bash
+# Configure locale and repository
+sudo apt update && sudo apt install locales curl
+sudo locale-gen en_US en_US.UTF-8
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+  -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+  http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" \
+  | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# Install ROS2 Humble Desktop
+sudo apt update && sudo apt upgrade
+sudo apt install ros-humble-desktop
+```
+
+### 2. Install Gazebo Harmonic
+
+```bash
+sudo apt install gz-harmonic ros-humble-ros-gz
+```
+
+### 3. Install Project Dependencies
+
+```bash
+sudo apt install -y \
+  python3-colcon-common-extensions python3-rosdep \
+  ros-humble-navigation2 ros-humble-nav2-bringup \
+  ros-humble-slam-toolbox ros-humble-rviz2 \
+  ros-humble-teleop-twist-keyboard ros-humble-joy \
+  ros-humble-robot-state-publisher ros-humble-tf2-tools
+
+sudo rosdep init && rosdep update
+```
+
+### 4. Clone the Repository
+
+```bash
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws/src
+git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git .
+```
+
+---
+
+## Build
+
+```bash
+cd ~/ros2_ws
+colcon build --symlink-install
+source install/setup.bash
+```
+
+To automatically source the workspace on every new terminal:
+
+```bash
+echo "source ~/ros2_ws/install/setup.bash" >> ~/.bashrc
+```
+
+---
+
+## Usage
+
+### SLAM (Mapping)
+
+Launch the simulation with Gazebo:
+
+```bash
+ros2 launch cobraflex gazebo.launch.py
+```
+
+Launch the simulation with SLAM Toolbox and RViz:
+
+```bash
+ros2 launch cobraflex mapping.launch.py
+```
+
+In a separate terminal, control the robot to explore the environment:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+Or use the graphical teleoperation interface:
+
+```bash
+ros2 launch axioma_teleop_gui teleop_gui.launch.py
+```
+
+Save the map once the environment has been fully explored.
+
+
+### Autonomous Navigation
+
+Launch the simulation with Nav2 and RViz (requires a previously saved map):
+
+```bash
+ros2 launch cobraflex navigation.launch.py
+```
+
+In RViz2:
+
+1. Use **2D Pose Estimate** to set the robot initial pose
+2. Use **2D Goal Pose** to send a navigation goal
+3. Monitor the global/local costmaps, planned paths, and AMCL particle distribution
+
+### Useful Commands
+
+```bash
+# Monitoring
+ros2 node list                           # Active nodes
+ros2 topic list                          # Active topics
+ros2 topic hz /scan                      # LiDAR frequency
+ros2 topic echo /cmd_vel                 # Velocity commands
+ros2 run tf2_ros tf2_echo map base_link  # TF lookup
+ros2 run tf2_tools view_frames           # TF tree diagram
+
+# Debugging
+ros2 node info /slam_toolbox
+ros2 param list /controller_server
+ros2 bag record -a -o navigation_data
+```
+
+---
+
+## Project Structure
+
+```
+cobraflex/
+├── src/
+│   ├── cobraflex/            # Top-level launch orchestrators
+│   │   └── cobraflex/
+│   │   │   ├── .py
+│   │   │   └── .py
+│   │   ├── config/
+│   │   │   ├── slam_params.yaml
+│   │   │   ├── gazebo_bridge.yaml
+│   │   │   └── nav2_params.yaml
+│   │   ├── urdf/
+│   │   ├── rviz/
+│   │   ├── launch/
+│   │   ├── worlds/                # Simulation worlds
+│   │   └── launch/
+│   │       ├── gazebo.launch.py
+│   │       ├── mapping.launch.py
+│   │       ├── rsp.launch.py
+│   │       └── navigation.launch.py
+│   │
+│   │
+│   └── axioma_teleop_gui/         # PyQt5 teleoperation interface
+│       ├── axioma_teleop_gui/
+│       │   ├── main.py
+│       │   ├── main_window.py
+│       │   ├── ros_node.py
+│       │   └── widgets/
+│       │       ├── keyboard_mode.py
+│       │       ├── joystick_mode.py
+│       │       └── slider_mode.py
+│       └── launch/
+│           └── teleop_gui.launch.py
+│
+├── documentation/
+│   └── math/         # Kinematic and control documentation
+│
+├── images/                        # Documentation images
 └── README.md
 ```
 
 ---
 
-## ⚙️ Installation
+## Physical Parameters
 
-### 1) System Preparation
-```bash
-sudo apt update
-sudo apt install -y python3-colcon-common-extensions python3-rosdep
-```
-
-### 2) ROS 2 Environment
-```bash
-source /opt/ros/humble/setup.bash
-```
-
-### 3) Clone Repository
-```bash
-git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git
-cd Waveshare-Cobra-Flex-ROS2-Autonomous-Car
-```
-
-### 4) Build Workspace
-```bash
-cd ros2_ws
-colcon build --symlink-install
-source install/setup.bash
-```
-
-### 5) Permissions for Scripts (if needed)
-```bash
-chmod +x ../scripts/*.py
-```
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| Total mass | 5.525 kg | SDF model |
+| Dimensions (L x W x H) | 0.1356 x 0.1725 x 0.1 m | Geometry |
+| Wheel radius | 0.0381 m | model.sdf |
+| Friction coefficient | 1.0 (wheels), 0.0 (caster) | SDF |
+| Max torque | 20 N*m per wheel | model.sdf |
+| LiDAR (RPLidar A2) | 360 samples, 360 deg, 0.12-12 m, 10 Hz | SDF |
 
 ---
 
-## ▶️ Usage
+## Contact
 
-### Bringup (example)
-```bash
-cd ros2_ws
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-ros2 launch cobraflex_bringup cobraflex.launch.xml
-```
-
-### Run individual perception scripts (example)
-```bash
-ros2 run <your_package> lidar_to_zed_pointcloud.py
-ros2 run <your_package> lidar_to_zed_projection_debug.py
-ros2 run <your_package> lidar_zed_distance_comparison.py
-```
-
-> Replace `<your_package>` with your actual package name or integrate these scripts into your package entry points.
-
----
-
-## 🧪 Core ROS 2 Scripts
-
-| Script | Purpose | I/O Topics |
-|---|---|---|
-| `scripts/lidar_to_zed_pointcloud.py` | Converts `/scan` LaserScan data to `PointCloud2` in camera-aligned coordinates | Sub: `/scan`, `/zed/zed_node/left/camera_info` • Pub: `/lidar_in_camera_frame` |
-| `scripts/lidar_to_zed_projection_debug.py` | Projects LiDAR points into ZED image for extrinsic sanity checks | Sub: `/scan`, `/zed/zed_node/left/image_rect_color`, `/zed/zed_node/left/camera_info` |
-| `scripts/lidar_zed_distance_comparison.py` | Compares ZED depth readings against LiDAR ranges | Sub: `/scan`, `/zed/zed_node/depth/depth_registered` |
-
----
-
-## 🛣️ Roadmap
-
-- [ ] Replace placeholders with final media assets
-- [ ] Finalize complete wiring diagram and power distribution map
-- [ ] Add reproducible calibration procedure (camera ↔ LiDAR extrinsics)
-- [ ] Publish benchmark logs for depth-vs-LiDAR comparison
-- [ ] Integrate localization + navigation stack
-- [ ] Add simulation parity checks with Gazebo scenes
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome.
-
-If you plan to contribute:
-1. Fork the repository
-2. Create a feature branch
-3. Keep experiments documented in `docs/experiments/`
-4. Submit a pull request with clear test/validation notes
-
----
-
-## 📄 License
-
-This project is distributed under the MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-## Project Status
-
-**Work in progress** — architecture, calibration workflow, and autonomy stack are actively evolving.
+**Author**: Samuel Sanchez
+**Repository**: [github.com/MrDavidAlv/Axioma_robot](https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car)
+**License**: BSD -- Free for academic and research use
