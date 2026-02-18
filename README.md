@@ -1,7 +1,7 @@
 # Waveshare Cobraflex 4WD Autonomous Mobile Robot
 
 <div align="center">
-<img src="images/Portada.gif" width="85%"/>
+<img src="assets/photos/Mockup V2 side 2.jpg" width="50%"/>
 </div>
 
 </br>
@@ -120,16 +120,16 @@ Mobile robot, autonomous navigation, industrial logistics, trajectory planning, 
 <div align="center">
 <table>
   <tr>
-    <td><img src="images/robot1.jpg" width="400"/></td>
-    <td><img src="images/robot2.jpg" width="400"/></td>
+    <td><img src="assets/photos/CAD Design V2.png" width="400"/></td>
+    <td><img src="assets/videos/Assembly Video Mockup V2.gif" width="500"/></td>
   </tr>
   <tr>
-    <td><img src="images/robot3.jpg" width="400"/></td>
-    <td><img src="images/robot4.jpg" width="400"/></td>
+    <td><img src="assets/photos/Mockup V2 Front.jpg" width="400"/></td>
+    <td><img src="assets/photos/Mockup V2 Back.jpg" width="400"/></td>
   </tr>
   <tr>
-    <td><img src="images/robot5.png" width="400"/></td>
-    <td><img src="images/robot6.jpg" width="400"/></td>
+    <td><img src="assets/photos/Mockup V2 side 2.jpg" width="400"/></td>
+    <td><img src="assets/photos/Mockup V2 Side 1.jpg" width="400"/></td>
   </tr>
 </table>
 </div>
