@@ -1,58 +1,58 @@
-# ⚙️ Sistema de Control del Robot Axioma
+# ⚙️ Axioma Robot Control System
 
-> **NOTA**: Este documento describe el sistema de control REAL implementado en el robot Axioma. NO hay controladores PID personalizados en el código, se utiliza el plugin estándar de Gazebo con control cinemático directo.
+> **NOTE**: This document describes the REAL control system implemented in the Axioma robot. There are NO custom PID controllers in the code; the standard Gazebo plugin is used with direct kinematic control.
 
-## 1. Arquitectura de Control
+## 1. Control Architecture
 
-El sistema de control del robot Axioma implementa una arquitectura simple basada en plugins de Gazebo:
+The Axioma robot control system implements a simple Gazebo plugin-based architecture:
 
 ```
-Nivel de Navegación (Nav2)
+Navigation Layer (Nav2)
     ↓
     /cmd_vel (Twist)
     ↓
-Plugin Gazebo Diff Drive
+Gazebo Diff Drive Plugin
     ↓
-Aplicación directa de velocidades a ruedas
+Direct application of wheel velocities
     ↓
-Simulación física (Gazebo)
+Physics simulation (Gazebo)
     ↓
-Odometría (/odom) + TF
+Odometry (/odom) + TF
 ```
 
-**IMPORTANTE**: No hay capa intermedia de control PID. El plugin de Gazebo aplica las velocidades directamente a las ruedas basándose en la cinemática diferencial.
+**IMPORTANT**: There is no intermediate PID control layer. The Gazebo plugin applies velocities directly to the wheels based on differential-drive kinematics.
 
 ---
 
-## 2. Plugin de Control: Gazebo Diff Drive
+## 2. Control Plugin: Gazebo Diff Drive
 
-### 2.1 Configuración
+### 2.1 Configuration
 
-**Archivo**: `/home/axioma/ros2/axioma_humble_ws/src/axioma_description/models/axioma_v2/model.sdf`
-**Líneas**: 427-454
+**File**: `/home/axioma/ros2/axioma_humble_ws/src/axioma_description/models/axioma_v2/model.sdf`
+**Lines**: 427-454
 
 ```xml
 <plugin name="diff_drive" filename="libgazebo_ros_diff_drive.so">
   <update_rate>50</update_rate>
   <num_wheel_pairs>2</num_wheel_pairs>
 
-  <!-- Par izquierdo -->
+  <!-- Left pair -->
   <left_joint>base_to_wheel1</left_joint>
   <left_joint>base_to_wheel2</left_joint>
 
-  <!-- Par derecho -->
+  <!-- Right pair -->
   <right_joint>base_to_wheel4</right_joint>
   <right_joint>base_to_wheel3</right_joint>
 
-  <!-- Parámetros geométricos -->
+  <!-- Geometric parameters -->
   <wheel_separation>0.1725</wheel_separation>
   <wheel_diameter>0.0762</wheel_diameter>
 
-  <!-- Límites -->
+  <!-- Limits -->
   <max_wheel_torque>20</max_wheel_torque>
   <max_wheel_acceleration>1.0</max_wheel_acceleration>
 
-  <!-- Odometría -->
+  <!-- Odometry -->
   <publish_odom>true</publish_odom>
   <publish_odom_tf>true</publish_odom_tf>
   <odometry_frame>odom</odometry_frame>
@@ -60,96 +60,96 @@ Odometría (/odom) + TF
 </plugin>
 ```
 
-### 2.2 Funcionamiento del Plugin
+### 2.2 Plugin Operation
 
-**Input**: Tópico `/cmd_vel` (tipo `geometry_msgs/Twist`)
+**Input**: `/cmd_vel` topic (type `geometry_msgs/Twist`)
 ```
-linear.x: velocidad lineal deseada [m/s]
-angular.z: velocidad angular deseada [rad/s]
+linear.x: desired linear velocity [m/s]
+angular.z: desired angular velocity [rad/s]
 ```
 
-**Procesamiento**:
-1. Lee comando de velocidad del tópico `/cmd_vel`
-2. Aplica cinemática inversa (ver `cinematica.md`):
+**Processing**:
+1. Read velocity command from `/cmd_vel`
+2. Apply inverse kinematics (see `cinematica.md`):
    - $\\omega_L = \\frac{v - \\omega \\cdot W/2}{r}$
    - $\\omega_R = \\frac{v + \\omega \\cdot W/2}{r}$
-3. Aplica velocidades angulares a las 4 ruedas (pares sincronizados)
-4. Calcula odometría desde encoders virtuales
-5. Publica `/odom` y TF `odom → base_link`
+3. Apply angular velocities to all 4 wheels (synchronized pairs)
+4. Compute odometry from virtual encoders
+5. Publish `/odom` and TF `odom → base_link`
 
 **Output**:
-- Tópico `/odom` (tipo `nav_msgs/Odometry`)
-- Transformada TF: `odom → base_link`
-- Estado de joints (via `joint_state_publisher`)
+- `/odom` topic (type `nav_msgs/Odometry`)
+- TF transform: `odom → base_link`
+- Joint states (via `joint_state_publisher`)
 
 ---
 
-## 3. Parámetros de Control
+## 3. Control Parameters
 
-### 3.1 Frecuencia de Actualización
+### 3.1 Update Frequency
 
-**✅ Valor REAL**:
+**✅ REAL value**:
 ```
 update_rate: 50 Hz
 ```
-**Fuente**: `model.sdf:439`
+**Source**: `model.sdf:439`
 
-Periodo de control: $\\Delta t = \\frac{1}{50} = 0.02$ s
+Control period: $\\Delta t = \\frac{1}{50} = 0.02$ s
 
-### 3.2 Límites de Torque y Aceleración
+### 3.2 Torque and Acceleration Limits
 
-**✅ Valores REALES de `model.sdf:446-447`**:
+**✅ REAL values from `model.sdf:446-447`**:
 
 ```
 max_wheel_torque: 20 N·m
 max_wheel_acceleration: 1.0 m/s²
 ```
 
-**Torque máximo por rueda**: 20 N·m
+**Maximum torque per wheel**: 20 N·m
 
-**Fuerza tractiva máxima** (por rueda):
+**Maximum tractive force** (per wheel):
 $$
 F_{max} = \\frac{\\tau_{max}}{r} = \\frac{20}{0.0381} = 524.9 \\text{ N}
 $$
 
-**Fuerza tractiva total** (4 ruedas):
+**Total tractive force** (4 wheels):
 $$
 F_{total} = 4 \\times 524.9 = 2099.6 \\text{ N}
 $$
 
-**Aceleración máxima teórica**:
+**Theoretical maximum acceleration**:
 $$
 a_{max,theory} = \\frac{F_{total}}{m} = \\frac{2099.6}{5.525} = 380.0 \\text{ m/s}^2
 $$
 
-**NOTA**: En práctica, la aceleración está limitada por:
+**NOTE**: In practice, acceleration is limited by:
 1. Plugin: `max_wheel_acceleration = 1.0 m/s²`
 2. Nav2: `acc_lim_x = 2.5 m/s²` (`nav2_params.yaml:129`)
-3. Fricción: $a_{friction} = \\mu \\cdot g = 1.0 \\times 9.81 = 9.81 \\text{ m/s}^2$
+3. Friction: $a_{friction} = \\mu \\cdot g = 1.0 \\times 9.81 = 9.81 \\text{ m/s}^2$
 
-El límite efectivo es **1.0 m/s²** (más conservador).
+The effective limit is **1.0 m/s²** (more conservative).
 
 ---
 
-## 4. Sistema de Navegación Nav2
+## 4. Nav2 Navigation System
 
-### 4.1 Controlador Local: DWB
+### 4.1 Local Controller: DWB
 
-**Archivo**: `nav2_params.yaml` líneas 108-170
+**File**: `nav2_params.yaml` lines 108-170
 **Plugin**: `dwb_core::DWBLocalPlanner`
 
-#### Límites de Velocidad
+#### Velocity Limits
 
-**✅ Valores REALES**:
+**✅ REAL values**:
 ```yaml
-max_vel_x: 0.26 m/s              # línea 120
-min_vel_x: 0.0 m/s               # línea 121
-max_vel_theta: 1.0 rad/s         # línea 122
-min_speed_xy: 0.0 m/s            # línea 124
-max_speed_xy: 0.26 m/s           # línea 125
+max_vel_x: 0.26 m/s              # line 120
+min_vel_x: 0.0 m/s               # line 121
+max_vel_theta: 1.0 rad/s         # line 122
+min_speed_xy: 0.0 m/s            # line 124
+max_speed_xy: 0.26 m/s           # line 125
 ```
 
-**Comando enviado a `/cmd_vel`**:
+**Command sent to `/cmd_vel`**:
 $$
 \\begin{aligned}
 v &\\in [0, 0.26] \\text{ m/s} \\\\
@@ -157,50 +157,50 @@ v &\\in [0, 0.26] \\text{ m/s} \\\\
 \\end{aligned}
 $$
 
-#### Límites de Aceleración
+#### Acceleration Limits
 
-**✅ Valores REALES**:
+**✅ REAL values**:
 ```yaml
-acc_lim_x: 2.5 m/s²              # línea 129
-acc_lim_theta: 3.2 rad/s²        # línea 130
-decel_lim_x: -2.5 m/s²           # línea 131
-decel_lim_theta: -3.2 rad/s²     # línea 132
+acc_lim_x: 2.5 m/s²              # line 129
+acc_lim_theta: 3.2 rad/s²        # line 130
+decel_lim_x: -2.5 m/s²           # line 131
+decel_lim_theta: -3.2 rad/s²     # line 132
 ```
 
-#### Parámetros de Muestreo
+#### Sampling Parameters
 
-**✅ Valores REALES**:
+**✅ REAL values**:
 ```yaml
-vx_samples: 20                   # línea 133
-vy_samples: 5                    # línea 134 (no usado en diff drive)
-vtheta_samples: 20               # línea 135
-sim_time: 1.7 s                  # línea 136
+vx_samples: 20                   # line 133
+vy_samples: 5                    # line 134 (unused in diff drive)
+vtheta_samples: 20               # line 135
+sim_time: 1.7 s                  # line 136
 ```
 
-El DWB genera una ventana dinámica de trayectorias:
-- 20 velocidades lineales entre $[v_{min}, v_{max}]$
-- 20 velocidades angulares entre $[-\\omega_{max}, \\omega_{max}]$
-- Simula cada trayectoria por 1.7 segundos hacia adelante
-- Selecciona la mejor trayectoria según funciones de costo
+DWB generates a dynamic window of trajectories:
+- 20 linear velocities between $[v_{min}, v_{max}]$
+- 20 angular velocities between $[-\\omega_{max}, \\omega_{max}]$
+- Simulates each trajectory 1.7 seconds forward
+- Selects the best trajectory according to cost functions
 
-#### Funciones de Costo (Critics)
+#### Cost Functions (Critics)
 
-**✅ Configuración REAL** (`nav2_params.yaml:137-154`):
+**✅ REAL configuration** (`nav2_params.yaml:137-154`):
 
 ```yaml
 critics: ["RotateToGoal", "Oscillation", "BaseObstacle",
           "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
 
-Pesos:
-  BaseObstacle.scale: 0.02       # Evitar obstáculos
-  PathAlign.scale: 32.0          # Alinearse con path global
-  GoalAlign.scale: 24.0          # Alinearse con goal
-  PathDist.scale: 32.0           # Proximidad al path
-  GoalDist.scale: 24.0           # Proximidad al goal
-  RotateToGoal.scale: 32.0       # Rotación hacia goal
+Weights:
+  BaseObstacle.scale: 0.02       # Obstacle avoidance
+  PathAlign.scale: 32.0          # Align with global path
+  GoalAlign.scale: 24.0          # Align with goal
+  PathDist.scale: 32.0           # Path proximity
+  GoalDist.scale: 24.0           # Goal proximity
+  RotateToGoal.scale: 32.0       # Rotate toward goal
 ```
 
-Función de costo total:
+Total cost function:
 $$
 J_{total} = \\sum_{i} w_i \\cdot J_i
 $$
@@ -209,12 +209,12 @@ $$
 
 ## 5. Velocity Smoother
 
-**Archivo**: `nav2_params.yaml` líneas 305-318
+**File**: `nav2_params.yaml` lines 305-318
 **Plugin**: `nav2_velocity_smoother::VelocitySmoother`
 
-### 5.1 Configuración
+### 5.1 Configuration
 
-**✅ Valores REALES**:
+**✅ REAL values**:
 ```yaml
 smoothing_frequency: 20.0 Hz
 feedback: "OPEN_LOOP"
@@ -226,97 +226,97 @@ max_accel: [2.5, 0.0, 3.2]         # [ax, ay, α]
 max_decel: [-2.5, 0.0, -3.2]
 ```
 
-### 5.2 Filtro de Suavizado
+### 5.2 Smoothing Filter
 
-El Velocity Smoother aplica restricciones de aceleración a los comandos de velocidad:
+The Velocity Smoother applies acceleration constraints to velocity commands:
 
-Para cada eje (x, θ):
+For each axis (x, θ):
 $$
 v_{cmd,k} = \\text{clip}\\left(v_{des}, v_{k-1} - a_{max}\\Delta t, v_{k-1} + a_{max}\\Delta t\\right)
 $$
 
-Donde:
-- $v_{des}$: velocidad deseada del controlador
-- $v_{k-1}$: velocidad anterior
-- $a_{max}$: aceleración máxima
+Where:
+- $v_{des}$: desired velocity from the controller
+- $v_{k-1}$: previous velocity
+- $a_{max}$: maximum acceleration
 - $\\Delta t = 0.05$ s (20 Hz)
 
 ---
 
-## 6. Localización: AMCL
+## 6. Localization: AMCL
 
-**Archivo**: `nav2_params.yaml` líneas 6-50
+**File**: `nav2_params.yaml` lines 6-50
 **Plugin**: `nav2_amcl::AmclNode`
 
-### 6.1 Modelo de Movimiento
+### 6.1 Motion Model
 
-**✅ Configuración REAL**:
+**✅ REAL configuration**:
 ```yaml
 robot_model_type: "nav2_amcl::DifferentialMotionModel"
 
-Parámetros del modelo:
-  alpha1: 0.05    # Rotación por rotación
-  alpha2: 0.05    # Rotación por traslación
-  alpha3: 0.05    # Traslación por traslación
-  alpha4: 0.05    # Traslación por rotación
-  alpha5: 0.05    # Ruido adicional
+Model parameters:
+  alpha1: 0.05    # Rotation from rotation
+  alpha2: 0.05    # Rotation from translation
+  alpha3: 0.05    # Translation from translation
+  alpha4: 0.05    # Translation from rotation
+  alpha5: 0.05    # Additional noise
 ```
 
-### 6.2 Modelo de Ruido Odométrico
+### 6.2 Odometry Noise Model
 
-El modelo diferencial asume que el error en odometría es proporcional a los movimientos:
+The differential model assumes odometry error is proportional to motion:
 
-**Error en rotación**:
+**Rotation error**:
 $$
 \\sigma_{\\theta_1}^2 = \\alpha_1 \\cdot |\\Delta\\theta| + \\alpha_2 \\cdot \\sqrt{\\Delta x^2 + \\Delta y^2}
 $$
 
-**Error en traslación**:
+**Translation error**:
 $$
 \\sigma_{trans}^2 = \\alpha_3 \\cdot \\sqrt{\\Delta x^2 + \\Delta y^2} + \\alpha_4 \\cdot |\\Delta\\theta|
 $$
 
-**Error en rotación final**:
+**Final rotation error**:
 $$
 \\sigma_{\\theta_2}^2 = \\alpha_1 \\cdot |\\Delta\\theta| + \\alpha_2 \\cdot \\sqrt{\\Delta x^2 + \\Delta y^2}
 $$
 
 ---
 
-## 7. Diagrama de Flujo de Control
+## 7. Control Flow Diagram
 
-### 7.1 Navegación Autónoma
+### 7.1 Autonomous Navigation
 
 ```
-Goal (2D Nav Goal en RViz)
+Goal (2D Nav Goal in RViz)
     ↓
 Nav2 BT Navigator
     ↓
-Global Planner (NavFn) → Path global
+Global Planner (NavFn) → Global path
     ↓
-Local Planner (DWB) → Trayectoria local óptima
+Local Planner (DWB) → Optimal local trajectory
     ↓
-Velocity Smoother → Suavizado de aceleración
+Velocity Smoother → Acceleration smoothing
     ↓
 /cmd_vel (Twist)
     ↓
-Gazebo Diff Drive Plugin → Cinemática inversa
+Gazebo Diff Drive Plugin → Inverse kinematics
     ↓
-4 Ruedas (2 pares sincronizados)
+4 Wheels (2 synchronized pairs)
     ↓
-Gazebo Physics → Simulación dinámica
+Gazebo Physics → Dynamic simulation
     ↓
-/odom + TF → Odometría
+/odom + TF → Odometry
     ↓
-AMCL → Localización con filtro de partículas
+AMCL → Localization with particle filter
     ↓
-/amcl_pose → Pose estimada en mapa
+/amcl_pose → Estimated pose in map
 ```
 
-### 7.2 Teleoperation Manual
+### 7.2 Manual Teleoperation
 
 ```
-Joystick (Xbox controller) / Teclado
+Joystick (Xbox controller) / Keyboard
     ↓
 joy_node / teleop_twist_keyboard
     ↓
@@ -326,76 +326,76 @@ teleop_twist_joy
     ↓
 /cmd_vel (Twist)
     ↓
-[Mismo flujo que navegación]
+[Same flow as navigation]
 ```
 
-**Fuente**: `slam_bringup.launch.py:99-107`
+**Source**: `slam_bringup.launch.py:99-107`
 
 ---
 
-## 8. Análisis de Rendimiento
+## 8. Performance Analysis
 
-### 8.1 Tiempo de Respuesta
+### 8.1 Response Time
 
-**Frecuencias del sistema**:
-- Plugin diff_drive: 50 Hz (20 ms)
+**System frequencies**:
+- diff_drive plugin: 50 Hz (20 ms)
 - Nav2 DWB controller: 20 Hz (50 ms)
 - Velocity smoother: 20 Hz (50 ms)
 - AMCL: Variable (triggered by odometry updates)
 
-**Latencia total estimada**: ~70-100 ms desde comando hasta ejecución
+**Estimated total latency**: ~70-100 ms from command to execution
 
-### 8.2 Precisión de Odometría
+### 8.2 Odometry Accuracy
 
-La odometría en simulación es **perfecta** (sin ruido). En el robot real, los errores provendrían de:
+Odometry in simulation is **perfect** (noise-free). On the real robot, errors would come from:
 
-1. **Deslizamiento de ruedas** (skid-steering inherente)
-2. **Resolución de encoders**: 1000 PPR (mencionado en README, no implementado en simulación)
-3. **Variación en diámetro de ruedas**
+1. **Wheel slip** (inherent to skid-steering)
+2. **Encoder resolution**: 1000 PPR (mentioned in README, not implemented in simulation)
+3. **Wheel diameter variation**
 
-**Deriva esperada** (basado en parámetros AMCL):
-- Traslacional: ~5% por metro recorrido
-- Rotacional: ~5% por radián girado
-
----
-
-## 9. Limitaciones del Sistema
-
-### 9.1 No Hay Control PID Real
-
-El sistema NO implementa control de seguimiento de velocidad con PID. El plugin de Gazebo aplica velocidades directamente (control cinemático perfecto).
-
-**Implicación**: En el robot real se necesitaría:
-- Controlador PID para cada motor
-- Medición de velocidad con encoders
-- Compensación de deslizamiento
-
-### 9.2 Saturación de Velocidades
-
-El sistema tiene múltiples capas de saturación:
-
-1. **DWB Controller**: Limita a 0.26 m/s y 1.0 rad/s
-2. **Velocity Smoother**: Aplica restricciones de aceleración
-3. **Plugin Gazebo**: Limita torque (20 N·m) y aceleración (1.0 m/s²)
-4. **Física de Gazebo**: Fricción y deslizamiento
+**Expected drift** (based on AMCL parameters):
+- Translational: ~5% per meter traveled
+- Rotational: ~5% per radian turned
 
 ---
 
-## 10. Referencias
+## 9. System Limitations
 
-**Implementación**:
-- Plugin Gazebo: `model.sdf:427-454`
-- Controlador Nav2: `nav2_params.yaml:108-170`
-- Velocity Smoother: `nav2_params.yaml:305-318`
+### 9.1 No Real PID Control
+
+The system does NOT implement PID velocity tracking control. The Gazebo plugin applies velocities directly (perfect kinematic control).
+
+**Implication**: On the real robot, you would need:
+- PID controller for each motor
+- Encoder-based velocity measurement
+- Slip compensation
+
+### 9.2 Velocity Saturation
+
+The system has multiple saturation layers:
+
+1. **DWB Controller**: Limits to 0.26 m/s and 1.0 rad/s
+2. **Velocity Smoother**: Applies acceleration constraints
+3. **Gazebo Plugin**: Limits torque (20 N·m) and acceleration (1.0 m/s²)
+4. **Gazebo Physics**: Friction and slip
+
+---
+
+## 10. References
+
+**Implementation**:
+- Gazebo plugin: `model.sdf:427-454`
+- Nav2 controller: `nav2_params.yaml:108-170`
+- Velocity smoother: `nav2_params.yaml:305-318`
 - AMCL: `nav2_params.yaml:6-50`
 
-**Documentación externa**:
+**External documentation**:
 - [Gazebo Diff Drive](http://gazebosim.org/tutorials?tut=ros2_diff_drive)
 - [Nav2 DWB Controller](https://navigation.ros.org/configuration/packages/configuring-dwb-controller.html)
 - [AMCL Documentation](https://navigation.ros.org/configuration/packages/configuring-amcl.html)
 
 ---
 
-**Autor**: Samuel Sanchez
-**Fecha**: 2026
-**Versión**: 0.2.0
+**Author**: Samuel Sanchez
+**Date**: 2026
+**Version**: 0.2.0
