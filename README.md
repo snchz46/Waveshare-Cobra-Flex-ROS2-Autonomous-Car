@@ -121,7 +121,7 @@ Mobile robot, autonomous navigation, industrial logistics, trajectory planning, 
 <table>
   <tr>
     <td><img src="assets/photos/CAD Design V2.png" width="400"/></td>
-    <td><img src="assets/videos/Assembly Video Mockup V2.gif" width="500"/></td>
+    <td><img src="assets/videos/Assembly Video Mockup V2.gif" width="400"/></td>
   </tr>
   <tr>
     <td><img src="assets/photos/Mockup V2 Front.jpg" width="400"/></td>
