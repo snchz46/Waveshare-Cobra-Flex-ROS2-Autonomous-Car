@@ -144,23 +144,17 @@ Mobile robot, autonomous navigation, industrial logistics, trajectory planning, 
 
 </div>
 
-> **Note:** The videos below correspond to an earlier version built with ROS2 Foxy. The core functionality remains the same in the current Humble release with improvements in performance and stability.
-
 <div align="center">
-
-| **Autonomous Navigation** | **SLAM and Mapping** |
-|:------------------------:|:-----------------:|
-|  |  |
-| *Navigation in a mapped environment* | *Real-time mapping with LiDAR* |
-
-| **Sensors and TF Frames** | **Mechanical Assembly** |
+  
+| **SImulation** | **Mechanical Assembly** |
 |:---------------------:|:-----------------:|
-|  |  |
-| *RViz visualization and odometry* | *CAD design in Autodesk Inventor* |
+| <img src="assets/videos/simulation.gif" width="400"/> | <img src="assets/videos/Assembly Video Mockup V2.gif" width="400"/> |
+| *Gazebo Simulation* | *CAD design in Autodesk Inventor* |
 
-| **Mercury Robotics Competition** | **Teleoperation** |
-|:-----------------------------:|:--------------------------:|
-
+| **SLAM and Mapping** | **Autonomous Navigation** |
+|:------------------------:|:-----------------:|
+| <img src="assets/videos/mapping.gif" width="400"/> | <img src="assets/videos/navigation.gif" width="400"/> |
+| *Real-time mapping with LiDAR* | *Navigation in a mapped environment* |
 
 </div>
 
