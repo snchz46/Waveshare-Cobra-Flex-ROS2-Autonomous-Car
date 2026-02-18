@@ -15,9 +15,7 @@
 [![Gazebo Harmonic](https://img.shields.io/badge/Gazebo-Harmonic-orange)](#)
 [![Nav2](https://img.shields.io/badge/Nav2-Humble-00599C)](#)
 [![SLAM Toolbox](https://img.shields.io/badge/SLAM-Toolbox-green)](#)
-[![License](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
-[![GitHub](https://img.shields.io/badge/GitHub-MrDavidAlv-181717?logo=github)](https://github.com/snchz46)
-![Visitors](https://komarev.com/ghpvc/?username=snchz46&repo=Waveshare-Cobra-Flex-ROS2-Autonomous-Car&label=Visitors&color=brightgreen)
+
 
 </div>
 
