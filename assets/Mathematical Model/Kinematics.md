@@ -3,10 +3,7 @@
 
 ## 1. Introduction
 
-The Axioma robot uses a **4-wheel drive configuration with differential kinematics** (skid-steer). Although it has 4 wheels, it is controlled as a traditional differential drive:
-- Left wheels (1 and 2) rotate at the same speed
-- Right wheels (3 and 4) rotate at the same speed
-- Differential control between sides enables rotation
+The robot uses a **4-wheel drive configuration with differential kinematics** (skid-steer).
 
 ---
 
