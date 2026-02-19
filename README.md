@@ -1,10 +1,9 @@
 # Waveshare Cobraflex 4WD Autonomous Mobile Robot
 
-<div align="center">
-<img src="assets/photos/Mockup V2 side 2.jpg" width="50%"/>
-</div>
+| **CAD Design** | **SImulation** | **Physical Robot** 
+|:---------------------:|:-----------------:|:-----------------:|
+| <img src="assets/photos/CAD Design V2.png" width="400"/> | <img src="assets/photos/digital_twin.png" width="600"/> | <img src="assets/photos/Mockup V2 side 2.jpg" width="400"/> |
 
-</br>
 
 <div align="center" width="70%">
 
@@ -122,6 +121,10 @@ Mobile robot, autonomous navigation, industrial logistics, trajectory planning, 
     <td><img src="assets/videos/Assembly Video Mockup V2.gif" width="400"/></td>
   </tr>
   <tr>
+    <td><img src="assets/photos/digital_twin.png" width="400"/></td>
+    <td><img src="assets/photos/digital_wtin_rviz.png" width="400"/></td>
+  </tr>
+  <tr>
     <td><img src="assets/photos/Mockup V2 Front.jpg" width="400"/></td>
     <td><img src="assets/photos/Mockup V2 Back.jpg" width="400"/></td>
   </tr>
@@ -165,7 +168,7 @@ Mobile robot, autonomous navigation, industrial logistics, trajectory planning, 
 ### Transform Tree (TF)
 
 <div align="center">
-<img src="images/URDF-TF.png" width="800"/>
+<img src="assets/photos/digital_twin_tf.png" width="800"/>
 </div>
 
 Spatial transform tree: `map -> odom -> base_footprint -> base_link -> sensors`. The `odom_to_tf` node publishes the `odom -> base_link` transform from Gazebo odometry. AMCL publishes `map -> odom` to correct odometric drift during navigation.
@@ -173,7 +176,7 @@ Spatial transform tree: `map -> odom -> base_footprint -> base_link -> sensors`.
 ### SLAM System
 
 <div align="center">
-<img src="images/SLAM.png" width="800"/>
+<img src="assets/photos/mapping.png" width="800"/>
 </div>
 
 SLAM Toolbox runs in asynchronous mode, building graph-based 2D occupancy grid maps in real time. It processes LiDAR scans at 10 Hz and odometry at 50 Hz with pose-graph optimization and loop closure detection.
@@ -181,7 +184,7 @@ SLAM Toolbox runs in asynchronous mode, building graph-based 2D occupancy grid m
 ### Navigation System
 
 <div align="center">
-<img src="images/Navigation.png" width="800"/>
+<img src="assets/photos/navigation.png" width="800"/>
 </div>
 
 The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local controller (Dynamic Window Approach), dynamic costmaps with inflation and obstacle layers, and recovery behaviors (spin, backup, wait).
@@ -191,7 +194,7 @@ The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local con
 ## Mathematical Model
 
 <div align="center">
-<img src="images/modelo-matematico.png" width="800"/>
+<img src="" width="300"/>
 </div>
 
 Complete differential 4WD skid-steering kinematic model. The diagram shows the robot geometry, control equations, Nav2 integration, and dynamic specifications.
@@ -202,7 +205,7 @@ Complete differential 4WD skid-steering kinematic model. The diagram shows the r
 |-----------|-------|
 | Wheel radius | $r = 0.03725$ m |
 | Wheel separation | $W = 0.154$ m |
-| Total mass | $m = 5.525$ kg |
+| Total mass | $m = 5.95$ kg |
 | Max linear velocity | $v_{max} = 0.56$ m/s |
 | Max angular velocity | $\omega_{max} = 6.0$ rad/s |
 | Max linear acceleration | $a_{max} = 2.5$ m/s² |
@@ -370,63 +373,68 @@ ros2 bag record -a -o navigation_data
 ## Project Structure
 
 ```
-cobraflex/
-├── src/
-│   ├── cobraflex/            # Top-level launch orchestrators
-│   │   └── cobraflex/
-│   │   │   ├── .py
-│   │   │   └── .py
-│   │   ├── config/
-│   │   │   ├── slam_params.yaml
-│   │   │   ├── gazebo_bridge.yaml
-│   │   │   └── nav2_params.yaml
-│   │   ├── urdf/
-│   │   ├── rviz/
-│   │   ├── launch/
-│   │   ├── worlds/                # Simulation worlds
-│   │   └── launch/
-│   │       ├── gazebo.launch.py
-│   │       ├── mapping.launch.py
-│   │       ├── rsp.launch.py
-│   │       └── navigation.launch.py
-│   │
-│   │
-│   └── axioma_teleop_gui/         # PyQt5 teleoperation interface
-│       ├── axioma_teleop_gui/
-│       │   ├── main.py
-│       │   ├── main_window.py
-│       │   ├── ros_node.py
-│       │   └── widgets/
-│       │       ├── keyboard_mode.py
-│       │       ├── joystick_mode.py
-│       │       └── slider_mode.py
-│       └── launch/
-│           └── teleop_gui.launch.py
-│
-├── documentation/
-│   └── math/         # Kinematic and control documentation
-│
-├── images/                        # Documentation images
-└── README.md
+ros2_ws/
+└── src/
+    ├── cobraflex/            
+    │   └── cobraflex/
+    │   │   ├── __pycache__/
+    │   │   ├── __init__.py
+    │   │   ├── cobraflex_odom.py
+    │   │   ├── cobraflex_ros_driver.py
+    │   │   └── lidar_avoidance_pid_node.py
+    │   ├── config/
+    │   │   ├── ekf_cobraflex.yaml
+    │   │   ├── ekf_gazebo.yaml
+    │   │   ├── gz_bridge.yaml
+    │   │   ├── slam_params.yaml
+    │   │   └── nav2_params.yaml (WIP)
+    │   ├── launch/
+    │   │   ├── gazebo.launch.py
+    │   │   ├── mapping.launch.py
+    │   │   ├── rsp.launch.py
+    │   │   └── navigation.launch.py
+    │   ├── meshes/
+    │   │   ├── cobraflex_body.stl
+    │   │   ├── cobraflex_chassis.stl
+    │   │   ├── cobraflex_wheel.stl
+    │   │   ├── rplidar-a2m4-r1.stl
+    │   │   └── zedmini_camera.stl
+    │   ├── rviz/
+    │   │   ├── bot.rviz
+    │   │   ├── mapping.rviz
+    │   │   └── navigation.rviz
+    │   ├── urdf/
+    │   │   ├── inertial_macros.xacro
+    │   │   ├── robot.gazebo
+    │   │   └── robot.urdf
+    │   └── worlds/
+    │       ├── empty.world
+    │       ├── obstacles.world
+    │       └── test_world.sdf  
+    │
+    └── axioma_teleop_gui/         # PyQt5 teleoperation interface
+        ├── axioma_teleop_gui/
+        │   ├── main.py
+        │   ├── main_window.py
+        │   ├── ros_node.py
+        │   └── widgets/
+        │       ├── keyboard_mode.py
+        │       ├── joystick_mode.py
+        │       └── slider_mode.py
+        └── launch/
+            └── teleop_gui.launch.py
 ```
 
 ---
 
-## Physical Parameters
+## Robot Features
 
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| Total mass | 5.525 kg | SDF model |
-| Dimensions (L x W x H) | 0.1356 x 0.1725 x 0.1 m | Geometry |
-| Wheel radius | 0.0381 m | model.sdf |
-| Friction coefficient | 1.0 (wheels), 0.0 (caster) | SDF |
-| Max torque | 20 N*m per wheel | model.sdf |
-| LiDAR (RPLidar A2) | 360 samples, 360 deg, 0.12-12 m, 10 Hz | SDF |
+| Parameter | Value |
+|-----------|-------|
+| Total mass | 5.95 kg |
+| Dimensions (L x W x H) | 0.228 x 0.18 x 0.21 m |
+| Wheel radius | 0.0375 m |
+| Max torque | 20 N*m per wheel |
+| LiDAR (RPLidar A2) | 360 samples, 360 deg, 0.12-8 m, 10 Hz |
+| Camera (Zed mini) | 2K, 100FPS, 0.15-15 m, Depth Sensing |
 
----
-
-## Contact
-
-**Author**: Samuel Sanchez
-**Repository**: [github.com/MrDavidAlv/Axioma_robot](https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car)
-**License**: BSD -- Free for academic and research use
