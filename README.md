@@ -174,7 +174,7 @@ The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local con
 <img src="" width="300"/>
 </div>
 
-Complete differential 4WD skid-steering kinematic model. The diagram shows the robot geometry, control equations, Nav2 integration, and dynamic specifications.
+[Complete differential 4WD skid-steering kinematic model.](https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/Mathematical%20Model/README.md) The diagram shows the robot geometry, control equations, Nav2 integration, and dynamic specifications.
 
 ### Key Parameters
 
