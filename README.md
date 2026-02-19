@@ -15,61 +15,25 @@
 [![Nav2](https://img.shields.io/badge/Nav2-Humble-00599C)](#)
 [![SLAM Toolbox](https://img.shields.io/badge/SLAM-Toolbox-green)](#)
 
-
 </div>
 
 ---
 
-## Quick Start
-
-```bash
-# 1. Install ROS2 Humble (Ubuntu 22.04)
-sudo apt update && sudo apt install ros-humble-desktop
-
-# 2. Install project dependencies
-sudo apt install -y python3-colcon-common-extensions python3-rosdep python3-argcomplete \
-                     ros-humble-ros-gz ros-humble-navigation2 ros-humble-nav2-bringup \
-                     ros-humble-robot-state-publisher ros-humble-joint-state-publisher \
-                     ros-humble-slam-toolbox ros-humble-teleop-twist-keyboard \
-                     ros-humble-rviz2 ros-humble-xacro ros-humble-tf2-tools
-
-# 3. Clone and build
-mkdir -p ~/ros2__ws/src
-cd ~/ros2_ws/src
-git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git .
-cd ~/ros2_ws
-colcon build --symlink-install
-source install/setup.bash
-
-# 4. Launch Robot (Gazebo)
-ros2 launch cobraflex gazebo.launch.py
-
-# 5. Launch SLAM (mapping)
-ros2 launch cobraflex mapping.launch.py
-
-# Or launch autonomous navigation (requires a saved map)
-ros2 launch cobraflex navigation.launch.py
-```
-
-See [Installation](#installation) and [Usage](#usage) for detailed instructions.
-
----
-
 ## Table of Contents
-
-- [Quick Start](#quick-start)
+  
 - [Description](#description)
-- [Features](#features)
+- [Robot Features](#robot-features)
+- [Simulation Features](#simulation-features)
 - [Robot Gallery](#robot-gallery)
 - [Video Demonstrations](#video-demonstrations)
 - [System Architecture](#system-architecture)
 - [Mathematical Model](#mathematical-model)
 - [Requirements](#requirements)
+- [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Build](#build)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
-- [Contact](#contact)
 
 ---
 
@@ -91,7 +55,20 @@ Mobile robot, autonomous navigation, industrial logistics, trajectory planning, 
 
 ---
 
-## Features
+## Robot Features
+
+| Parameter | Value |
+|-----------|-------|
+| Total mass | 5.95 kg |
+| Dimensions (L x W x H) | 0.228 x 0.18 x 0.21 m |
+| Wheel radius | 0.0375 m |
+| Max torque | 20 N*m per wheel |
+| LiDAR (RPLidar A2) | 360 samples, 360 deg, 0.12-8 m, 10 Hz |
+| Camera (Zed mini) | 2K, 100FPS, 0.15-15 m, Depth Sensing |
+
+---
+
+## Simulation Features
 
 <div align="center">
 
@@ -239,6 +216,41 @@ ros-humble-robot-state-publisher   # URDF TF publishing
 ros-humble-tf2-tools               # TF debugging utilities
 ```
 
+
+---
+
+## Quick Start
+
+```bash
+# 1. Install ROS2 Humble (Ubuntu 22.04)
+sudo apt update && sudo apt install ros-humble-desktop
+
+# 2. Install project dependencies
+sudo apt install -y python3-colcon-common-extensions python3-rosdep python3-argcomplete \
+                     ros-humble-ros-gz ros-humble-navigation2 ros-humble-nav2-bringup \
+                     ros-humble-robot-state-publisher ros-humble-joint-state-publisher \
+                     ros-humble-slam-toolbox ros-humble-teleop-twist-keyboard \
+                     ros-humble-rviz2 ros-humble-xacro ros-humble-tf2-tools
+
+# 3. Clone and build
+mkdir -p ~/ros2__ws/src
+cd ~/ros2_ws/src
+git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git .
+cd ~/ros2_ws
+colcon build --symlink-install
+source install/setup.bash
+
+# 4. Launch Robot (Gazebo)
+ros2 launch cobraflex gazebo.launch.py
+
+# 5. Launch SLAM (mapping)
+ros2 launch cobraflex mapping.launch.py
+
+# Or launch autonomous navigation (requires a saved map)
+ros2 launch cobraflex navigation.launch.py
+```
+
+See [Installation](#installation) and [Usage](#usage) for detailed instructions.
 
 ---
 
@@ -427,14 +439,4 @@ ros2_ws/
 
 ---
 
-## Robot Features
-
-| Parameter | Value |
-|-----------|-------|
-| Total mass | 5.95 kg |
-| Dimensions (L x W x H) | 0.228 x 0.18 x 0.21 m |
-| Wheel radius | 0.0375 m |
-| Max torque | 20 N*m per wheel |
-| LiDAR (RPLidar A2) | 360 samples, 360 deg, 0.12-8 m, 10 Hz |
-| Camera (Zed mini) | 2K, 100FPS, 0.15-15 m, Depth Sensing |
 
