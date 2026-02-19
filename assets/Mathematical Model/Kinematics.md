@@ -372,9 +372,3 @@ def compute_robot_velocity(omega_left, omega_right):
 **External documentation**:
 - [Gazebo Diff Drive Plugin](http://gazebosim.org/tutorials?tut=ros2_installing&cat=connect_ros)
 - [Differential Drive Kinematics](https://www.cs.columbia.edu/~allen/F17/NOTES/icckinematics.pdf)
-
----
-
-**Author**: Samuel Sanchez
-**Date**: 2026
-**Version**: 0.2.0
