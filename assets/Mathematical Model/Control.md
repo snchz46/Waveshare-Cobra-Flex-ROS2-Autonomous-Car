@@ -1,5 +1,4 @@
-# ⚙️ Axioma Robot Control System
-
+# ⚙️ Robot Control System
 
 ## 1. Control Architecture
 
