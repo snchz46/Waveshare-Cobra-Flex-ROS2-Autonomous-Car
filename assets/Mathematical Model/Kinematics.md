@@ -1,6 +1,5 @@
-# 🔄 Axioma 4WD Robot Kinematics
+# 🔄 4WD Robot Kinematics
 
-> **NOTE**: This document presents the differential-drive kinematic model (4WD skid-steer). All parameters are REAL values extracted from `model.sdf` and Gazebo plugins.
 
 ## 1. Introduction
 
@@ -17,33 +16,32 @@ The Axioma robot uses a **4-wheel drive configuration with differential kinemati
 
 The robot has **4 wheels** arranged in a rectangular configuration:
 
-**Positions in Frame {R}** (extracted from `model.sdf`):
+**Positions related to frame `base_link`** (extracted from `robot.urdf`):
 
 | Wheel | Name | Position $(x, y, z)$ [m] | Joint |
 |-------|------|---------------------------|-------|
-| 1 | Front Left | (0.0644, 0.0738, 0.0407) | `base_to_wheel1` |
-| 2 | Rear Left | (-0.0712, 0.0738, 0.0407) | `base_to_wheel2` |
-| 3 | Rear Right | (-0.0712, -0.0625, 0.0407) | `base_to_wheel3` |
-| 4 | Front Right | (0.0644, -0.0625, 0.0407) | `base_to_wheel4` |
+| 1 | front_left | (0.06, 0.077, 0) | `front_left_wheel_joint` |
+| 2 | rear Left | (-0.06, 0.077, 0)) | `rear_left_wheel_joint` |
+| 3 | rear Right | (-0.06, -0.077, 0) | `rear_right_wheel_joint` |
+| 4 | front Right | (0.06, -0.077, 0) | `front_right_wheel_joint` |
 
-**Source**: `model.sdf` lines 38, 115, 192, 269
 
 ### 2.2 Geometric Parameters
 
-**✅ REAL values from `model.sdf`**:
+**✅ REAL values from Waveshare Cobraflex Platform**:
 
 ```python
-wheel_radius (r) = 0.0381 m        # lines 72, 149, 226, 303
-wheel_diameter   = 0.0762 m        # line 443 (2 × radius)
-wheel_separation = 0.1725 m        # line 441
-wheel_base       = 0.135644 m      # Computed: |0.0644-(-0.0712)| m
-wheel_width      = 0.03 m          # lines 73, 150, 227, 304
+wheel_radius (r) = 0.03725 m       
+wheel_diameter   = 0.0745 m        
+wheel_separation = 0.154 m        
+wheel_base       = 0.135644 m    
+wheel_width      = 0.02 m          
 ```
 
 ### 2.3 Coordinate System
 
 ```
-        y (left)
+        x (forward)
         ↑
         |     W1 ●━━━━━● W4
         |        |     |
@@ -51,7 +49,7 @@ wheel_width      = 0.03 m          # lines 73, 150, 227, 304
         |        |     |
         |     W2 ●━━━━━● W3
         |
-        └─────────────────→ x (forward)
+        └─────────────────→ -y (right)
 
              θ (yaw, counterclockwise)
 ```
@@ -113,8 +111,8 @@ $$
 $$
 
 Where:
-- $r = 0.0381$ m (wheel radius)
-- $W = 0.1725$ m (wheel separation)
+- $r = 0.03725$ m (wheel radius)
+- $W = 0.154$ m (wheel separation)
 
 ### 4.2 Derivation
 
@@ -238,19 +236,31 @@ $$
 
 ### 6.3 Gazebo Implementation
 
-**Plugin**: `libgazebo_ros_diff_drive.so` (`model.sdf:427-454`)
+**Plugin**: `gz-sim-diff-drive-system`
 
 **Configuration**:
 ```xml
-<update_rate>50</update_rate>
-<num_wheel_pairs>2</num_wheel_pairs>
-<publish_odom>true</publish_odom>
-<publish_odom_tf>true</publish_odom_tf>
-<odometry_frame>odom</odometry_frame>
-<robot_base_frame>base_link</robot_base_frame>
-```
+<plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+    <left_joint>front_left_wheel_joint</left_joint>
+    <left_joint>rear_left_wheel_joint</left_joint>
 
-**Source**: `model.sdf` lines 439-451
+    <right_joint>front_right_wheel_joint</right_joint>
+    <right_joint>rear_right_wheel_joint</right_joint>
+
+    <wheel_separation>0.154</wheel_separation>
+    <wheel_radius>0.03725</wheel_radius>
+
+    <max_linear_acceleration>0.53</max_linear_acceleration>
+    <min_linear_acceleration>-10</min_linear_acceleration>
+    
+    <topic>cmd_vel</topic>
+    
+    <odom_topic>odom</odom_topic>
+    <tf_topic>tf</tf_topic>
+    <frame_id>odom</frame_id>
+    <child_frame_id>base_footprint</child_frame_id>
+</plugin>
+```
 
 ---
 
@@ -320,8 +330,8 @@ def compute_wheel_velocities(v, omega):
     Returns:
         omega_left, omega_right: Angular velocities [rad/s]
     """
-    r = 0.0381  # wheel_radius
-    W = 0.1725  # wheel_separation
+    r = 0.03725  # wheel_radius
+    W = 0.154  # wheel_separation
 
     # Saturate commands
     v = clip(v, -0.26, 0.26)
@@ -348,8 +358,8 @@ def compute_robot_velocity(omega_left, omega_right):
     Returns:
         v, omega: Robot linear and angular velocity
     """
-    r = 0.0381  # wheel_radius
-    W = 0.1725  # wheel_separation
+    r = 0.03725  # wheel_radius
+    W = 0.154  # wheel_separation
 
     # Forward kinematics
     v = r * (omega_right + omega_left) / 2
@@ -361,11 +371,6 @@ def compute_robot_velocity(omega_left, omega_right):
 ---
 
 ## 9. References
-
-**Implementation**:
-- Gazebo plugin: `libgazebo_ros_diff_drive.so` (`model.sdf:427-454`)
-- Geometric parameters: `model.sdf:441-444`
-- Speed limits: `nav2_params.yaml:120-130`
 
 **External documentation**:
 - [Gazebo Diff Drive Plugin](http://gazebosim.org/tutorials?tut=ros2_installing&cat=connect_ros)
