@@ -137,8 +137,3 @@ $$
 4. **Configuration**: 4 wheels, no independent steering
 
 ---
-
-**Author**: Samuel Sanchez
-**Project**: Cobraflex - ADMIT14
-**Date**: 2026
-**Version**: 0.2.0
