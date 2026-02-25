@@ -148,7 +148,7 @@ Mobile robot, autonomous navigation, industrial logistics, trajectory planning, 
 <img src="assets/photos/digital_twin_tf.png" width="800"/>
 </div>
 
-Spatial transform tree: `map -> odom -> base_footprint -> base_link -> sensors`. The `odom_to_tf` node publishes the `odom -> base_link` transform from Gazebo odometry. AMCL publishes `map -> odom` to correct odometric drift during navigation.
+Spatial transform tree: `map -> odom -> base_footprint -> base_link -> body_link -> sensors`. The `odom_to_tf` node publishes the `odom -> base_footprint` transform from Gazebo odometry. AMCL publishes `map -> odom` to correct odometric drift during navigation.
 
 ### SLAM System
 
@@ -425,7 +425,7 @@ ros2_ws/
     │       ├── obstacles.world
     │       └── test_world.sdf  
     │
-    └── axioma_teleop_gui/         # PyQt5 teleoperation interface
+    └── axioma_teleop_gui/         # WIP
         ├── axioma_teleop_gui/
         │   ├── main.py
         │   ├── main_window.py
