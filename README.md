@@ -1,5 +1,7 @@
 # Waveshare Cobraflex 4WD Autonomous Mobile Robot
 
+Welcome to the **Waveshare Cobra Flex ROS 2 Autonomous Car** project. This repository contains everything you need to simulate, build and operate a skid-steer mobile robot using the Waveshare Cobra Flex chassis, the RPLIDAR A2 LiDAR, a ZED Mini stereo camera and the Nav2 navigation stack on ROS 2 Humble.
+
 | **CAD Design** | **SImulation** | **Physical Robot** 
 |:---------------------:|:-----------------:|:-----------------:|
 | <img src="assets/photos/CAD Design V2.png" width="400"/> | <img src="assets/photos/digital_twin.png" width="600"/> | <img src="assets/photos/Mockup V2 side 2.jpg" width="400"/> |
@@ -22,7 +24,7 @@
 ## Table of Contents
   
 - [Description](#description)
-- [Robot Features](#robot-features)
+- [Key Features](#key-features)
 - [Simulation Features](#simulation-features)
 - [Robot Gallery](#robot-gallery)
 - [Video Demonstrations](#video-demonstrations)
@@ -39,23 +41,26 @@
 
 ## Description
 
-This project implements autonomous navigation software using ROS2 for the **Cobraflex** mobile robot platform. The system integrates SLAM (Simultaneous Localization and Mapping) for real-time map construction, AMCL (Adaptive Monte Carlo Localization) for pose estimation, and Nav2 for trajectory planning and obstacle avoidance. The robot is designed for autonomous material transport in industrial production lines.
+Industrial autonomous mobile robots need a tightly integrated software stack to perceive the environment, localise themselves, plan safe paths and actuate the robot. Off-the-shelf chassis such as the Waveshare Cobra Flex provide a robust mechanical platform but not a ready-made control and navigation solution. This repository bridges that gap by providing:
 
-### Objectives
+- A digital twin of the Cobra Flex in Gazebo Harmonic with URDF/Xacro models, sensors and realistic physics.
+- A navigation stack built on Nav2, AMCL and SLAM Toolbox.
+- Python drivers to control the real robot over a serial link and publish battery and wheel feedback.
+- Example scripts for LiDAR and ZED Mini integration, including point-cloud generation and sensor calibration utilities.
+- Project documentation covering the mathematical model, control architecture, simulation setup and media assets.
 
-- Design a 3D simulation environment that replicates real workspaces with static and dynamic obstacles
-- Equip the simulated robot with navigation sensors (LiDAR, encoders, IMU)
-- Implement the ROS2 ecosystem for localization (AMCL), control (differential drive), and navigation (Nav2)
-- Develop trajectory planning under kinematic constraints and obstacle avoidance
-- Integrate the software stack with the physical Axioma.io robot
+## Key features
 
-### Keywords
-
-Mobile robot, autonomous navigation, industrial logistics, trajectory planning, ROS2 Humble, Gazebo Harmonic, Nav2, SLAM, differential drive, skid-steering
+- 4WD skid-steer base with ROS 2 integration
+- Gazebo simulation and RViz visualisation
+- Mapping with SLAM Toolbox
+- Navigation with Nav2
+- Serial bridge to the Cobra Flex microcontroller
+- Example perception and calibration scripts
 
 ---
 
-## Robot Features
+### Robot Features
 
 | Parameter | Value |
 |-----------|-------|
@@ -329,7 +334,7 @@ Launch the simulation with Gazebo:
 ros2 launch cobraflex gazebo.launch.py
 ```
 
-Launch the simulation with SLAM Toolbox and RViz:
+Launch SLAM Toolbox and RViz:
 
 ```bash
 ros2 launch cobraflex mapping.launch.py
@@ -341,11 +346,6 @@ In a separate terminal, control the robot to explore the environment:
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-Or use the graphical teleoperation interface:
-
-```bash
-ros2 launch axioma_teleop_gui teleop_gui.launch.py
-```
 
 Save the map once the environment has been fully explored.
 
@@ -383,59 +383,30 @@ ros2 bag record -a -o navigation_data
 
 ---
 
-## Project Structure
+## Project structure
 
-```
-ros2_ws/
-└── src/
-    ├── cobraflex/            
-    │   └── cobraflex/
-    │   │   ├── __pycache__/
-    │   │   ├── __init__.py
-    │   │   ├── cobraflex_odom.py
-    │   │   ├── cobraflex_ros_driver.py
-    │   │   └── lidar_avoidance_pid_node.py
-    │   ├── config/
-    │   │   ├── ekf_cobraflex.yaml
-    │   │   ├── ekf_gazebo.yaml
-    │   │   ├── gz_bridge.yaml
-    │   │   ├── slam_params.yaml
-    │   │   └── nav2_params.yaml (WIP)
-    │   ├── launch/
-    │   │   ├── gazebo.launch.py
-    │   │   ├── mapping.launch.py
-    │   │   ├── rsp.launch.py
-    │   │   └── navigation.launch.py
-    │   ├── meshes/
-    │   │   ├── cobraflex_body.stl
-    │   │   ├── cobraflex_chassis.stl
-    │   │   ├── cobraflex_wheel.stl
-    │   │   ├── rplidar-a2m4-r1.stl
-    │   │   └── zedmini_camera.stl
-    │   ├── rviz/
-    │   │   ├── bot.rviz
-    │   │   ├── mapping.rviz
-    │   │   └── navigation.rviz
-    │   ├── urdf/
-    │   │   ├── inertial_macros.xacro
-    │   │   ├── robot.gazebo
-    │   │   └── robot.urdf
-    │   └── worlds/
-    │       ├── empty.world
-    │       ├── obstacles.world
-    │       └── test_world.sdf  
-    │
-    └── axioma_teleop_gui/         # WIP
-        ├── axioma_teleop_gui/
-        │   ├── main.py
-        │   ├── main_window.py
-        │   ├── ros_node.py
-        │   └── widgets/
-        │       ├── keyboard_mode.py
-        │       ├── joystick_mode.py
-        │       └── slider_mode.py
-        └── launch/
-            └── teleop_gui.launch.py
+```text
+.
+├── README.md
+├── LICENSE
+├── CONTRIBUTING.md
+├── requirements.txt
+├── ros2_ws/
+│   ├── README.md
+│   └── src/
+│       └── cobraflex/
+│           ├── README.md
+│           └── cobraflex/
+│               ├── cobraflex_ros_driver.py
+│               └── cobraflex_odom.py
+├── scripts/
+│   └── README.md
+└── assets/
+    ├── README.md
+    ├── Gazebo Simulation/
+    │   └── README.md
+    └── Mathematical Model/
+        └── README.md
 ```
 
 ---
