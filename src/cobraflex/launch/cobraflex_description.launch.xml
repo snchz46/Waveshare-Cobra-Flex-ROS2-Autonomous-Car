@@ -1,0 +1,33 @@
+<launch>
+
+    <!-- =========================================== -->
+    <!-- Arguments                                    -->
+    <!-- =========================================== -->
+    <arg name="use_rviz" default="true"/>
+    <arg name="urdf_file" default="$(find-pkg-share cobraflex)/urdf/my_robot_basic.urdf"/>
+    <arg name="use_sim_time" default="false"/>
+    
+    <!-- =========================================== -->
+    <!-- robot_state_publisher                        -->
+    <!-- =========================================== -->
+    <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
+        <param name="robot_description" value="$(command 'xacro $(var urdf_file)')"/>
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
+
+    <!-- =========================================== -->
+    <!-- joint_state_publisher                        -->
+    <!-- =========================================== -->
+    <node pkg="joint_state_publisher" exec="joint_state_publisher" name="joint_state_publisher" output="screen">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
+
+    <!-- =========================================== -->
+    <!-- RViz (optional)                              -->
+    <!-- =========================================== -->
+    <group if="$(var use_rviz)">
+        <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
+              args="-d $(find-pkg-share cobraflex)/rviz/bot.rviz"/>
+    </group>
+
+</launch>

@@ -1,0 +1,13 @@
+<launch>
+
+    <!-- Base bringup for the physical robot: model, sensors and serial driver. -->
+
+    <arg name="use_rviz" default="true"/>
+
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_description.launch.xml">
+        <arg name="use_rviz" value="$(var use_rviz)"/>
+    </include>
+
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml" />
+
+</launch>

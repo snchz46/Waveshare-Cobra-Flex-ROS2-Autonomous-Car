@@ -1,0 +1,21 @@
+<launch>
+    <!-- ================= Lidar SLLIDAR A2M8 ================= -->
+    <include file="$(find-pkg-share sllidar_ros2)/launch/sllidar_a2m8_launch.py">
+        <arg name="frame_id" value="lidar_link"/>
+    </include>
+
+    <!-- ================= ZED Camera (ZED Mini) ================= -->
+    <include file="$(find-pkg-share zed_wrapper)/launch/zed_camera.launch.py">
+        <arg name="camera_model" value="zedm"/>
+        <arg name="camera_name" value="zed"/>
+        <arg name="publish_urdf" value="false"/>
+        <arg name="publish_tf" value="true"/>
+
+        <!-- ZED IMU -->
+        <arg name="publish_imu_tf" value="true"/>
+
+        <!-- ZED Mapping -->
+        <arg name="publish_map_tf" value="false"/>
+        <arg name="reset_odom_with_loop_closure" value="true"/>
+    </include>
+</launch>
