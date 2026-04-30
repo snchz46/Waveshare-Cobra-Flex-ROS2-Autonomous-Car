@@ -1,21 +1,13 @@
 <launch>
 
-    <!-- =======================================     README    ========================================== -->
-    <!-- =======================================               ========================================== -->
-    <!-- This launch file brings up the entire robot system ready to drive                                -->
-    <!-- After launching this file, launch "cobraflex.launch.xml" with either manual or automatic control -->
-    <!-- ================================================================================================ -->
+    <!-- Base bringup for the physical robot: model, sensors and serial driver. -->
 
-    <!-- Launch arguments -->
     <arg name="use_rviz" default="true"/>
 
-    <!-- Load robot model -->
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_description.launch.xml">
         <arg name="use_rviz" value="$(var use_rviz)"/>
     </include>
 
-    <!-- Load driver -->
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml" />
 
 </launch>
-

@@ -1,78 +1,73 @@
+"""Launch SLAM mapping with RViz for simulation."""
+
 import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
+
 
 def generate_launch_description():
-
-    pkg_cobraflex_robot = get_package_share_directory('cobraflex')
-
-    gazebo_models_path, ignore_last_dir = os.path.split(pkg_cobraflex_robot)
-
-    # Ensure that the GZ_SIM_RESOURCE_PATH is initialized before adding to it
-    if "GZ_SIM_RESOURCE_PATH" not in os.environ:
-        os.environ["GZ_SIM_RESOURCE_PATH"] = gazebo_models_path
-    else:
-        os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path
+    """Build the mapping launch description."""
+    pkg_share = get_package_share_directory("cobraflex")
 
     rviz_launch_arg = DeclareLaunchArgument(
-        'rviz', default_value='true',
-        description='Open RViz'
+        "rviz",
+        default_value="true",
+        description="Open RViz.",
     )
-
     rviz_config_arg = DeclareLaunchArgument(
-        'rviz_config', default_value='mapping.rviz',
-        description='RViz config file'
+        "rviz_config",
+        default_value="mapping.rviz",
+        description="RViz config file.",
     )
-
     sim_time_arg = DeclareLaunchArgument(
-        'use_sim_time', default_value='True',
-        description='Flag to enable use_sim_time'
+        "use_sim_time",
+        default_value="true",
+        description="Use simulation time if true.",
     )
 
-    # Path to the Slam Toolbox launch file
-    slam_toolbox_launch_path = os.path.join(
-        get_package_share_directory('slam_toolbox'),
-        'launch',
-        'online_async_launch.py'
-    )
-
-    slam_toolbox_params_path = os.path.join(
-        get_package_share_directory('cobraflex'),
-        'config',
-        'slam_toolbox_mapping.yaml'
-    )
-
-    # Launch rviz
     rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        arguments=['-d', PathJoinSubstitution([pkg_cobraflex_robot, 'rviz', LaunchConfiguration('rviz_config')])],
-        condition=IfCondition(LaunchConfiguration('rviz')),
-        parameters=[
-            {'use_sim_time': LaunchConfiguration('use_sim_time')},
-        ]
+        package="rviz2",
+        executable="rviz2",
+        arguments=[
+            "-d",
+            PathJoinSubstitution(
+                [pkg_share, "rviz", LaunchConfiguration("rviz_config")]
+            ),
+        ],
+        condition=IfCondition(LaunchConfiguration("rviz")),
+        parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}],
     )
-
 
     slam_toolbox_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(slam_toolbox_launch_path),
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("slam_toolbox"),
+                "launch",
+                "online_async_launch.py",
+            )
+        ),
         launch_arguments={
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'slam_params_file': slam_toolbox_params_path,
-        }.items()
+            "use_sim_time": LaunchConfiguration("use_sim_time"),
+            "slam_params_file": os.path.join(
+                pkg_share,
+                "config",
+                "slam_toolbox_mapping.yaml",
+            ),
+        }.items(),
     )
 
-    launchDescriptionObject = LaunchDescription()
-
-    launchDescriptionObject.add_action(rviz_launch_arg)
-    launchDescriptionObject.add_action(rviz_config_arg)
-    launchDescriptionObject.add_action(sim_time_arg)
-    launchDescriptionObject.add_action(rviz_node)
-    launchDescriptionObject.add_action(slam_toolbox_launch)
-
-    return launchDescriptionObject
+    return LaunchDescription(
+        [
+            rviz_launch_arg,
+            rviz_config_arg,
+            sim_time_arg,
+            rviz_node,
+            slam_toolbox_launch,
+        ]
+    )

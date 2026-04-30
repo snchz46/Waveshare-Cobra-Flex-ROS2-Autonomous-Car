@@ -1,42 +1,47 @@
-from launch_ros.actions import Node
+"""Launch the robot_state_publisher for CobraFlex."""
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
 
 
 def generate_launch_description():
-
-    # Package name
-    package_name = FindPackageShare("cobraflex")
-
-    # Default robot description if none is specified
-    urdf_path = PathJoinSubstitution([package_name, "urdf", "my_robot_basic.urdf"])
-    
-    # Launch configurations
-    use_sim_time = LaunchConfiguration('use_sim_time')
-
-    # Declare launch arguments
-    declare_use_sim_time = DeclareLaunchArgument(
-            'use_sim_time', default_value='false',
-            description='Use sim time if true')
-
-    declare_urdf = DeclareLaunchArgument(
-            name='urdf', default_value=urdf_path,
-            description='Path to the robot description file')
-
-    # Create a robot state publisher 
-    robot_state_publisher = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        name='robot_state_publisher',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time,'robot_description': Command(['xacro', ' ', urdf_path]),}],
+    """Build the robot_state_publisher launch description."""
+    package_share = FindPackageShare("cobraflex")
+    default_urdf = PathJoinSubstitution(
+        [package_share, "urdf", "my_robot_gazebo.urdf"]
     )
 
-    # Launch!
-    return LaunchDescription([
-        declare_urdf,
-        declare_use_sim_time,
-        robot_state_publisher
-    ])
+    use_sim_time = LaunchConfiguration("use_sim_time")
+    urdf = LaunchConfiguration("urdf")
+
+    robot_state_publisher = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name="robot_state_publisher",
+        output="screen",
+        parameters=[
+            {
+                "use_sim_time": use_sim_time,
+                "robot_description": Command(["xacro", " ", urdf]),
+            }
+        ],
+    )
+
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "use_sim_time",
+                default_value="true",
+                description="Use simulation time if true.",
+            ),
+            DeclareLaunchArgument(
+                "urdf",
+                default_value=default_urdf,
+                description="Path to the robot description file.",
+            ),
+            robot_state_publisher,
+        ]
+    )

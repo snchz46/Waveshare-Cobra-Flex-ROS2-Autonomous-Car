@@ -6,8 +6,8 @@
     <!-- AUTOMATIC AVOIDANCE -->
     <node
         pkg="cobraflex"
-        exec="lidar_avoidance_pid_node"
-        name="lidar_avoidance"
+        exec="lidar_avoidance_node"
+        name="lidar_avoidance_node"
         output="screen">
     </node>
 

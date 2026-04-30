@@ -1,6 +1,6 @@
 <launch>
-    <!-- ================= Lidar RPLIDAR A2M8 ================= -->
-    <include file="$(find-pkg-share rplidar_ros)/launch/rplidar_a2m8_launch.py">
+    <!-- ================= Lidar SLLIDAR A2M8 ================= -->
+    <include file="$(find-pkg-share sllidar_ros2)/launch/sllidar_a2m8_launch.py">
         <arg name="frame_id" value="lidar_link"/>
     </include>
 
