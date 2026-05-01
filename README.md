@@ -1,4 +1,4 @@
-# Waveshare Cobraflex 4WD Autonomous Mobile Robot
+# Waveshare Cobraflex 4WD Autonomous Mobile Robot test
 
 Welcome to the **Waveshare Cobra Flex ROS 2 Autonomous Car** project. This repository contains everything you need to simulate, build and operate a skid-steer mobile robot using the Waveshare Cobra Flex chassis, the RPLIDAR A2 LiDAR, a ZED Mini stereo camera and the Nav2 navigation stack on ROS 2 Humble.
 
@@ -23,19 +23,35 @@ Welcome to the **Waveshare Cobra Flex ROS 2 Autonomous Car** project. This repos
 
 ## Table of Contents
   
-- [Description](#description)
-- [Key Features](#key-features)
-- [Simulation Features](#simulation-features)
-- [Robot Gallery](#robot-gallery)
-- [Video Demonstrations](#video-demonstrations)
-- [System Architecture](#system-architecture)
-- [Mathematical Model](#mathematical-model)
-- [Requirements](#requirements)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Build](#build)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
+- [Waveshare Cobraflex 4WD Autonomous Mobile Robot test](#waveshare-cobraflex-4wd-autonomous-mobile-robot-test)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Key features](#key-features)
+    - [Robot Features](#robot-features)
+  - [Simulation Features](#simulation-features)
+  - [Robot Gallery](#robot-gallery)
+  - [Video Demonstrations](#video-demonstrations)
+  - [System Architecture](#system-architecture)
+    - [Transform Tree (TF)](#transform-tree-tf)
+    - [SLAM System](#slam-system)
+    - [Navigation System](#navigation-system)
+  - [Mathematical Model](#mathematical-model)
+    - [Key Parameters](#key-parameters)
+  - [Requirements](#requirements)
+    - [Software](#software)
+    - [ROS2 Dependencies](#ros2-dependencies)
+  - [Quick Start](#quick-start)
+  - [Installation](#installation)
+    - [1. Install ROS2 Humble](#1-install-ros2-humble)
+    - [2. Install Gazebo Harmonic](#2-install-gazebo-harmonic)
+    - [3. Install Project Dependencies](#3-install-project-dependencies)
+    - [4. Clone the Repository](#4-clone-the-repository)
+  - [Build](#build)
+  - [Usage](#usage)
+    - [SLAM (Mapping)](#slam-mapping)
+    - [Autonomous Navigation](#autonomous-navigation)
+    - [Useful Commands](#useful-commands)
+  - [Project structure](#project-structure)
 
 ---
 
