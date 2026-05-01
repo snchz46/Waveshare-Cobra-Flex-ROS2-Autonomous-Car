@@ -2,10 +2,9 @@
 
 Welcome to the **Waveshare Cobra Flex ROS 2 Autonomous Car** project. This repository contains everything you need to simulate, build and operate a skid-steer mobile robot using the Waveshare Cobra Flex chassis, the RPLIDAR A2 LiDAR, a ZED Mini stereo camera and the Nav2 navigation stack on ROS 2 Humble.
 
-| **CAD Design** | **SImulation** | **Physical Robot** 
+| **CAD Design** | **SImulation** | **Physical Robot**
 |:---------------------:|:-----------------:|:-----------------:|
 | <img src="assets/photos/CAD Design V2.png" width="400"/> | <img src="assets/photos/digital_twin.png" width="600"/> | <img src="assets/photos/Mockup V2 side 2.jpg" width="400"/> |
-
 
 <div align="center" width="70%">
 
@@ -139,8 +138,6 @@ Industrial autonomous mobile robots need a tightly integrated software stack to 
 
 <div align="center">
 
-
-
 *Complete walkthrough: real-time SLAM, map saving, and autonomous Nav2 navigation*
 
 </div>
@@ -195,7 +192,6 @@ The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local con
 <img width="850" height="418" alt="image" src="https://github.com/user-attachments/assets/6da0f924-369f-494f-b9e7-908198959b37" />
 </div>
 
-
 [Complete differential 4WD skid-steering kinematic model.](https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car/blob/main/assets/Mathematical%20Model/README.md) The diagram shows the robot geometry, control equations, Nav2 integration, and dynamic specifications.
 
 ### Key Parameters
@@ -228,7 +224,7 @@ $$v = \frac{r(\omega_R + \omega_L)}{2}, \quad \omega = \frac{r(\omega_R - \omega
 
 ### ROS2 Dependencies
 
-```
+```bash
 ros-humble-ros-gz                  # Gazebo Harmonic integration
 ros-humble-navigation2             # Full Nav2 stack
 ros-humble-slam-toolbox            # SLAM mapping
@@ -237,7 +233,6 @@ ros-humble-teleop-twist-keyboard   # Keyboard teleoperation
 ros-humble-robot-state-publisher   # URDF TF publishing
 ros-humble-tf2-tools               # TF debugging utilities
 ```
-
 
 ---
 
@@ -362,9 +357,7 @@ In a separate terminal, control the robot to explore the environment:
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-
 Save the map once the environment has been fully explored.
-
 
 ### Autonomous Navigation
 
@@ -426,5 +419,3 @@ ros2 bag record -a -o navigation_data
 ```
 
 ---
-
-
