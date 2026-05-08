@@ -197,7 +197,7 @@ The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local con
 ### Key Parameters
 
 | Parameter | Value |
-|-----------|-------|
+| --------- | ----- |
 | Wheel radius | $r = 0.03725$ m |
 | Wheel separation | $W = 0.154$ m |
 | Total mass | $m = 5.95$ kg |
