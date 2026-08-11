@@ -6,6 +6,7 @@ import math
 from geometry_msgs.msg import Twist
 import numpy as np
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 
@@ -27,6 +28,14 @@ class AvoidanceWithLights(Node):
         self.declare_parameter("front_angle_deg", 20.0)
         self.declare_parameter("side_sample_deg", 40.0)
         self.declare_parameter("lateral_safe_distance", 0.30)
+        # Yaw of the robot's forward axis expressed in the scan's own angle
+        # frame. 180 deg means the lidar is mounted rotated half a turn, which
+        # is how it sits on this platform (lidar_joint carries rpy yaw = pi).
+        self.declare_parameter("front_offset_deg", 180.0)
+        # Deadman: stop if /scan goes quiet. Without it the command timer keeps
+        # republishing the last decision -- possibly full forward speed -- for
+        # ever after the lidar unplugs or its driver dies.
+        self.declare_parameter("scan_timeout", 0.5)
 
         self.forward_speed = float(self.get_parameter("forward_speed").value)
         self.turn_speed = float(self.get_parameter("turn_speed").value)
@@ -40,12 +49,17 @@ class AvoidanceWithLights(Node):
         self.lateral_safe_distance = float(
             self.get_parameter("lateral_safe_distance").value
         )
+        self.front_offset_rad = math.radians(
+            float(self.get_parameter("front_offset_deg").value)
+        )
+        self.scan_timeout = float(self.get_parameter("scan_timeout").value)
 
         self.state = "FORWARD"
         self.state_enter_time = self.get_clock().now()
         self.target_lin = 0.0
         self.target_ang = 0.0
-        self.last_scan_time = self.get_clock().now()
+        self.last_scan_time = None
+        self.scan_expired = False
         self.filt_left = None
         self.filt_right = None
 
@@ -60,43 +74,79 @@ class AvoidanceWithLights(Node):
 
         self.get_logger().info("CobraFlex avoidance node started")
 
+    @staticmethod
+    def _sector_min(msg, ranges, start_ang, end_ang):
+        """Closest valid return inside an angular sector, measured from the front.
+
+        Angles are relative to the robot's forward axis; the caller has already
+        folded in `front_offset_rad`. Two things this has to get right:
+
+        * **Wrapping.** Indices are taken modulo the ray count, so a sector that
+          straddles the seam of the scan (which is where "forward" lands on this
+          robot, the lidar being mounted rotated 180 deg) still reads the rays
+          on both sides of it. Clamping instead -- the previous behaviour --
+          silently collapsed any out-of-range sector onto the single last ray,
+          so the left distance was a constant and the turn-direction choice ran
+          on it. Only safe because this is a full-circle scanner; the caller
+          checks that before relying on it.
+        * **Minimum, not mean.** Averaging a sector hides exactly what this node
+          exists to detect: a table leg two rays wide averages away against the
+          open space around it.
+        """
+        n = ranges.size
+        if n == 0:
+            return float(msg.range_max)
+
+        i0 = int(math.floor((start_ang - msg.angle_min) / msg.angle_increment))
+        i1 = int(math.ceil((end_ang - msg.angle_min) / msg.angle_increment))
+        if i1 < i0:
+            i0, i1 = i1, i0
+
+        values = ranges[np.arange(i0, i1 + 1) % n]
+        valid = values[
+            np.isfinite(values)
+            & (values >= msg.range_min)
+            & (values <= msg.range_max)
+        ]
+
+        if valid.size == 0:
+            # Nothing valid in the sector: treat as clear, not as an obstacle.
+            return float(msg.range_max)
+
+        return float(valid.min())
+
     def _scan_callback(self, msg):
         """Classify the latest scan into front/left/right minima and decide avoidance."""
         now = self.get_clock().now()
-        dt = (now - self.last_scan_time).nanoseconds / 1e9
-        if dt <= 0.0:
-            dt = 1e-3
         self.last_scan_time = now
 
-        ranges = np.array(msg.ranges)
-        angle_min = msg.angle_min
-        angle_inc = msg.angle_increment
+        if self.scan_expired:
+            self.scan_expired = False
+            self.get_logger().info("/scan recovered, resuming avoidance")
+
+        ranges = np.asarray(msg.ranges, dtype=float)
+
+        # The modulo wrap in _sector_min is only meaningful on a full-circle
+        # scanner. Anything narrower (a bumper lidar, a cropped scan) would
+        # wrap the front sector onto the far edge of the field of view.
+        span = msg.angle_increment * ranges.size
+        if span < 1.9 * math.pi:
+            self.get_logger().warning(
+                f"Scan spans {math.degrees(span):.0f} deg, not a full circle: "
+                "this node assumes a 360 deg lidar, refusing to drive",
+                throttle_duration_sec=5.0,
+            )
+            self.target_lin = 0.0
+            self.target_ang = 0.0
+            return
 
         front_rad = math.radians(self.front_angle_deg)
         side_rad = math.radians(self.side_sample_deg)
-        center_angle = math.pi
+        off = self.front_offset_rad
 
-        def sample_range(start_ang, end_ang, samples=8):
-            values = []
-            for ang in np.linspace(start_ang, end_ang, samples):
-                abs_ang = center_angle + ang
-                idx = int((abs_ang - angle_min) / angle_inc)
-                idx = max(0, min(len(ranges) - 1, idx))
-                distance = ranges[idx]
-                if math.isfinite(distance):
-                    values.append(distance)
-
-            if not values:
-                return 5.0
-
-            return float(np.mean(values))
-
-        front = min(
-            sample_range(-front_rad, -front_rad * 0.5),
-            sample_range(front_rad * 0.5, front_rad),
-        )
-        left = sample_range(side_rad * 0.5, side_rad)
-        right = sample_range(-side_rad, -side_rad * 0.5)
+        front = self._sector_min(msg, ranges, off - front_rad, off + front_rad)
+        left = self._sector_min(msg, ranges, off + side_rad * 0.5, off + side_rad)
+        right = self._sector_min(msg, ranges, off - side_rad, off - side_rad * 0.5)
 
         alpha = 0.25
         if self.filt_left is None:
@@ -153,12 +203,43 @@ class AvoidanceWithLights(Node):
         self.state_enter_time = now
         self.target_lin = 0.0 if front < self.hard_stop_distance else 0.15
 
+    def _scan_is_stale(self):
+        """True when no scan arrived within `scan_timeout` seconds."""
+        if self.scan_timeout <= 0.0 or self.last_scan_time is None:
+            return False
+
+        age = (self.get_clock().now() - self.last_scan_time).nanoseconds / 1e9
+        return age > self.scan_timeout
+
     def _cmd_timer_cb(self):
         """Publish the current (cruise or avoidance) command at the control rate."""
+        if self._scan_is_stale():
+            if not self.scan_expired:
+                self.scan_expired = True
+                self.get_logger().warning(
+                    f"No /scan for {self.scan_timeout:.2f} s, stopping"
+                )
+
+            self.target_lin = 0.0
+            self.target_ang = 0.0
+
         twist = Twist()
         twist.linear.x = float(self.target_lin)
         twist.angular.z = float(self.target_ang)
         self.cmd_pub.publish(twist)
+
+    def _publish_zero(self):
+        """Publish a zero Twist (stop)."""
+        self.cmd_pub.publish(Twist())
+
+    def destroy_node(self):
+        """Stop the robot before shutdown."""
+        try:
+            self._publish_zero()
+        except Exception:
+            pass
+
+        super().destroy_node()
 
 
 def main(args=None):
@@ -168,12 +249,18 @@ def main(args=None):
     try:
         node = AvoidanceWithLights()
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
+        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException,
+        # not KeyboardInterrupt; letting it escape made the node exit 1.
         pass
     finally:
         if node is not None:
+            # Publishes a zero Twist before tearing the publisher down.
             node.destroy_node()
-        rclpy.shutdown()
+        # Already down when the shutdown came from outside, and calling it
+        # twice raises.
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

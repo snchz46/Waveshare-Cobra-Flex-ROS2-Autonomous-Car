@@ -23,10 +23,10 @@ setup(
         "stable-baselines3",
     ],
     zip_safe=True,
-    maintainer="admit",
-    maintainer_email="admit@example.com",
+    maintainer="Samuel Sanchez",
+    maintainer_email="sasamt02@hs-esslingen.de",
     description="ROS2 PPO lane-following package for Gazebo.",
-    license="Apache License 2.0",
+    license="MIT",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [

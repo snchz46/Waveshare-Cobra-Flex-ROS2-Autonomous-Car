@@ -17,7 +17,7 @@ setup(
     install_requires=["setuptools"],
     zip_safe=True,
     maintainer="Samuel Sanchez",
-    maintainer_email="samuel.sanchez@example.com",
+    maintainer_email="sasamt02@hs-esslingen.de",
     description="ROS2 wrapper for the safety cage.",
     license="MIT",
     tests_require=["pytest"],

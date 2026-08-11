@@ -3,8 +3,8 @@
   <name>cobraflex_rl</name>
   <version>0.0.1</version>
   <description>ROS2 Python package for PPO-based lane following in Gazebo.</description>
-  <maintainer email="admit@example.com">admit</maintainer>
-  <license>Apache-2.0</license>
+  <maintainer email="sasamt02@hs-esslingen.de">Samuel Sanchez</maintainer>
+  <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
 

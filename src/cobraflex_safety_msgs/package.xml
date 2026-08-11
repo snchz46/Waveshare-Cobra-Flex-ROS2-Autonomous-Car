@@ -9,7 +9,7 @@
     Custom ROS2 messages for the safety cage diagnostic topic
     /cage_status. Action topics use stock geometry_msgs/Twist.
   </description>
-  <maintainer email="samuel.sanchez@example.com">Samuel Sanchez</maintainer>
+  <maintainer email="sasamt02@hs-esslingen.de">Samuel Sanchez</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -5,8 +5,8 @@
   <version>0.1.0</version>
   <description>ROS2 driver and feedback interface for the CobraFlex chassis.</description>
 
-  <maintainer email="sasamt02@hs-esslingen.de">samuel</maintainer>
-  <license>Apache-2.0</license>
+  <maintainer email="sasamt02@hs-esslingen.de">Samuel Sanchez</maintainer>
+  <license>MIT</license>
 
   <!-- Test dependencies -->
   <test_depend>ament_copyright</test_depend>

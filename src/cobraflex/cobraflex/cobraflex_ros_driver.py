@@ -23,6 +23,16 @@ class CobraFlexROSDriver(Node):
         self.declare_parameter("max_linear", 0.53)
         self.declare_parameter("max_angular", 6.0)
         self.declare_parameter("turn_threshold", 0.3)
+        # Deadman. `_resend_last_cmd` exists to defeat the firmware's own
+        # command timeout, so without this the last velocity is re-sent for
+        # ever: if the publisher of /cmd_vel dies, its process is killed or the
+        # DDS link drops, the physical robot keeps driving at that velocity
+        # until someone cuts the power. Zero the command after this many
+        # seconds without a fresh /cmd_vel. Set to 0.0 to disable (bench only).
+        self.declare_parameter("cmd_timeout", 0.5)
+        # Cap on feedback lines drained per read tick, so a chatty firmware
+        # cannot starve the keep-alive timer that shares this executor thread.
+        self.declare_parameter("max_lines_per_read", 20)
 
         port = str(self.get_parameter("port").value)
         baud = int(self.get_parameter("baud").value)
@@ -30,9 +40,13 @@ class CobraFlexROSDriver(Node):
         self.max_linear = float(self.get_parameter("max_linear").value)
         self.max_angular = float(self.get_parameter("max_angular").value)
         self.turn_threshold = float(self.get_parameter("turn_threshold").value)
+        self.cmd_timeout = float(self.get_parameter("cmd_timeout").value)
+        self.max_lines_per_read = int(self.get_parameter("max_lines_per_read").value)
 
         self.last_vx = 0.0
         self.last_wz = 0.0
+        self.last_cmd_time = None
+        self.cmd_expired = False
         self.ser = None
 
         try:
@@ -80,10 +94,35 @@ class CobraFlexROSDriver(Node):
 
         self.last_vx = vx
         self.last_wz = wz
+        self.last_cmd_time = self.get_clock().now()
+
+        if self.cmd_expired:
+            self.cmd_expired = False
+            self.get_logger().info("/cmd_vel recovered, resuming drive commands")
+
         self._update_lights(wz)
+
+    def _cmd_is_stale(self):
+        """True when no /cmd_vel arrived within `cmd_timeout` seconds."""
+        if self.cmd_timeout <= 0.0 or self.last_cmd_time is None:
+            return False
+
+        age = (self.get_clock().now() - self.last_cmd_time).nanoseconds / 1e9
+        return age > self.cmd_timeout
 
     def _resend_last_cmd(self):
         """Re-send the last drive command (keep-alive against the firmware timeout)."""
+        if self._cmd_is_stale():
+            if not self.cmd_expired:
+                self.cmd_expired = True
+                self.get_logger().warning(
+                    f"No /cmd_vel for {self.cmd_timeout:.2f} s, stopping the robot"
+                )
+                self._turn_lights(True, True)
+
+            self.last_vx = 0.0
+            self.last_wz = 0.0
+
         self._send_json({"T": 13, "X": self.last_vx, "Z": self.last_wz})
 
     def _stop_robot(self):
@@ -108,30 +147,46 @@ class CobraFlexROSDriver(Node):
         self._send_json({"T": 131, "cmd": 1})
         self.get_logger().info("Requested feedback stream (T=131)")
 
+    def _publish_feedback(self, raw):
+        """Parse one feedback line and republish it on the ROS topics."""
+        data = json.loads(raw)
+        self.feedback_pub.publish(String(data=json.dumps(data)))
+
+        if data.get("T", -1) != 1001:
+            return
+
+        battery = float(data.get("v", 0.0))
+        self.battery_pub.publish(Float32(data=battery))
+
+        twist = Twist()
+        twist.linear.x = float(data.get("odl", 0.0))
+        twist.linear.y = float(data.get("odr", 0.0))
+        self.wheels_pub.publish(twist)
+
     def _read_serial(self):
-        """Drain and parse incoming serial feedback lines."""
+        """Drain and parse whatever feedback the OS buffer already holds."""
         if self.ser is None:
             return
 
+        # Gated on in_waiting instead of calling readline() unconditionally.
+        # readline() blocks for the port's full timeout (20 ms) whenever the
+        # firmware is quiet, and this node runs on a single-threaded executor
+        # shared with the 20 Hz keep-alive timer -- a silent link used to eat a
+        # whole timer period on every one of these 50 Hz ticks.
+        lines = 0
         try:
-            raw = self.ser.readline().decode("utf-8").strip()
-            if not raw:
-                return
+            while self.ser.in_waiting and lines < self.max_lines_per_read:
+                raw = self.ser.readline().decode("utf-8", errors="replace").strip()
+                lines += 1
+                if not raw:
+                    continue
 
-            data = json.loads(raw)
-            self.feedback_pub.publish(String(data=json.dumps(data)))
-
-            t_code = data.get("T", -1)
-            if t_code == 1001:
-                battery = float(data.get("v", 0.0))
-                self.battery_pub.publish(Float32(data=battery))
-
-                twist = Twist()
-                twist.linear.x = float(data.get("odl", 0.0))
-                twist.linear.y = float(data.get("odr", 0.0))
-                self.wheels_pub.publish(twist)
+                try:
+                    self._publish_feedback(raw)
+                except (ValueError, TypeError) as exc:
+                    self.get_logger().warning(f"Serial parse error: {exc}")
         except Exception as exc:
-            self.get_logger().warning(f"Serial parse error: {exc}")
+            self.get_logger().warning(f"Serial read failed: {exc}")
 
     def destroy_node(self):
         """Stop the robot and release the serial device on shutdown."""

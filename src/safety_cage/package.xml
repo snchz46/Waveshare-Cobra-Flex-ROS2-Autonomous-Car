@@ -11,7 +11,7 @@
     /safe_action (Twist), /cage_status (cobraflex_safety_msgs/CageStatus),
     and /emergency (Bool).
   </description>
-  <maintainer email="samuel.sanchez@example.com">Samuel Sanchez</maintainer>
+  <maintainer email="sasamt02@hs-esslingen.de">Samuel Sanchez</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>

@@ -8,6 +8,7 @@ import numpy as np
 
 import rclpy
 from rclpy.duration import Duration
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 
 from geometry_msgs.msg import Point, Twist
@@ -959,12 +960,17 @@ def main(args=None):
     try:
         node = LaneKeeperNode()
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
+        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException,
+        # not KeyboardInterrupt; letting it escape made the node exit 1.
         pass
     finally:
         if node is not None:
             node.destroy_node()
-        rclpy.shutdown()
+        # The 'q'/ESC path in _timer_callback already shuts the context down,
+        # and a second call raises -- which used to mask every clean exit.
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

@@ -39,14 +39,20 @@
 
 ### 2.1 Total Robot Mass
 
+Measured total of the built robot: **3.5 kg**. The breakdown below is what the
+URDFs actually declare — `chassis_mass` and `body_mass` in
+`src/cobraflex/urdf/my_robot_*.urdf`, the wheel macro, and the LiDAR link.
+
 | Component | Quantity | Unit Mass | Total Mass |
 |-----------|----------|-----------|------------|
-| Base Link (chassis) | 1 | 2.1 kg | 2.1 kg |
-| Body Link (body) | 1 | 0.8 kg | 0.8 kg |
-| Wheels (`wheel_1...4`) | 4 | 0.1 kg | 0.4 kg |
-| LiDAR (`lidar_link`) | 1 | 0.1 kg | 0.1 kg |
-| Camera (`camera_link`) | 1 | 0.1 kg | 0.1 kg |
-| **TOTAL** | - | - | **3.5 kg** |
+| Base Link (chassis, motors, drivetrain) | 1 | 2.20 kg | 2.20 kg |
+| Body Link (upper deck, Jetson, LiPo, wiring) | 1 | 0.71 kg | 0.71 kg |
+| Wheels (`wheel_1...4`) | 4 | 0.10 kg | 0.40 kg |
+| LiDAR (`lidar_link`, RPLidar A2) | 1 | 0.19 kg | 0.19 kg |
+| **TOTAL** | - | - | **3.50 kg** |
+
+The ZED Mini (~62 g) carries no separate inertial in the URDF; its mass is
+folded into the body link it is bolted to. `camera_link` is a frame only.
 
 
 ### 2.2 Chassis, Body and Camera Inertia Tensors
@@ -117,14 +123,19 @@ $$
 
 ```xml
 <max_wheel_torque>20</max_wheel_torque>
-<max_linear_acceleration>0.53</max_linear_acceleration>
-<min_linear_acceleration>-10</min_linear_acceleration>
+<max_linear_acceleration>2.5</max_linear_acceleration>
+<min_linear_acceleration>-2.5</min_linear_acceleration>
 ```
 
 | Parameter | Value |
 |-----------|-------|
 | Maximum torque per wheel | 20 N·m |
-| Maximum wheel acceleration (plugin) | 1.0 m/s² |
+| Plugin linear acceleration limit | ±2.5 m/s² |
+
+These last two used to read `0.53` and `-10` in `urdf/robot.gazebo`: `0.53` is
+this chassis's maximum *velocity* in m/s, copied into an acceleration field,
+and the `-10` braking limit was twenty times the acceleration limit. Both now
+match the kinematic limits in §3.1.
 
 
 ---
@@ -261,7 +272,7 @@ PARAMS_GEOMETRY = {
     'wheel_radius': 0.03725,      # m (model.sdf:72)
     'wheel_separation': 0.154,  # m (model.sdf:441)
     'wheel_base': 0.1356,        # m (calculated)
-    'total_mass': 5.525          # kg (sum of masses)
+    'total_mass': 3.5            # kg (measured; see section 2.1)
 }
 ```
 

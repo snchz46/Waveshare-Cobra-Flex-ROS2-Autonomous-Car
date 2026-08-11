@@ -11,9 +11,18 @@
             <wheel_separation>0.154</wheel_separation>
             <wheel_radius>0.03725</wheel_radius>
 
-            <max_linear_acceleration>0.53</max_linear_acceleration>
-            <min_linear_acceleration>-10</min_linear_acceleration>
-            
+            <!-- 2.5 / -2.5 m/s^2, the platform limits recorded in
+                 assets/Mathematical Model/parameters.md and now also in
+                 config/nav2_params.yaml (acc_lim_x / decel_lim_x).
+                 These read 0.53 and -10: 0.53 is this chassis's maximum
+                 VELOCITY in m/s, copied into an acceleration field, and the
+                 -10 made braking twenty times more aggressive than
+                 accelerating. The asymmetry let the simulated robot stop dead
+                 in ways the real one cannot, which flatters any controller
+                 tuned against it. -->
+            <max_linear_acceleration>2.5</max_linear_acceleration>
+            <min_linear_acceleration>-2.5</min_linear_acceleration>
+
             <topic>cmd_vel</topic>
 
             <odom_topic>odom</odom_topic>

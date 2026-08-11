@@ -19,6 +19,7 @@ import cv2
 import numpy as np
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
@@ -276,13 +277,18 @@ class LaneKeeperGazeboNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = LaneKeeperGazeboNode()
+    node = None
     try:
+        node = LaneKeeperGazeboNode()
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
+        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException,
+        # not KeyboardInterrupt; letting it escape made the node exit 1.
         pass
     finally:
-        node.destroy_node()
+        if node is not None:
+            node._publish_zero()
+            node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
 

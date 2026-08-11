@@ -1,8 +1,48 @@
 # ROS 2 workspace build outputs
-ros2_ws/build/
-ros2_ws/install/
-ros2_ws/log/
+build/
+install/
+log/
 
 # Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Editor / IDE state.
+# browse.vc.db is the VS Code C/C++ IntelliSense database: it is machine-local,
+# regenerated on demand, and grows to hundreds of megabytes. One was committed
+# by accident in db3f977 (776 MB) and is still in the history.
+.vscode/
+.vs/
+.idea/
+*.vc.db
+*.code-workspace
+
+# Test / tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Saved maps: site-specific, regenerated per environment, and a PGM of a large
+# room is big and compresses badly. See src/cobraflex/maps/README.md.
+src/cobraflex/maps/*.pgm
+src/cobraflex/maps/*.yaml
+
+# Training artefacts (cobraflex_rl)
+*.zip
+runs/
+checkpoints/
+
+# ROS bags
+*.db3
+*.mcap
+rosbag2_*/
+
+# Agent scratch files, not part of the project
+CLAUDE.md
+.codex
+
+# OS noise
+.DS_Store
+Thumbs.db

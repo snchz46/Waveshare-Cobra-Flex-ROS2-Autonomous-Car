@@ -1,34 +1,39 @@
 # cobraflex/meshes
 
 Visualisation meshes (STL) referenced by the URDF / SDF of the
-CobraFlex 1:14 platform.
-
-## Tracked in git
+CobraFlex 1:14 platform. All of them are tracked in git and installed to the
+package share by `setup.py`, so a fresh clone renders the full robot with no
+extra download step.
 
 | File | Size | Source |
 | ---- | ---- | ------ |
 | `cobraflex_body.stl` | 6.4 MB | Author CAD design |
 | `cobraflex_chassis.stl` | 12 MB | Author CAD design |
 | `cobraflex_wheel.stl` | 4.5 MB | Author CAD design |
+| `rplidar-a2m4-r1.stl` | 176 KB | Slamtec RPLidar A2 visualisation mesh |
 | `zedmini_camera.stl` | 78 KB | Stereolabs ZED Mini visual reference |
 
-## Not tracked in git (obtain externally)
+These are **visual** meshes only. Collision geometry in the URDFs is primitive
+(boxes and cylinders) and the inertias come from the `inertial_macros.xacro`
+box/cylinder formulas, so replacing a mesh changes what you see and nothing
+about the physics.
 
-| File | Size | Source | How to obtain |
-| ---- | ---- | ------ | ------------- |
-| `rplidar-a2m4-r1.stl` | 87 MB | Slamtec RPLidar A2 visualisation mesh | Run `scripts/download_meshes.sh` from the repo root, or download manually from the Slamtec CAD library and place it in this directory. |
+## Referencing them
 
-The RPLidar STL is excluded from git via `.gitignore` because it
-exceeds the 50 MB soft-limit that GitHub warns about and because the
-file is upstream-distributed and does not change with the thesis
-work. Without it, the URDF will still load but the simulator's rviz
-visualisation of the LIDAR sensor will be a placeholder primitive
-(or missing) — perception and the cage are unaffected because they
-operate on the sensor's data, not on its visual model.
+Use the package-resolved form, which works in RViz, robot_state_publisher and
+Gazebo alike:
 
-If your local clone does not have the file and you need the visual
-representation for a demo or a figure, run:
+```xml
+<mesh filename="file://$(find cobraflex)/meshes/cobraflex_chassis.stl"
+      scale="0.001 0.001 0.001"/>
+```
 
-    ./scripts/download_meshes.sh
+The scale factor is not optional: the STLs are exported in millimetres and
+URDF works in metres.
 
-The script is idempotent and will skip files that already exist.
+## Note on repository size
+
+The three author meshes are ~23 MB together and are duplicated under
+`assets/3d-models/`. That duplication is deliberate — `assets/` is the CAD
+archive, `meshes/` is what the package installs — but it does mean a change to
+the CAD has to be copied to both places.

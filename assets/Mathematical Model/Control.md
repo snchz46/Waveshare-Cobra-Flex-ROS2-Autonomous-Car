@@ -39,13 +39,16 @@ Odometry (/odom) + TF
         <wheel_separation>0.154</wheel_separation>
         <wheel_radius>0.03725</wheel_radius>
 
-        <max_linear_acceleration>0.53</max_linear_acceleration>
-        <min_linear_acceleration>-10</min_linear_acceleration>
+        <max_linear_acceleration>2.5</max_linear_acceleration>
+        <min_linear_acceleration>-2.5</min_linear_acceleration>
         
         <topic>cmd_vel</topic>
         
         <odom_topic>odom</odom_topic>
-        <tf_topic>tf</tf_topic>
+        <!-- Dead-reckoning TF is kept off the ROS /tf topic: the ground-truth
+             OdometryPublisher is the sole owner of odom -> base_footprint in
+             simulation. See urdf/robot.gazebo. -->
+        <tf_topic>tf_diffdrive</tf_topic>
         <frame_id>odom</frame_id>
         <child_frame_id>base_footprint</child_frame_id>
     </plugin>
