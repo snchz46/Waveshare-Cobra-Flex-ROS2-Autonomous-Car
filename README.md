@@ -1,4 +1,4 @@
-# Waveshare Cobraflex 4WD Autonomous Mobile Robot test
+# Waveshare Cobraflex 4WD Autonomous Mobile Robot
 
 Welcome to the **Waveshare Cobra Flex ROS 2 Autonomous Car** project. This repository contains everything you need to simulate, build and operate a skid-steer mobile robot using the Waveshare Cobra Flex chassis, the RPLIDAR A2 LiDAR, a ZED Mini stereo camera and the Nav2 navigation stack on ROS 2 Humble.
 
