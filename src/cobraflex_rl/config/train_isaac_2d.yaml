@@ -1,0 +1,138 @@
+# Isaac posterior track (D-49/D-50) — full-authority end-to-end training config:
+# front-camera CNN policy with a 2-D action (steering + throttle) on a
+# multi-circuit scene. This is the `tools/isaac_train.py` DEFAULT. Deltas vs
+# train_ppo_camera.yaml (the frozen Gazebo E-main config): the `action:` block
+# (2-D), the `reward.throttle_delta` term, and viz off (in-process Isaac cannot
+# publish RViz markers). Everything else — PPO stability stack (target_kl +
+# linear LR + normalize_reward + clip_range_vf, the v3 levers the 297k E-main
+# ran on), camera observation, H-10 visual DR, cage wiring, spawn perturbation —
+# is carried over unchanged.
+#
+# NB the Gazebo E verdict (GE4-V2) stays frozen on the 1-D steering-only action
+# (ED-2/D-49); a policy trained with this config is a NEW baseline, never a
+# re-run of the 297k E-main.
+total_timesteps: 1000000  # ~11 h at the ~25 env-steps/s measured on the multi-track+DR
+                          # 2-D scene (RTX 5060, headless — docs/13; the ~33 figure was
+                          # the single-track 1-D pilot)
+checkpoint_freq: 25000    # 40 ckpts/1M (~800 MB). Unset = n_steps (1024) -> ~20 GB/1M.
+learning_rate: 0.0003
+lr_schedule: linear       # constant | linear (anneal to 0)
+target_kl: 0.5            # trust-region KL early-stop; null disables
+gamma: 0.99
+gae_lambda: 0.95
+n_steps: 1024
+batch_size: 64
+n_epochs: 10
+clip_range: 0.2
+ent_coef: 0.01           # D-52: run 1 (ppo_isaac2d_2024_1M) collapsed exploration by 36%
+                          # (policy std 0.99 -> 0.023) into a crawl-and-die local optimum
+                          # (nominal eval: <= 0.45 laps, 15/18 cage emergencies); entropy
+                          # bonus keeps the 2-D action stochastic long enough to discover
+                          # the full-lap mode. Was 0.0 (the 1-D Gazebo recipe).
+vf_coef: 0.5
+max_grad_norm: 0.5
+normalize_reward: true    # VecNormalize(norm_reward=True, norm_obs=False)
+clip_range_vf: 0.2        # value clip; only meaningful WITH normalize_reward
+clip_reward: 10.0
+device: auto              # CnnPolicy benefits from CUDA when present
+seed: 2024                # main-seed precedent (D-36)
+max_episode_steps: 1024
+control_dt: 0.10
+# fixed_speed stays the CRUISE REFERENCE: the progress reward normaliser
+# (~1.0 == one cruise-speed step; docs/10) and the 1-D fallback speed. The 2-D
+# policy's actual speed authority is action.max_speed_mps below.
+fixed_speed: 0.20
+progress_bounded_tracking: false   # road-centre off-road check supersedes it
+viz: false                # in-process Isaac cannot publish to RViz
+model_path: cobraflex_ppo_isaac2d_lane
+
+policy: CnnPolicy
+
+# --- 2-D action (D-50): steering + throttle -----------------------------------
+# The policy commands [steer, throttle] in [-1, 1]²; throttle maps to the cage
+# scale u ∈ [0, 1] (cage_bridge.policy_throttle_to_cage) and actuates on the
+# linear map speed = max_speed_mps · u (full stop below throttle_deadband).
+# max_speed_mps = 0.5 = C-04's v_max_straight = ODD-1.V_MAX: the policy can
+# genuinely exceed the curve ceiling (0.25 m/s) and the C-05 warning band
+# (0.4 m/s), so the cage speed rules arbitrate for real — and a true stop is
+# commandable, making SR-009's stall/liveness sub-mode well-posed.
+action:
+  type: steer_throttle    # "steer" = frozen 1-D contract (ED-2)
+  max_speed_mps: 0.5
+  throttle_deadband: 0.05
+
+# E-observation (docs/09 §10): 84×84 grayscale frames, stack k=4 applied by the
+# trainer (VecFrameStack). The cage's state comes from the deterministic CV
+# lane-estimator on the same (possibly degraded) frame (D-43).
+observation:
+  type: camera
+  camera:
+    topic: /camera/image_raw_lane   # informational on Isaac (in-process capture)
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+
+# Training-side mitigation of H-10 (SR-012): per-episode visual degradation
+# drawn from the H-10 envelope (glare / low-light / motion-blur). Occlusion and
+# false-lane stay eval-only (SC-PERT-07/08).
+domain_randomization:
+  enabled: true
+  p_degrade: 0.5
+  level_range: [0.2, 0.8]
+
+# Sim-to-real DR lever #2/#3 (Isaac in-process trainer only): per-episode
+# physics + actuation-latency randomization. Ranges centred on the sim nominal;
+# re-centre after real-platform system-ID (docs/13).
+dynamics_randomization:
+  enabled: true
+  friction_range: [0.04, 0.07]
+  mass_scale_range: [0.85, 1.15]
+  yaw_scale_range: [0.8, 1.2]
+  latency_steps_range: [0, 2]
+
+# Sim-to-real DR lever #4 (camera only): per-episode scene-appearance
+# randomization (lights + track colours). The track materials are shared across
+# all circuits of a multi-track scene, so one draw re-colours them coherently.
+scene_randomization:
+  enabled: true
+  dome_intensity_scale: [0.6, 1.4]
+  sun_intensity_scale: [0.5, 1.5]
+  light_tint: 0.1
+  asphalt_jitter: 0.08
+  line_jitter: 0.15
+  grass_jitter: 0.10
+
+reward:
+  lateral_error: 2.5
+  heading_error: 0.75
+  steer_delta: 0.20
+  # Raw-throttle smoothness (D-50), the longitudinal mirror of steer_delta —
+  # same raw-not-post-cage rationale (C-06 rate-limits throttle too, so a
+  # post-cage delta would be toothless). [provisional: first 2-D pilot]
+  throttle_delta: 0.10
+  forward_progress: 1.0
+  # D-56: make the degenerate "park" optimum strictly unprofitable — the v5
+  # evals showed 1747-2200-step idles at 0.005-0.03 m/s exploiting the D-55
+  # blind-stretch budgets. Charged per step while normalised progress
+  # < stall_progress_min (0.25 = 0.05 m/s at cruise 0.2); slow-but-driving
+  # (>= 0.05 m/s) is never charged. [provisional: first D-56 run]
+  stall_penalty: 0.5
+  stall_progress_min: 0.25
+  termination: 25.0
+
+cage:
+  enabled: true
+  mode: enforcement
+  yaml_path: "cage/cage_isaac.yaml"  # D-55: Isaac cage variant (theta_max 40 deg — renderer over-read)
+  perception_heading_bias_rad: 0.084   # D-57 [provisional, Isaac]: de-bias estimator heading (renderer calibration)
+  perception_min_invalid_cycles: 12   # D-55 [provisional, Isaac]: supervisor invalid-persistence (was 4, Gazebo-tuned)
+  lookahead_segments: 5
+  throttle_nominal: 0.5  # 1-D fallback / SC-EDGE-03 override scale (unused as cruise here)
+  yaw_gain: 2.4          # D-54: Isaac skid-steer delivers ~18% of commanded yaw; 0.8 capped achievable yaw below every curve requirement (CV parity probes 04.07.2026)
+  min_speed_scale: 0.35  # 1-D map only; the 2-D map has no lower speed clamp
+
+spawn_perturbation:
+  enabled: true
+  heading_rad: 0.15
+  lateral_m: 0.05

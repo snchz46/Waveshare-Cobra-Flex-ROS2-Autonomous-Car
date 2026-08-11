@@ -1,0 +1,61 @@
+total_timesteps: 200000
+learning_rate: 0.0003
+gamma: 0.99
+n_steps: 1024
+batch_size: 64
+device: cpu
+seed: 23                  # §7.2.7: first training cycle uses seed 23/42/123/666/2024 for reproducibility; later cycles may randomize or sweep seeds for robustness.
+max_episode_steps: 500
+control_dt: 0.10
+fixed_speed: 0.20
+model_path: cobraflex_ppo_lane
+# Headless-training sim clock cap (×real-time). 1 = original real-time pacing;
+# 10 ≈ 10× faster episodes (40s -> ~4s). 0 = as fast as the CPU allows, but at
+# very high rates the async ROS->gz /cmd_vel bridge can lag the sim by a step,
+# so start moderate and raise only after verifying the policy still responds.
+# Applied at runtime via /world/.../set_physics — does NOT modify the world
+# file/hash or max_step_size, so physics fidelity and run reproducibility are
+# unchanged. control_dt cadence stays correct via sim-time step_ros.
+sim_real_time_factor: 1
+
+reward:
+  lateral_error: 2.5
+  heading_error: 0.75
+  # steer_delta now penalises the RAW policy steering delta (pre-cage), not the
+  # post-cage applied delta, and is weighted up 0.10 -> 0.20 (reward v1.2,
+  # §7.2.5 / §7.5.2): C-06 absorbs raw bang-bang for free, so the old post-cage
+  # term never bit. [provisional, M-P4] — confirm via re-train + Ch.8 sensitivity.
+  steer_delta: 0.20
+  # forward_progress now weights NORMALISED centerline progress (≈1.0 per cruise
+  # step), not instantaneous speed — so the return rewards surviving + advancing
+  # and every on-track step stays net-positive (§7.2.3; D-34 F3 refinements).
+  forward_progress: 1.0
+  termination: 25.0
+
+# Observation: signed-curvature preview (rad/m) at two centerline look-aheads
+# (segments) so the policy can anticipate curves, not just react to ey/epsi.
+observation:
+  curvature_lookahead_near: 3
+  curvature_lookahead_far: 8
+
+# Safety cage in the training loop (D-34, TS-01). The cage is invoked
+# in-process from GazeboLaneEnv using the same SafetyCageNode + cage/cage.yaml
+# as deployment. enabled=false reverts to the legacy no-cage debug loop
+# (Training Spec §7.2.5).
+cage:
+  enabled: true
+  mode: enforcement
+  yaml_path: ""          # empty -> path-walk to repo-root cage/cage.yaml
+  lookahead_segments: 5  # match lane_perception_node curvature look-ahead
+  # Actuation mapping — MUST mirror vehicle_control_node defaults so the env
+  # reproduces the deployment /cmd_vel mapping. Keep in sync if those change.
+  throttle_nominal: 0.5
+  yaw_gain: 0.8
+  min_speed_scale: 0.35
+
+# Random spawn perturbation per episode (Training Spec §7.3) for start-state
+# diversity. eval_policy disables it for a deterministic, comparable start.
+spawn_perturbation:
+  enabled: true
+  heading_rad: 0.15   # [provisional, M-P5]
+  lateral_m: 0.05     # [provisional, M-P5]

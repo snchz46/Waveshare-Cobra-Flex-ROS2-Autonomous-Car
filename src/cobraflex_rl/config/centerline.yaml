@@ -1,0 +1,9 @@
+centerline:
+  points:
+    - [0.0, -1.0]
+    - [0.0, 0.0]
+    - [0.0, 1.0]
+    - [0.0, 2.0]
+
+lane_width: 0.245
+road_width: 0.50

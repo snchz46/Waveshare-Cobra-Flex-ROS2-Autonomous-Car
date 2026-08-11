@@ -1,0 +1,137 @@
+# PREREGISTERED / UNTRAINED Gazebo 2-D campaign-qualification contract.
+#
+# This is a fresh-training derivative of train_sac_camera_2d_tuned_entfix.yaml.
+# Its only learning/environment delta is action.max_speed_mps 0.25 -> 0.22,
+# leaving >=0.03 m/s below the canonical C-04 curve floor (0.25 m/s). The
+# remaining deltas are evidence controls: new model/contract identity and
+# a bounded 75k parent plus replay evidence for the preregistered 50k
+# SC-PERT-03 continuation. The 150k buffer covers all 125k transitions.
+#
+# Do NOT evaluate a historical 0.25 checkpoint with this file. Normalized
+# throttle maps to a different physical speed, so that would be an eval-time
+# sensitivity probe, not evidence for this contract. The runtime guard binds
+# this contract into newly trained SB3 checkpoints and rejects old ones.
+# D-43 characterization remains a separate prerequisite before a 2-D campaign.
+algorithm: sac
+
+sac:
+  buffer_size: 150000
+  learning_starts: 5000
+  tau: 0.005
+  train_freq: 1
+  gradient_steps: 2
+  ent_coef: 0.005
+  target_update_interval: 1
+
+total_timesteps: 75000
+learning_rate: 0.0003
+lr_schedule: constant
+target_kl: 0.5
+gamma: 0.99
+gae_lambda: 0.95
+n_steps: 1024
+batch_size: 256
+n_epochs: 10
+clip_range: 0.2
+ent_coef: 0.01
+vf_coef: 0.5
+max_grad_norm: 0.5
+normalize_reward: true
+clip_range_vf: 0.2
+clip_reward: 10.0
+device: auto
+service_timeout_ms: 3500
+seed: 2024
+max_episode_steps: 2048
+control_dt: 0.10
+fixed_speed: 0.20
+progress_bounded_tracking: false
+viz: false
+checkpoint_freq: 25000
+save_replay_buffer: true
+model_path: cobraflex_sac_gz2d_lane_tuned_entfix_margin022_75k_v1
+sim_real_time_factor: 1
+
+policy: CnnPolicy
+
+action:
+  type: steer_throttle
+  max_speed_mps: 0.22
+  throttle_deadband: 0.05
+
+# Machine-checked preregistration. The duplicated cap is an assertion against
+# the executable action map. This block is also fingerprinted into checkpoints.
+campaign_contract:
+  schema_version: 1
+  id: GZ2D-SAC-ENTFIX-MARGIN022-V1
+  status: preregistered_untrained
+  requires_fresh_training: true
+  historical_checkpoint_compatible: false
+  d43_preflight_required: true
+  replay_buffer_required: true
+  bounded_training_required: true
+  planned_training_steps: 75000
+  planned_finetune_steps: 50000
+  replay_buffer_covers_parent_and_finetune: true
+  c04_curve_ceiling_mps: 0.25
+  minimum_speed_margin_mps: 0.03
+  max_speed_mps: 0.22
+
+observation:
+  type: camera
+  camera:
+    topic: /camera/image_raw_lane
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+
+domain_randomization:
+  enabled: true
+  p_degrade: 0.5
+  level_range: [0.2, 0.8]
+
+reward:
+  lateral_error: 2.5
+  heading_error: 0.75
+  steer_delta: 0.20
+  throttle_delta: 0.10
+  forward_progress: 1.0
+  stall_penalty: 0.5
+  stall_progress_min: 0.25
+  termination: 25.0
+
+cage:
+  enabled: true
+  mode: enforcement
+  yaml_path: ""
+  # Gazebo D-43/C-02 calibration (21.07.2026), valid for the Lane Cam /
+  # complex_b renderer envelope only.  The shared quadratic tangent avoids the
+  # legacy curvature subtraction; the global measurement gain preserves the
+  # canonical 25-degree physical limit.  Evidence:
+  # d43_c02_calibration_20260721T082128Z (held-out dynamic PASS).
+  perception_heading_fit_mode: joint_pair_quadratic
+  perception_heading_gain: 1.60
+  # Temporal heading-consistency gate (T3, D-62, 24.07.2026). Eval-time cage
+  # readout only — the policy observes the CNN camera, never cv_epsi, so this is
+  # not a training/observation change and needs no retrain. Caps the CV heading
+  # ONLY while the estimator's own ey confirms lane-following (centred + drift-
+  # free) with real curvature present — conditions a genuine heading fault breaks
+  # within one cycle, so it cannot mask a fault. Resolves the H-12 single-frame
+  # over-read that blocked the D-43 preflight (13 -> 0 centred false triggers
+  # offline; held-out D-43/C-02 faults still 6/6 detected, <=1-cycle delay).
+  perception_heading_temporal_window: 4
+  perception_heading_temporal_ey_track_m: 0.08
+  perception_heading_temporal_ey_drift_m: 0.03
+  perception_heading_temporal_kappa_gate: 0.30
+  perception_heading_temporal_cap_rad: 0.32
+  lookahead_segments: 5
+  throttle_nominal: 0.5
+  yaw_gain: 0.8
+  min_speed_scale: 0.35
+
+spawn_perturbation:
+  enabled: true
+  heading_rad: 0.15
+  lateral_m: 0.05
+  random_start_s: true

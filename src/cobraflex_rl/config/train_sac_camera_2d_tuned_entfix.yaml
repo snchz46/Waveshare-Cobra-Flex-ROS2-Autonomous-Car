@@ -1,0 +1,119 @@
+# ENTFIX VARIANT of train_sac_camera_2d_tuned.yaml (18.07.2026): identical except
+# sac.ent_coef 0.005 FIXED (vs auto) + model_path. Tests whether the temperature
+# floor removes the collapse-recover cycle regime of sac_gz2d_tuned_complex_b_2024_1M.
+# Track 'E' (posterior) — GAZEBO 2-D camera SAC, TUNED variant (15.07.2026).
+#
+# Purpose split (see docs/11 §4.2): the *_pilot25k pair answers the like-for-like
+# algorithm question (configs identical except `algorithm:`), while THIS config
+# answers "how far can 2-D SAC actually get" — so it drops the PPO-inherited
+# values that are non-canonical for SAC and were knowingly handicapping it:
+#
+#   * batch_size 64  -> 256      (SAC canonical; 64 was the shared-PPO value)
+#   * lr_schedule linear -> constant  (SAC canonical is constant 3e-4; the
+#     PPO-inherited anneal-to-0 switches learning off exactly when the replay
+#     buffer is at its richest)
+#   * learning_starts 1000 -> 5000   (canonical warmup scale for a 1M run)
+#   * gradient_steps 1 -> 2          (UTD ratio 2: the Gazebo render caps
+#     collection at ~7 steps/s and the GPU idles between frames, so extra
+#     updates per env step are free wall-clock — the standard lever when the
+#     sim, not the compute, is the bottleneck)
+#   * buffer_size 150000             (~8.4 GB at ~56 KB/transition; lower to
+#     100000 (~5.6 GB) if the training host is RAM-tight — NEVER unset)
+#
+# Everything env-side is byte-identical to train_sac_camera_2d.yaml /
+# train_ppo_camera_2d.yaml (0.25-cap D-59 revision): action contract, reward
+# extras (throttle_delta / stall_penalty), canonical cage, DR, D-58 random
+# spawns, 2048-step episodes, seed 2024. PPO-only keys are kept (ignored by
+# the SAC path) so diffs against the pair stay readable.
+#
+# Watch item from the 25k pilots: SAC 2-D drives slow-but-alive (ep_len 198 at
+# rew 90) — if the long run settles into a low-speed local optimum that
+# stall_penalty (bites < ~0.05 m/s) never charges, revisit reward.stall_progress_min.
+algorithm: sac
+
+sac:
+  buffer_size: 150000
+  learning_starts: 5000
+  tau: 0.005
+  train_freq: 1
+  gradient_steps: 2       # UTD 2 — see header rationale
+  ent_coef: 0.005         # FIXED temperature floor (18.07.2026): auto collapsed to ~7e-4
+                          # in the 2-D tuned 1M run (collapse-recover cycles, peak 527@154k,
+                          # cycle 3 died) and in the 1-D run. Only intended delta vs
+                          # train_sac_camera_2d_tuned.yaml. NB: UTD 2 kept — with a fixed
+                          # temperature there is no alpha adaptation to accelerate.
+  target_update_interval: 1
+
+total_timesteps: 1000000  # ~40 h at ~7 steps/s on the training host
+learning_rate: 0.0003
+lr_schedule: constant     # SAC canonical (the pair keeps PPO's linear)
+target_kl: 0.5            # PPO-only, ignored
+gamma: 0.99
+gae_lambda: 0.95
+n_steps: 1024
+batch_size: 256           # SAC canonical (the pair keeps the shared 64)
+n_epochs: 10
+clip_range: 0.2
+ent_coef: 0.01            # PPO-only, ignored (SAC uses sac.ent_coef auto)
+vf_coef: 0.5
+max_grad_norm: 0.5
+normalize_reward: true
+clip_range_vf: 0.2
+clip_reward: 10.0
+device: auto
+service_timeout_ms: 3500
+seed: 2024
+max_episode_steps: 2048
+control_dt: 0.10
+fixed_speed: 0.20         # cruise reference (progress normaliser + 1-D fallback)
+progress_bounded_tracking: false
+viz: false                # long headless run
+checkpoint_freq: 25000    # 40 ckpts/1M — the periodic-ckpt volume lesson (03.07.2026)
+model_path: cobraflex_sac_gz2d_lane_tuned_entfix
+sim_real_time_factor: 1
+
+policy: CnnPolicy
+
+action:
+  type: steer_throttle
+  max_speed_mps: 0.25     # D-59 0.25-cap revision — stays inside the validated cage envelope
+  throttle_deadband: 0.05
+
+observation:
+  type: camera
+  camera:
+    topic: /camera/image_raw_lane
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+
+domain_randomization:
+  enabled: true
+  p_degrade: 0.5
+  level_range: [0.2, 0.8]
+
+reward:
+  lateral_error: 2.5
+  heading_error: 0.75
+  steer_delta: 0.20
+  throttle_delta: 0.10
+  forward_progress: 1.0
+  stall_penalty: 0.5
+  stall_progress_min: 0.25
+  termination: 25.0
+
+cage:
+  enabled: true
+  mode: enforcement
+  yaml_path: ""           # canonical cage.yaml (25°)
+  lookahead_segments: 5
+  throttle_nominal: 0.5
+  yaw_gain: 0.8
+  min_speed_scale: 0.35
+
+spawn_perturbation:
+  enabled: true
+  heading_rad: 0.15
+  lateral_m: 0.05
+  random_start_s: true    # D-58 curriculum lever

@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>cobraflex_rl</name>
+  <version>0.0.1</version>
+  <description>ROS2 Python package for PPO-based lane following in Gazebo.</description>
+  <maintainer email="admit@example.com">admit</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>ament_index_python</depend>
+  <depend>cobraflex_safety_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+  <depend>nav_msgs</depend>
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+
+  <!-- NOT declared: <exec_depend>cobraflex</exec_depend>. deploy_cobraflex.launch.py
+       resolves cobraflex_bringup.launch.xml through ament_index at runtime, and only
+       under bringup:=true (the non-default standalone path) — while `cobraflex`
+       already exec_depends on this package (lane_keeper_gazebo_node imports the CV
+       lane estimator). Declaring both directions makes the dependency graph cyclic
+       and colcon refuses to order the workspace at all
+       ("Unable to order packages topologically"). The code-level direction
+       cobraflex -> cobraflex_rl is the real one and is the one kept. -->
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

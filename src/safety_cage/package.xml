@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>safety_cage</name>
+  <version>0.1.0</version>
+  <description>
+    ROS2 wrapper around cage.cage_node.SafetyCageNode. Subscribes to
+    /raw_action (Twist) and /state_obs (Float64MultiArray); publishes
+    /safe_action (Twist), /cage_status (cobraflex_safety_msgs/CageStatus),
+    and /emergency (Bool).
+  </description>
+  <maintainer email="samuel.sanchez@example.com">Samuel Sanchez</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>cobraflex_safety_msgs</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

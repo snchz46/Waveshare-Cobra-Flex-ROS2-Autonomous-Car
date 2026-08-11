@@ -1,0 +1,154 @@
+# ENTFIX VARIANT of train_sac_camera.yaml (18.07.2026): identical except sac.ent_coef
+# 0.005 FIXED (vs auto) + model_path. Tests whether the entropy-temperature floor
+# prevents the collapse-cycle regime seen in sac_newcam_complex_b_2024_1M (docs/11 §4.2).
+# Track 'E' — end-to-end front-camera SAC training config.
+# Single-parameter algorithm switch vs train_ppo_camera.yaml: `algorithm: sac`
+# plus the off-policy `sac:` block below. Everything else — observation,
+# reward, cage wiring, domain randomisation, spawn perturbation, seed policy,
+# LR (+ linear schedule), gamma, batch_size — is byte-identical to the PPO
+# config, so PPO-vs-SAC runs differ only in the update rule.
+# PPO-only keys (n_steps, clip_range, target_kl, clip_range_vf, n_epochs,
+# gae_lambda, ent_coef, vf_coef, max_grad_norm) are ignored by the SAC path;
+# they are kept here so a config diff against train_ppo_camera.yaml shows only
+# the algorithm switch.
+algorithm: sac            # ppo (default) | sac — the only intended delta
+
+# SAC off-policy knobs (train_ppo.py `_resolve_sac_kwargs` defaults shown).
+# buffer_size is the RAM-critical one: each 84x84x4 uint8 transition holds
+# ~56 KB (obs + next_obs), so 100k ≈ 5.6 GB. SB3's 1M default would need
+# ~56 GB — never leave this unset on the camera obs.
+sac:
+  buffer_size: 100000
+  learning_starts: 1000   # uniform-random warmup steps before updates start
+  tau: 0.005              # target-network Polyak coefficient
+  train_freq: 1           # env steps per collection phase
+  gradient_steps: 1       # gradient updates per collection phase
+  ent_coef: 0.005         # FIXED temperature floor (18.07.2026): auto collapsed to ~4-7e-4
+                          # in BOTH 1M runs (1-D 143k cliff, 2-D cycles) -> near-deterministic
+                          # policy exploiting critic errors. 0.005 holds the stochasticity floor
+                          # ~7x above the collapse value. Only intended delta vs the mirror.
+  target_update_interval: 1
+
+total_timesteps: 1000000  # mirror of the PPO main-run budget
+learning_rate: 0.0003
+# Stability levers added after the ppo_newcam_complex_b_2024_1M pilot collapsed
+# at ~105k steps: approx_kl ran away to ~2.7 (vs a healthy ~0.02-0.4 band) with
+# no trust-region brake, destroying the policy + value function (and the tiny
+# post-collapse episodes then hammered the gz set_pose service -> reset storm).
+# target_kl stops the PPO update once a minibatch's approx_kl exceeds
+# 1.5*target_kl (0.5 -> brake at 0.75: above the healthy ceiling ~0.4, far below
+# the 2.7 runaway). lr_schedule: linear anneals the LR to 0 across training.
+lr_schedule: linear       # constant | linear (anneal to 0)
+target_kl: 0.5            # trust-region KL early-stop; null disables
+gamma: 0.99
+gae_lambda: 0.95
+n_steps: 1024
+batch_size: 64
+n_epochs: 10
+clip_range: 0.2
+ent_coef: 0.005
+vf_coef: 0.5
+max_grad_norm: 0.5        # gradient clip; bounds per-step policy movement (SB3 default)
+# Value-function stabilization (root-cause fix for the sawtooth seen in the
+# v2 1M run: it reached rew ~735 but kept crashing to single digits with
+# value_loss exploding to ~470 — the critic chasing returns ~700). VecNormalize
+# divides the reward the algorithm sees by the running std of the discounted
+# return so the critic's targets stay ~O(1); clip_range_vf then bounds the
+# per-update critic movement on that normalized scale. norm_obs stays False, so
+# eval/inference are unaffected and ep_rew_mean in the learning curve stays RAW
+# (Monitor is inside VecNormalize) — comparable with past runs and the F3 536.
+normalize_reward: true    # wrap env in VecNormalize(norm_reward=True, norm_obs=False)
+clip_range_vf: 0.2        # value clip; only meaningful WITH normalize_reward; null disables
+clip_reward: 10.0         # VecNormalize clip on the normalized reward (rarely hit)
+device: auto              # CNN benefits from CUDA when present; falls back to cpu
+# gz set_pose/set_physics CLI timeout (ms). Raised 2000->3500: the CLI does
+# service discovery per call and occasionally times out under reset load.
+service_timeout_ms: 3500
+seed: 2024                # E-main seed mirrors the F-track main run (D-36 precedent)
+max_episode_steps: 1024
+control_dt: 0.10
+fixed_speed: 0.20
+# Off-road termination on the complex_b circuit is judged by the global distance
+# to the ROAD-CENTRE centerline vs road_width/2 (the painted edge) — robust to
+# the circuit approaching itself, where the stateful cross-track ey collapses.
+# Pass the road centre via --road-centerline-config (train_lane.launch.py wires
+# config/complex_b_centerline.yaml). progress_bounded_tracking is the older,
+# weaker mitigation and is left off now that the road-centre check supersedes it.
+progress_bounded_tracking: false
+# Publish the cage/agent runtime view to RViz (/cage/markers + /agent/obs_image)
+# each step. Negligible overhead; set false for headless campaign runs.
+viz: true
+checkpoint_freq: 25000    # periodic-ckpt cadence; without it the trainer falls back to
+                          # n_steps (1024) → ~1000 ckpts over 1M (the Isaac volume gotcha,
+                          # 03.07.2026). 40 ckpts/1M; peak rescue reads these.
+model_path: cobraflex_sac_newcam_lane_entfix
+sim_real_time_factor: 1   # camera rendering is real-time-bound; see Training Spec
+
+policy: CnnPolicy
+
+# E-observation (docs/09 §10, fixed at E2): 84×84 grayscale frames, stack k=4
+# applied by the trainer (VecFrameStack). The cage's state comes from the
+# deterministic CV lane-estimator on the same (possibly degraded) frame (D-43).
+observation:
+  type: camera
+  camera:
+    # Dedicated front lane camera (IMX219-160 mirror, 640x360 hfov 90 deg);
+    # shared by policy obs and the cage CV estimator since 2026-06-11.
+    topic: /camera/image_raw_lane
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+
+# Training-side mitigation of H-10 (SR-012): per-episode visual degradation
+# drawn from the H-10 envelope (glare / low-light / motion-blur). Occlusion and
+# false-lane are eval-only stressors (SC-PERT-07/08) — training on them would
+# teach the policy to ignore exactly the cues whose loss must trigger the
+# SR-013/SR-014 stop.
+domain_randomization:
+  enabled: true
+  p_degrade: 0.5                # per-episode degradation probability (raised 0.25→0.5 to widen H-10 coverage, matching the newcam 425k run)
+  level_range: [0.2, 0.8]       # degradation level range (raised 0.5→0.8 ceiling); uniform sampling
+  # modes: defaults to the H-10 trio (visual_degradation.MODES)
+
+# Sim-to-real DR lever #2/#3 (Isaac in-process trainer only. Per-episode physics + actuation-latency
+dynamics_randomization:           # Isaac Sim only; ignored by Gazebo and eval
+  enabled: true
+  friction_range: [0.04, 0.07]    # effective wheel+ground friction (both set equal; combine=min)
+  mass_scale_range: [0.85, 1.15]  # multiply explicit link masses (best-effort; no-op if masses are density-derived)
+  yaw_scale_range: [0.8, 1.2]     # gain on commanded angular velocity (yaw-response uncertainty)
+  latency_steps_range: [0, 2]     # actuation delay in control cycles (inclusive); 0.10 s/step → up to 0.2 s
+
+# Sim-to-real DR lever #4 (camera only): per-episode scene-appearance randomization
+# (lights + track colours), complementary to the image-level domain_randomization
+# above. Covers shadows/exposure/surface-colour shifts the frame degradation cannot.
+scene_randomization:              # Isaac Sim only; ignored by Gazebo and eval
+  enabled: true
+  dome_intensity_scale: [0.6, 1.4]
+  sun_intensity_scale: [0.5, 1.5]
+  light_tint: 0.1                 # ± per-channel multiplicative tint on the lights
+  asphalt_jitter: 0.08            # near-black asphalt: brighten-only lift up to this
+  line_jitter: 0.15               # lane-line grey jitter (±)
+  grass_jitter: 0.10              # off-road colour jitter (±)
+
+reward:
+  lateral_error: 2.5
+  heading_error: 0.75
+  steer_delta: 0.20
+  forward_progress: 1.0
+  termination: 25.0
+
+cage:
+  enabled: true
+  mode: enforcement
+  yaml_path: ""          # empty -> path-walk to repo-root cage/cage.yaml (0.6.0)
+  lookahead_segments: 5
+  throttle_nominal: 0.5
+  yaw_gain: 0.8
+  min_speed_scale: 0.35
+
+spawn_perturbation:
+  enabled: true
+  heading_rad: 0.15
+  lateral_m: 0.05
+  random_start_s: false

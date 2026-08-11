@@ -1,0 +1,172 @@
+# Track 'E' (posterior) — GAZEBO 2-D action (steering + throttle) camera SAC.
+# Single-parameter algorithm switch vs train_ppo_camera_2d.yaml (D-60): only
+# `algorithm: sac`, the off-policy `sac:` block and model_path differ; the 2-D
+# action contract, reward extras (throttle_delta / stall_penalty), cage wiring,
+# DR, spawn curriculum and seed are byte-identical. PPO-only keys are ignored
+# by the SAC path and kept so a diff shows only the switch. All the
+# which-Isaac-findings-port rationale lives in train_ppo_camera_2d.yaml.
+algorithm: sac
+
+# SAC off-policy knobs (defaults in train_ppo.py _resolve_sac_kwargs).
+# buffer_size is RAM-critical on the 84x84x4 camera obs (~56 KB/transition):
+# 100k ~= 5.6 GB. Never leave it unset (SB3's 1M default would be ~56 GB).
+sac:
+  buffer_size: 100000
+  learning_starts: 1000
+  tau: 0.005
+  train_freq: 1
+  gradient_steps: 1
+  ent_coef: auto          # auto-tuned temperature: SAC's own answer to the D-52
+                          # 2-D exploration-collapse concern (no fixed bonus needed)
+  target_update_interval: 1
+
+total_timesteps: 1000000  # 1M-step run (~34 h at ~8 steps/s on this host). Pilot at 20k first.
+learning_rate: 0.0003
+lr_schedule: linear       # constant | linear (anneal to 0)
+target_kl: 0.5            # trust-region KL early-stop; null disables (v3 stability stack)
+gamma: 0.99
+gae_lambda: 0.95
+n_steps: 1024
+batch_size: 64
+n_epochs: 10
+clip_range: 0.2
+ent_coef: 0.01           # D-52: the 2-D action doubles the exploration burden; run 1
+                          # (Isaac) collapsed policy std 0.99 → 0.023 into crawl-and-die
+                          # with ent_coef 0.0. The entropy bonus keeps the 2-D Gaussian
+                          # stochastic long enough to find the full-lap mode. Backend-agnostic.
+vf_coef: 0.5
+max_grad_norm: 0.5
+normalize_reward: true    # VecNormalize(norm_reward=True, norm_obs=False) — critic-target stabiliser
+clip_range_vf: 0.2        # value clip; only meaningful WITH normalize_reward
+clip_reward: 10.0
+device: auto              # CnnPolicy benefits from CUDA when present
+# gz set_pose/set_physics CLI timeout (ms); raised for reset-load discovery stalls.
+service_timeout_ms: 3500
+seed: 2024                # cross-backend parity with train_isaac_2d.yaml (D-36 main-seed);
+                          # makes the Gazebo-vs-Isaac 2-D comparison seed-aligned (docs/13).
+max_episode_steps: 2048   # D-58/kin2 lesson (user-directed 08.07.2026): with random_start_s
+                          # on and a 2-D policy that slows for curves, 1024 truncates before a
+                          # full lap and the policy never learns past it (Isaac kin2 had to be
+                          # resumed 1024→2048). E-main frozen parity was 1024.
+control_dt: 0.10
+# fixed_speed stays the CRUISE REFERENCE: the progress-reward normaliser
+# (~1.0 == one cruise-speed step; docs/10) and the 1-D fallback speed. The 2-D
+# policy's actual speed authority is action.max_speed_mps below.
+fixed_speed: 0.20
+progress_bounded_tracking: false   # road-centre off-road check supersedes it
+viz: true                 # Gazebo CAN publish the cage/agent RViz view (unlike in-process
+                          # Isaac) — useful to watch the 2-D throttle slow for curves.
+                          # Set false for long headless runs (§9.1).
+model_path: cobraflex_sac_gz2d_lane_v2  # SAC counterpart of the _v2 (0.25-cap) PPO run
+checkpoint_freq: 25000    # periodic-ckpt cadence; without it train_ppo falls back to
+                          # n_steps (1024) → ~20 GB over 1M (the Isaac gotcha, fixed
+                          # there 03.07.2026 — same fix here). 40 ckpts/1M ≈ 800 MB.
+sim_real_time_factor: 1   # camera rendering is real-time-bound in Gazebo
+
+policy: CnnPolicy
+
+# --- 2-D action (D-50): steering + throttle -----------------------------------
+# The policy commands [steer, throttle] in [-1, 1]²; throttle maps to the cage
+# scale u ∈ [0, 1] (cage_bridge.policy_throttle_to_cage) and actuates on the
+# linear map speed = max_speed_mps · u (full stop below throttle_deadband).
+#
+# max_speed_mps REVISED 0.5 → 0.25 (13.07.2026, CHANGELOG; evidence: the
+# ppo_gz2d_complex_b_2024 full-authority evals, docs/11 §8.5 / ch.7 §7.5.4).
+# The original 0.5 (= C-04 v_max_straight = ODD-1.V_MAX) was chosen so the cage
+# speed rules would "arbitrate for real" — but with the cage's speed thresholds
+# still [provisional] and calibrated at the 1-D 0.2 m/s regime, that arbitration
+# is a wall, not an arbiter: NO enforcement eval completed the horizon (4 runs:
+# 26 steps / 0.62 / 0.91 / 1.52 laps), every stop C-04+C-05 on a CENTERED car at
+# >0.25 m/s (TTLC shortens with speed, curve ceiling 0.25, fast C-05 persistence
+# above v_warning 0.4 — marginal CV reads that are harmless at 0.2 cross
+# emergency thresholds at speed). Capping the ACTION at 0.25 keeps the policy
+# inside the validated envelope by construction — no cage.yaml change (loosening
+# safety-traced thresholds to fit the policy would invert the safety logic) —
+# while preserving everything that justifies 2-D: slowing for curves (down to a
+# full stop), a commandable stop (SR-009 well-posed), and a small margin over
+# the 0.2 cruise on straights. The full-authority 0.5 variant returns AFTER the
+# cage speed-envelope calibration for the >0.2 regime (D-59 prerequisite).
+action:
+  type: steer_throttle    # "steer" = the frozen 1-D contract (ED-2)
+  max_speed_mps: 0.25     # was 0.5 — see revision note above
+  throttle_deadband: 0.05
+
+# E-observation (docs/09 §10): 84×84 grayscale frames, stack k=4 applied by the
+# trainer (VecFrameStack). The cage's state comes from the deterministic CV
+# lane-estimator on the same (possibly degraded) frame (D-43).
+observation:
+  type: camera
+  camera:
+    topic: /camera/image_raw_lane
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+
+# Training-side mitigation of H-10 (SR-012): per-episode visual degradation
+# drawn from the H-10 envelope (glare / low-light / motion-blur). Occlusion and
+# false-lane stay eval-only (SC-PERT-07/08).
+domain_randomization:
+  enabled: true
+  p_degrade: 0.5
+  level_range: [0.2, 0.8]
+
+# Sim-to-real DR levers #2/#3/#4 — Isaac Sim in-process trainer ONLY; ignored by
+# Gazebo and eval. Left here for config-shape parity with train_isaac_2d.yaml;
+# they are no-ops on this (Gazebo) path.
+dynamics_randomization:
+  enabled: false          # Gazebo ignores this regardless; off for an explicit no-DR-physics run
+  friction_range: [0.04, 0.07]
+  mass_scale_range: [0.85, 1.15]
+  yaw_scale_range: [0.8, 1.2]
+  latency_steps_range: [0, 2]
+
+scene_randomization:
+  enabled: false          # Gazebo ignores this regardless
+  dome_intensity_scale: [0.6, 1.4]
+  sun_intensity_scale: [0.5, 1.5]
+  light_tint: 0.1
+  asphalt_jitter: 0.08
+  line_jitter: 0.15
+  grass_jitter: 0.10
+
+reward:
+  lateral_error: 2.5
+  heading_error: 0.75
+  steer_delta: 0.20
+  # Raw-throttle smoothness (D-50), the longitudinal mirror of steer_delta —
+  # same raw-not-post-cage rationale (C-06 rate-limits throttle too). [provisional]
+  throttle_delta: 0.10
+  forward_progress: 1.0
+  # D-56: make the degenerate "park" optimum strictly unprofitable — charged per
+  # step while normalised progress < stall_progress_min (0.25 = 0.05 m/s at cruise
+  # 0.2); slow-but-driving (≥ 0.05 m/s) is never charged. [provisional]
+  # CAVEAT: in Isaac v6, stall_penalty 0.5 OVERCORRECTED to fast-and-reckless —
+  # but that was entangled with the D-55 loosened Isaac cage (blind-stretch budgets
+  # that stopped executing a stalled car promptly). Gazebo runs the canonical tight
+  # cage, so re-check: if the 2-D policy goes reckless, lower this toward 0.2.
+  stall_penalty: 0.5
+  stall_progress_min: 0.25
+  termination: 25.0
+
+cage:
+  enabled: true
+  mode: enforcement
+  yaml_path: ""          # canonical repo-root cage/cage.yaml (theta_max 25°) — NOT cage_isaac
+  lookahead_segments: 5
+  throttle_nominal: 0.5  # 1-D fallback / SC-EDGE-03 override scale (unused as cruise here)
+  yaw_gain: 0.8          # Gazebo DiffDrive delivers ~1:1 yaw — NO Isaac 2.4 boost (D-54)
+  min_speed_scale: 0.35  # 1-D map only; the 2-D map has no lower speed clamp
+
+spawn_perturbation:
+  enabled: true
+  heading_rad: 0.15
+  lateral_m: 0.05
+  # D-58 curriculum lever, ON (user-directed 08.07.2026): uniform random
+  # along-track spawn so every section — incl. the U-turn — is practised from
+  # step 0. This is THE Isaac finding that cracked complex_b's U-turn (kin2:
+  # 0.63 → 0.95 peak laps); the under-visited hard corner gets gradient early
+  # instead of never being reached from the start line. Judge only by
+  # deterministic nominal eval, never by training curves (the flag shifts the
+  # episode-length distribution).
+  random_start_s: true

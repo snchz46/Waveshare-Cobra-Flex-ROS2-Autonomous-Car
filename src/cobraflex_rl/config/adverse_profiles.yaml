@@ -1,0 +1,89 @@
+# ODD-2 / ODD-4 adverse scenario profiles — machine-readable stressor parameters.
+# ---------------------------------------------------------------------------
+# Single source of truth for the named adverse profiles. docs/08 §5.5 (ODD-2)
+# and §7.3 (ODD-4) link here; this file closes TBD-Q4..Q7 (ODD-2 stressors) and
+# TBD-Q12 (whether ODD-4 adds stressors). Consumed by the F4 campaign runner
+# (Phase C) to configure per-scenario stressor injection in GazeboLaneEnv.
+#
+# Stressor channels (zero / disabled == nominal ODD-1 behaviour):
+#   perception_noise.sigma_lateral_m : gaussian sigma added to the OBSERVED ey
+#   latency.extra_ms                 : delay added BEYOND latency_nominal_ms
+#   latency.jitter_ms                : uniform jitter on the injected delay
+#   actuation.steer_noise            : gaussian sigma on applied steering (normalised)
+#   lighting_markings                : qualitative world asset (faded / non-uniform light)
+#   obstacle.*                       : static obstacle (SPEC ONLY — execution deferred,
+#                                      see note at the bottom of this file)
+
+latency_nominal_ms: 50      # ODD-Spec §9 *.LATENCY_NOMINAL, for reference
+
+profiles:
+
+  odd2_nominal_adverse:
+    lighting_markings: faded_markings_nonuniform_light
+    world: lane_following_oval_worn.world
+    perception_noise: { sigma_lateral_m: 0.03 }
+    latency: { extra_ms: 0, jitter_ms: 0 }
+    actuation: { steer_noise: 0.0 }
+    obstacle: { enabled: false }
+    # sigma = mid level of the SC-PERT-01 noise sweep {0.01, 0.03, 0.05}.
+    references_scenario: SC-PERT-01
+
+  odd2_adverse_with_latency:
+    lighting_markings: nominal
+    world: lane_following_oval.world
+    perception_noise: { sigma_lateral_m: 0.0 }
+    latency: { extra_ms: 100, jitter_ms: 20 }
+    actuation: { steer_noise: 0.02 }
+    obstacle: { enabled: false }
+    # latency = high level of the SC-PERT-02 sweep {50, 100} ms, over 50 ms nominal.
+    references_scenario: SC-PERT-02
+
+  odd2_adverse_with_obstacle:
+    lighting_markings: nominal
+    world: obstacles.world
+    perception_noise: { sigma_lateral_m: 0.0 }
+    latency: { extra_ms: 0, jitter_ms: 0 }
+    actuation: { steer_noise: 0.0 }
+    obstacle:
+      enabled: true
+      shape: box
+      size_m: [0.10, 0.10, 0.10]
+      quantity: 1
+      placement: mid_straight       # s = L/2 on a straight section
+      lane_intrusion_m: 0.05        # partial intrusion from the right lane edge
+    execution: deferred             # see EXECUTION NOTE below
+    references_odd: "ODD-Spec §5.1 (8-dim obs w/ obstacle channels), §5.3, §5.7"
+
+  odd2_adverse_full:
+    lighting_markings: faded_markings_nonuniform_light
+    world: lane_following_oval_worn.world
+    perception_noise: { sigma_lateral_m: 0.03 }
+    latency: { extra_ms: 100, jitter_ms: 20 }
+    actuation: { steer_noise: 0.02 }
+    obstacle:                       # = odd2_adverse_with_obstacle
+      enabled: true
+      shape: box
+      size_m: [0.10, 0.10, 0.10]
+      quantity: 1
+      placement: mid_straight
+      lane_intrusion_m: 0.05
+    execution: deferred             # inherits the obstacle execution-deferral
+    composed_of: [odd2_nominal_adverse, odd2_adverse_with_latency, odd2_adverse_with_obstacle]
+
+# ODD-4 named profiles (TBD-Q12): the PURE CROSS-PRODUCT of ODD-3 curvy-loop
+# geometry with the ODD-2 stressors above — no additional stressor mechanism.
+# Listed for traceability; geometry := odd3_curvy_loop (oval_R080 composer preset).
+odd4_profiles:
+  odd4_nominal_adverse:       { inherits: odd2_nominal_adverse,       geometry: odd3_curvy_loop }
+  odd4_adverse_with_latency:  { inherits: odd2_adverse_with_latency,  geometry: odd3_curvy_loop }
+  odd4_adverse_with_obstacle: { inherits: odd2_adverse_with_obstacle, geometry: odd3_curvy_loop }
+  odd4_adverse_full:          { inherits: odd2_adverse_full,          geometry: odd3_curvy_loop }
+
+# EXECUTION NOTE (obstacle profiles) -----------------------------------------
+# odd2_adverse_with_obstacle and odd2_adverse_full are SPECIFIED here but are
+# NOT executed by the F4 campaign yet: the F3-trained policy observes a 6-dim
+# vector [ey, epsi, speed, prev_steer, kappa_near, kappa_far] with no obstacle
+# channel. ODD-Spec §5.1 specifies an 8-dim ODD-2 observation (obstacle-forward
+# distance, obstacle-lateral offset, obstacle-detected flag); wiring that channel
+# and retraining are out of F4 scope. The campaign runner skips profiles whose
+# `execution: deferred` until obstacle perception exists. (D-33 closure rationale.)

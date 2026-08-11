@@ -1,0 +1,123 @@
+# CURRICULUM SPAWN (2nd attempt, discovery-based): 2-D + yaw 0.8 (champion stable recipe)
+# + random along-track spawn so the U-turn is practised from step 0 (it dies there early ->
+# no gradient there -> never learns slow-and-turn). Single complex_b, no DR, 1M.
+# needed for R 0.97m U-turn) + single complex_b + no DR + de-biased. Both levers to make the
+# U-turn. Q: does this beat the 0.63 champion toward CV 0.97?
+total_timesteps: 1000000  # FULL validation (2-D needs ~1M to converge; 150k diagnostics too short)
+                          # 2-D scene (RTX 5060, headless — docs/13; the ~33 figure was
+                          # the single-track 1-D pilot)
+checkpoint_freq: 25000    # 40 ckpts/1M (~800 MB). Unset = n_steps (1024) -> ~20 GB/1M.
+learning_rate: 0.0003
+lr_schedule: linear       # constant | linear (anneal to 0)
+target_kl: 0.5            # trust-region KL early-stop; null disables
+gamma: 0.99
+gae_lambda: 0.95
+n_steps: 1024
+batch_size: 64
+n_epochs: 10
+clip_range: 0.2
+ent_coef: 0.01           # D-52: run 1 (ppo_isaac2d_2024_1M) collapsed exploration by 36%
+                          # (policy std 0.99 -> 0.023) into a crawl-and-die local optimum
+                          # (nominal eval: <= 0.45 laps, 15/18 cage emergencies); entropy
+                          # bonus keeps the 2-D action stochastic long enough to discover
+                          # the full-lap mode. Was 0.0 (the 1-D Gazebo recipe).
+vf_coef: 0.5
+max_grad_norm: 0.5
+normalize_reward: true    # VecNormalize(norm_reward=True, norm_obs=False)
+clip_range_vf: 0.2        # value clip; only meaningful WITH normalize_reward
+clip_reward: 10.0
+device: auto              # CnnPolicy benefits from CUDA when present
+seed: 2024                # main-seed precedent (D-36)
+max_episode_steps: 2048   # allow >1 lap (curriculum slows to ~0.15 m/s at the U-turn)
+control_dt: 0.10
+# fixed_speed stays the CRUISE REFERENCE: the progress reward normaliser
+# (~1.0 == one cruise-speed step; docs/10) and the 1-D fallback speed. The 2-D
+# policy's actual speed authority is action.max_speed_mps below.
+fixed_speed: 0.20
+progress_bounded_tracking: false   # road-centre off-road check supersedes it
+viz: false                # in-process Isaac cannot publish to RViz
+model_path: cobraflex_ppo_isaac2d_kin2_2024_1M
+
+policy: CnnPolicy
+
+# --- 2-D action (D-50): steering + throttle -----------------------------------
+# The policy commands [steer, throttle] in [-1, 1]²; throttle maps to the cage
+# scale u ∈ [0, 1] (cage_bridge.policy_throttle_to_cage) and actuates on the
+# linear map speed = max_speed_mps · u (full stop below throttle_deadband).
+# max_speed_mps = 0.5 = C-04's v_max_straight = ODD-1.V_MAX: the policy can
+# genuinely exceed the curve ceiling (0.25 m/s) and the C-05 warning band
+# (0.4 m/s), so the cage speed rules arbitrate for real — and a true stop is
+# commandable, making SR-009's stall/liveness sub-mode well-posed.
+action:
+  type: steer_throttle   # T6: 2-D (can slow for the U-turn)
+  max_speed_mps: 0.5
+  throttle_deadband: 0.05
+
+# E-observation (docs/09 §10): 84×84 grayscale frames, stack k=4 applied by the
+# trainer (VecFrameStack). The cage's state comes from the deterministic CV
+# lane-estimator on the same (possibly degraded) frame (D-43).
+observation:
+  type: camera
+  camera:
+    topic: /camera/image_raw_lane   # informational on Isaac (in-process capture)
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+
+# Training-side mitigation of H-10 (SR-012): per-episode visual degradation
+# drawn from the H-10 envelope (glare / low-light / motion-blur). Occlusion and
+# false-lane stay eval-only (SC-PERT-07/08).
+domain_randomization:
+  enabled: false   # T3: visual DR OFF (Gazebo recipe floor)
+  p_degrade: 0.5
+  level_range: [0.2, 0.8]
+
+# Sim-to-real DR lever #2/#3 (Isaac in-process trainer only): per-episode
+# physics + actuation-latency randomization. Ranges centred on the sim nominal;
+# re-centre after real-platform system-ID (docs/13).
+dynamics_randomization:
+  enabled: false  # D-53 stage 1: OFF (curriculum)
+  friction_range: [0.04, 0.07]
+  mass_scale_range: [0.85, 1.15]
+  yaw_scale_range: [0.8, 1.2]
+  latency_steps_range: [0, 2]
+
+# Sim-to-real DR lever #4 (camera only): per-episode scene-appearance
+# randomization (lights + track colours). The track materials are shared across
+# all circuits of a multi-track scene, so one draw re-colours them coherently.
+scene_randomization:
+  enabled: false  # D-53 stage 1: OFF (curriculum)
+  dome_intensity_scale: [0.6, 1.4]
+  sun_intensity_scale: [0.5, 1.5]
+  light_tint: 0.1
+  asphalt_jitter: 0.08
+  line_jitter: 0.15
+  grass_jitter: 0.10
+
+reward:
+  lateral_error: 2.5
+  heading_error: 0.75
+  steer_delta: 0.20
+  # Raw-throttle smoothness (D-50), the longitudinal mirror of steer_delta —
+  # same raw-not-post-cage rationale (C-06 rate-limits throttle too, so a
+  # post-cage delta would be toothless). [provisional: first 2-D pilot]
+  throttle_delta: 0.10
+  forward_progress: 1.0
+  termination: 25.0
+
+cage:
+  enabled: true
+  mode: enforcement
+  yaml_path: ""          # canonical cage/cage.yaml (champion stage-1 recipe)
+  perception_heading_bias_rad: 0.084   # D-57 [provisional, Isaac]: de-bias estimator heading (renderer calibration)
+  lookahead_segments: 5
+  throttle_nominal: 0.5  # 1-D fallback / SC-EDGE-03 override scale (unused as cruise here)
+  yaw_gain: 0.8            # champion stable recipe (yaw 1.5/2.4 destabilised, T4/kin)
+  min_speed_scale: 0.35  # 1-D map only; the 2-D map has no lower speed clamp
+
+spawn_perturbation:
+  enabled: true
+  random_start_s: true    # curriculum: practice EVERY part incl. the tight U-turn from step 0
+  heading_rad: 0.15
+  lateral_m: 0.05
