@@ -41,12 +41,12 @@
 
 | Component | Quantity | Unit Mass | Total Mass |
 |-----------|----------|-----------|------------|
-| Base Link (chassis) | 1 | 5.0 kg | 5.0 kg |
-| Body Link (body) | 1 | 0.3 kg | 0.3 kg |
+| Base Link (chassis) | 1 | 2.1 kg | 2.1 kg |
+| Body Link (body) | 1 | 0.8 kg | 0.8 kg |
 | Wheels (`wheel_1...4`) | 4 | 0.1 kg | 0.4 kg |
-| LiDAR (`lidar_link`) | 1 | 0.125 kg | 0.125 kg |
-| Camera (`camera_link`) | 1 | 0.125 kg | 0.125 kg |
-| **TOTAL** | - | - | **5.95 kg** |
+| LiDAR (`lidar_link`) | 1 | 0.1 kg | 0.1 kg |
+| Camera (`camera_link`) | 1 | 0.1 kg | 0.1 kg |
+| **TOTAL** | - | - | **3.5 kg** |
 
 
 ### 2.2 Chassis, Body and Camera Inertia Tensors

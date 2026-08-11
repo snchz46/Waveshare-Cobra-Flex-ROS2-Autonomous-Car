@@ -85,7 +85,7 @@ $$
 | Wheel radius | $r$ | 0.03725 m |
 | Wheel separation | $W$ | 0.154 m |
 | Wheelbase | $L$ | 0.1356 m |
-| Total mass | $m$ | 6 kg |
+| Total mass | $m$ | 3.5 kg |
 
 ### Operating Limits
 

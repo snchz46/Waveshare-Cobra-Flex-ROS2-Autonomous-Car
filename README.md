@@ -4,7 +4,7 @@ Welcome to the **Waveshare Cobra Flex ROS 2 Autonomous Car** project. This repos
 
 | **CAD Design** | **SImulation** | **Physical Robot**
 |:---------------------:|:-----------------:|:-----------------:|
-| <img src="assets/photos/CAD Design V2.png" width="400"/> | <img src="assets/photos/digital_twin.png" width="600"/> | <img src="assets/photos/Mockup V2 side 2.jpg" width="400"/> |
+| <img src="assets/photos/Car Prototype V3_1.png" width="400"/> | <img src="assets/photos/digital_twin.png" width="600"/> | <img src="assets/photos/Mockup V2 side 2.jpg" width="400"/> |
 
 <div align="center" width="70%">
 
@@ -114,7 +114,7 @@ Industrial autonomous mobile robots need a tightly integrated software stack to 
 <div align="center">
 <table>
   <tr>
-    <td><img src="assets/photos/CAD Design V2.png" width="400"/></td>
+    <td><img src="assets/photos/Car Prototype V3_1.png" width="400"/></td>
     <td><img src="assets/videos/Assembly Video Mockup V2.gif" width="400"/></td>
   </tr>
   <tr>
@@ -200,7 +200,7 @@ The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local con
 | --------- | ----- |
 | Wheel radius | $r = 0.03725$ m |
 | Wheel separation | $W = 0.154$ m |
-| Total mass | $m = 5.95$ kg |
+| Total mass | $m = 3.5$ kg |
 | Max linear velocity | $v_{max} = 0.56$ m/s |
 | Max angular velocity | $\omega_{max} = 6.0$ rad/s |
 | Max linear acceleration | $a_{max} = 2.5$ m/s² |
