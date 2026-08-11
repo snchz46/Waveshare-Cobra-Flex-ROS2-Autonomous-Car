@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Lane keeping node for the CobraFlex robot."""
+import array
 import math
 import time
 import cv2
@@ -16,6 +17,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 
 def _gstreamer_pipeline(sensor_id=0, width=1280, height=720, fps=60, flip_method=0):
+    """GStreamer pipeline string for the Jetson CSI camera (nvarguscamerasrc)."""
     return (
         f"nvarguscamerasrc sensor-id={sensor_id} ! "
         f"video/x-raw(memory:NVMM), width=(int){width}, height=(int){height}, "
@@ -63,6 +65,7 @@ def _status_color(status):
 
 
 def _build_trapezoid_mask(binary_shape, top_y_pct, top_w_pct, bottom_w_pct):
+    """Binary ROI mask shaped as a road-ahead trapezoid (percent-parameterised)."""
     h, w = binary_shape
     mask = np.zeros((h, w), dtype=np.uint8)
 
@@ -88,6 +91,7 @@ def _build_trapezoid_mask(binary_shape, top_y_pct, top_w_pct, bottom_w_pct):
 
 
 def _threshold_image(roi_bgr, threshold_val, blur_k, morph_k, invert):
+    """Blur + threshold (+ optional invert) + morphological close of the ROI."""
     gray = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (blur_k, blur_k), 0)
 
@@ -104,6 +108,7 @@ def _threshold_image(roi_bgr, threshold_val, blur_k, morph_k, invert):
 
 
 def _extract_peaks_from_band(band_binary, min_peak, min_gap_px):
+    """Column-histogram peaks of a horizontal band: candidate line x-positions."""
     hist = band_binary.sum(axis=0).astype(np.float32) / 255.0
 
     kernel = np.ones(9, dtype=np.float32) / 9.0
@@ -203,7 +208,7 @@ class LaneKeeperNode(Node):
         self.declare_parameter("publish_histogram_image", True)
         self.declare_parameter("publish_camera_info", True)
         self.declare_parameter("publish_markers", True)
-        self.declare_parameter("camera_frame_id", "camera_link_optical")
+        self.declare_parameter("camera_frame_id", "camera_link_optical_lane")
         self.declare_parameter("marker_frame_id", "base_footprint")
         self.declare_parameter("camera_hfov_deg", 90.0)
 
@@ -286,6 +291,7 @@ class LaneKeeperNode(Node):
         self.get_logger().info("lane_keeper node started")
 
     def _read_cfg(self):
+        """Read all ROS parameters into a config dict (one place, every cycle)."""
         cfg = {
             "proc_width": self.get_parameter("proc_width").value,
             "proc_height": self.get_parameter("proc_height").value,
@@ -331,6 +337,7 @@ class LaneKeeperNode(Node):
         return cfg
 
     def _create_control_window(self):
+        """OpenCV trackbar window for live threshold/ROI tuning (debug mode)."""
         try:
             cv2.namedWindow(self.controls_window_name, cv2.WINDOW_NORMAL)
             cv2.resizeWindow(self.controls_window_name, 560, 560)
@@ -375,6 +382,7 @@ class LaneKeeperNode(Node):
             )
 
     def _get_control_window_values(self):
+        """Current trackbar values as config overrides."""
         return {
             "roi_start_pct": cv2.getTrackbarPos("ROI start %", self.controls_window_name),
             "threshold_val": cv2.getTrackbarPos("Threshold", self.controls_window_name),
@@ -396,6 +404,7 @@ class LaneKeeperNode(Node):
         }
 
     def _build_image_msg(self, image, encoding, stamp, frame_id):
+        """Wrap a numpy image as a sensor_msgs/Image."""
         if not image.flags["C_CONTIGUOUS"]:
             image = np.ascontiguousarray(image)
 
@@ -407,10 +416,18 @@ class LaneKeeperNode(Node):
         msg.encoding = encoding
         msg.is_bigendian = False
         msg.step = int(image.strides[0])
-        msg.data = image.tobytes()
+        # array.array('B', ...) is the ONLY fast path through rclpy's generated
+        # uint8[] setter. A plain bytes/numpy value falls through to a __debug__
+        # assertion that walks every element in Python, twice: measured at
+        # 127 ms for one 640x360 BGR frame on the Jetson, i.e. a ~8 Hz ceiling
+        # per published image against this node's 20 Hz timer — and it publishes
+        # four debug topics per cycle. With array.array the same assignment is
+        # 0.12 ms.
+        msg.data = array.array("B", image.tobytes())
         return msg
 
     def _build_camera_info_msg(self, width, height, stamp, frame_id, hfov_deg):
+        """CameraInfo with a pinhole model derived from the configured HFOV."""
         msg = CameraInfo()
         msg.header.stamp = stamp
         msg.header.frame_id = frame_id
@@ -453,6 +470,7 @@ class LaneKeeperNode(Node):
         cmd,
         confidence,
     ):
+        """RViz markers for the detected line points and the steering target."""
         markers = MarkerArray()
         frame_id = cfg["marker_frame_id"]
         color_r, color_g, color_b = _status_color(status)
@@ -517,6 +535,7 @@ class LaneKeeperNode(Node):
         return markers
 
     def _publish_visual_topics(self, cfg, debug, overlay, masked_vis, stamp):
+        """Publish the debug/overlay/masked images and markers when enabled."""
         frame_id = cfg["camera_frame_id"]
         frame = debug["frame"]
         hist_image = debug["debug_hist_image"]
@@ -554,6 +573,7 @@ class LaneKeeperNode(Node):
             )
 
     def _process_frame(self, frame_bgr, cfg):
+        """Full per-frame CV pipeline: mask, threshold, peak-track lines, steering error."""
         frame = cv2.resize(
             frame_bgr,
             (cfg["proc_width"], cfg["proc_height"]),
@@ -703,6 +723,7 @@ class LaneKeeperNode(Node):
         }
 
     def _timer_callback(self):
+        """Main control tick: grab a frame, process, publish /cmd_vel and visuals."""
         cfg = self._read_cfg()
 
         ret, frame = self.cap.read()
@@ -909,6 +930,7 @@ class LaneKeeperNode(Node):
             self.last_debug_print = now
 
     def _publish_zero(self):
+        """Publish a zero Twist (stop)."""
         cmd = Twist()
         self.cmd_pub.publish(cmd)
 

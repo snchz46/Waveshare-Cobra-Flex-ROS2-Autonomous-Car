@@ -4,6 +4,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -11,7 +12,7 @@ def generate_launch_description():
     """Build the robot_state_publisher launch description."""
     package_share = FindPackageShare("cobraflex")
     default_urdf = PathJoinSubstitution(
-        [package_share, "urdf", "my_robot_gazebo.urdf"]
+        [package_share, "urdf", "my_robot_gazebo_mesh.urdf"]
     )
 
     use_sim_time = LaunchConfiguration("use_sim_time")
@@ -25,7 +26,12 @@ def generate_launch_description():
         parameters=[
             {
                 "use_sim_time": use_sim_time,
-                "robot_description": Command(["xacro", " ", urdf]),
+                # value_type=str: robot_description is the xacro-expanded URDF
+                # XML; without this, launch tries to YAML-parse it and fails
+                # (e.g. on ':' inside comments).
+                "robot_description": ParameterValue(
+                    Command(["xacro", " ", urdf]), value_type=str
+                ),
             }
         ],
     )
@@ -34,7 +40,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument(
                 "use_sim_time",
-                default_value="true",
+                default_value="false",
                 description="Use simulation time if true.",
             ),
             DeclareLaunchArgument(

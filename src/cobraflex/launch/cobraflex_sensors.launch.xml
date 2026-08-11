@@ -1,4 +1,29 @@
 <launch>
+    <!-- Layer 2 — every sensor the platform carries.
+
+         The lane camera (Jetson CSI) joins the lidar and the ZED here so a
+         bring-up is three commands and no sensor is left to a side script:
+
+             1. cobraflex_bringup.launch.xml   description + ROS->JSON driver
+             2. cobraflex_sensors.launch.xml   lidar + ZED + LANE CAMERA + ekf
+             3. a Layer-3 controller (e.g. cobraflex_rl deploy_cobraflex.launch.py)
+
+         Consequences of owning the camera here, both load-bearing:
+
+         * `deploy_cobraflex.launch.py` defaults `camera:=false` — it attaches to
+           `camera/image_raw_lane` instead of opening the device a second time.
+           nvarguscamerasrc does not share a sensor, so the second opener simply
+           fails to start.
+         * `cobraflex_lane_keeper.launch.py` (the classical CV controller) opens
+           the CSI device *inside* `lane_keeper_node`. Run it with
+           `use_lane_camera:=false`, or not at all — it also commands /cmd_vel.
+    -->
+
+    <arg name="use_lane_camera" default="true"/>
+    <arg name="lane_camera_sensor_id" default="0"/>
+    <arg name="lane_camera_flip_method" default="0"/>
+    <arg name="lane_camera_topic" default="camera/image_raw_lane"/>
+
     <!-- ================= Lidar SLLIDAR A2M8 ================= -->
     <include file="$(find-pkg-share sllidar_ros2)/launch/sllidar_a2m8_launch.py">
         <arg name="frame_id" value="lidar_link"/>
@@ -8,14 +33,55 @@
     <include file="$(find-pkg-share zed_wrapper)/launch/zed_camera.launch.py">
         <arg name="camera_model" value="zedm"/>
         <arg name="camera_name" value="zed"/>
+        <!-- OFF: my_robot_basic.urdf instantiates the zed_camera macro itself, so
+             the wrapper must not publish a competing description. -->
         <arg name="publish_urdf" value="false"/>
-        <arg name="publish_tf" value="true"/>
+        <!-- OFF, and load-bearing: left at its default the wrapper broadcasts
+             odom -> zed_camera_link, which would collide with the ekf's
+             odom -> base_footprint (two publishers rooted at odom, and
+             zed_camera_link reachable by two paths). The ekf is the single owner
+             of that edge; the ZED contributes only the /zed/zed_node/odom TOPIC,
+             which keeps publishing because it is gated on positional tracking,
+             not on publish_tf. -->
+        <arg name="publish_tf" value="false"/>
 
         <!-- ZED IMU -->
         <arg name="publish_imu_tf" value="true"/>
 
         <!-- ZED Mapping -->
         <arg name="publish_map_tf" value="false"/>
+        <!-- NO-OP, kept as documentation of intent: zed_camera.launch.py does not
+             declare this argument, and ROS 2 silently turns undeclared launch
+             arguments into LaunchConfigurations nobody reads. The value actually
+             in force is `true`, from the wrapper's own config/common_stereo.yaml.
+             Worth revisiting: on loop closure the ZED JUMPS its odometry, and that
+             jump enters the ekf as an absolute pose with ~1e-5 covariance and
+             odom0_differential:false, so the filter follows it hard and emits a
+             spurious velocity spike straight into the cage's speed. REP-105 wants
+             odom continuous and jumps confined to map. To actually change it, edit
+             the wrapper YAML or pass ros_params_override_path. -->
         <arg name="reset_odom_with_loop_closure" value="true"/>
     </include>
+
+    <!-- ============ Lane camera (Jetson CSI, IMX219-160) ============
+         The camera the RL policy and the D-43 cage estimator BOTH read. Frame
+         geometry is deliberately not exposed as an argument: csi_camera_node
+         defaults 640x360 / 90 deg / 20 Hz from `camera_geometry`, and any other
+         size mis-projects every ey/epsi the cage acts on. -->
+    <node pkg="cobraflex_rl" exec="csi_camera_node" name="csi_camera_node"
+          output="screen" if="$(var use_lane_camera)">
+        <param name="image_topic" value="$(var lane_camera_topic)"/>
+        <param name="sensor_id" value="$(var lane_camera_sensor_id)"/>
+        <param name="flip_method" value="$(var lane_camera_flip_method)"/>
+    </node>
+
+    <!-- ================= State estimation =================
+         Fuses the ZED visual odometry into /odometry/filtered and owns the
+         odom -> base_footprint TF on hardware (see config/ekf_hw.yaml). This is
+         also the ONLY source of speed for the cage: cv_lane_estimator_node reads
+         /odometry/filtered, and without it C-03/C-04 stay inert. -->
+    <node pkg="robot_localization" exec="ekf_node" name="ekf_filter_node" output="screen">
+        <param from="$(find-pkg-share cobraflex)/config/ekf_hw.yaml"/>
+    </node>
+
 </launch>

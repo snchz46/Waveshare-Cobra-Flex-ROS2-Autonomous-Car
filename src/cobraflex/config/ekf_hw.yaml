@@ -1,0 +1,106 @@
+### ekf config file -- PHYSICAL CobraFlex platform ###
+#
+# Hardware counterpart of ekf_gazebo.yaml. The difference that matters is
+# `publish_tf`: in sim the Gazebo ground-truth OdometryPublisher owns
+# odom -> base_footprint, so the ekf must not compete for it. On the physical
+# robot nobody else publishes that TF -- the ZED wrapper's own broadcast is
+# switched off in cobraflex_sensors.launch.xml (`publish_tf:=false`), which is
+# what makes the ekf the single owner of odom -> base_footprint. Note it is the
+# launch argument doing that, not a limitation of the wrapper: left at its
+# default the ZED publishes odom -> zed_camera_link itself.
+#
+# Data flow:
+#   ZED  -> /zed/zed_node/odom (nav_msgs/Odometry, child = zed_camera_link)
+#        -> ekf_filter_node
+#        -> TF odom -> base_footprint   (+ /odometry/filtered)
+#
+# The ZED hardcodes the odometry's child frame to `<camera_name>_camera_link`
+# (zed_camera_component_main.cpp, mBaseFrameId) and exposes no `base_frame`
+# parameter, so the measurement always arrives in the camera's frame. That is
+# fine: robot_localization transforms sensor data into `base_link_frame` using
+# tf, resolving the zed_camera_link -> base_footprint offset through the static
+# TF that robot_state_publisher emits from the URDF mount joint
+# (`zed_mount_joint`). robot_state_publisher must therefore be running for this
+# node to produce output.
+#
+# `base_link_frame` MUST equal the root link of my_robot_basic.urdf. This node
+# publishes odom -> base_link_frame while robot_state_publisher publishes the
+# URDF tree from its root; naming two different frames gives one of them two
+# parents and an invalid TF tree. It also has to be a ground-projected frame,
+# because `two_d_mode` below pins its z/roll/pitch to zero -- true for
+# base_footprint, meaningless for a camera link 0.137 m up.
+ekf_filter_node:
+    ros__parameters:
+        frequency: 30.0
+
+        # Planar platform: ignore out-of-plane wobble from the visual odometry.
+        two_d_mode: true
+
+        publish_acceleration: false
+
+        # ON, unlike the Gazebo config: on hardware the ekf is the only
+        # producer of odom -> base_footprint.
+        publish_tf: true
+
+        map_frame: map
+        odom_frame: odom
+        base_link_frame: base_footprint   # == my_robot_basic.urdf root (see header)
+        world_frame: odom
+
+        # ZED visual odometry: the most reliable source on this platform.
+        #
+        # The planar pose (x, y, yaw) is fused. The twist is deliberately NOT
+        # used: the ZED publishes an all-zero twist covariance, which makes the
+        # update singular.
+        odom0: /zed/zed_node/odom
+        odom0_config: [true,  true,  false,
+                       false, false, true,
+                       false, false, false,
+                       false, false, false,
+                       false, false, false]
+        odom0_differential: false
+        odom0_relative: false
+        odom0_queue_size: 10
+
+        # ZED IMU, available at /zedm/zed_node/imu/data. Left off by default:
+        # the ZED's odometry is already visual-inertial internally, so fusing
+        # the same IMU again double-counts it. Enable only if you retune.
+        # imu0: /zedm/zed_node/imu/data
+        # imu0_config: [false, false, false,
+        #               false, false, false,
+        #               false, false, false,
+        #               false, false, true,
+        #               false, false, false]
+        # imu0_differential: false
+        # imu0_remove_gravitational_acceleration: true
+
+        process_noise_covariance: [0.05, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.05, 0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.06, 0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.03, 0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.03, 0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.06, 0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.025, 0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.025, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.04, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.01, 0.0,    0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.01, 0.0,    0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.02, 0.0,    0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.01, 0.0,    0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.01, 0.0,
+                                   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.015]
+
+        # initial_estimate_covariance is deliberately NOT set here -- do not
+        # copy the [1.0 x15] line from ekf_gazebo.yaml into this file.
+        #
+        # Bisected against the real camera: any initial_estimate_covariance of
+        # order 1.0 makes the filter emit NaN on its very first update
+        # ("Critical Error, NaNs were detected in the output state of the
+        # filter"), which then poisons /tf with a NaN odom -> base_footprint.
+        # The reason is conditioning: the ZED's pose covariance is ~1e-5, so a
+        # 1.0 prior gives a condition number around 1e5 and the update inverts
+        # to garbage. It works in Gazebo only because the ground-truth odometry
+        # there carries much larger covariances.
+        #
+        # Leaving it unset uses robot_localization's own 1e-9 default, which is
+        # well conditioned against the ZED. Verified: 0 NaN over a full run.

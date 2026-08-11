@@ -43,6 +43,8 @@
 
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
+  <!-- lane_keeper_gazebo_node shares the CV lane estimator + controller -->
+  <exec_depend>cobraflex_rl</exec_depend>
   
   <exec_depend>sllidar_ros2</exec_depend>
   <exec_depend>zed_wrapper</exec_depend>

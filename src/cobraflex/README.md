@@ -78,12 +78,6 @@ O con launch y RViz:
 ros2 launch cobraflex cobraflex_lane_keeper.launch.py
 ```
 
-En Gazebo con la camara virtual bridged:
-
-```bash
-ros2 launch cobraflex lane_keeper_gazebo.launch.py
-```
-
 ## Launch files
 
 Solo sensores:
@@ -108,12 +102,6 @@ Simulacion en Gazebo:
 
 ```bash
 ros2 launch cobraflex gazebo.launch.py
-```
-
-Lane keeping en simulacion con la carretera y la camara virtual:
-
-```bash
-ros2 launch cobraflex lane_keeper_gazebo.launch.py
 ```
 
 Mapeado en simulacion:

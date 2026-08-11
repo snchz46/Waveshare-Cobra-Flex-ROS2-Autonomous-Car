@@ -18,7 +18,7 @@ def generate_launch_description():
 
     lane_keeper_node = Node(
         package="cobraflex",
-        executable="lane_keeper",
+        executable="lane_keeper_node",
         name="lane_keeper",
         output="screen",
         emulate_tty=True,
@@ -44,7 +44,7 @@ def generate_launch_description():
             {"publish_histogram_image": True},
             {"publish_camera_info": True},
             {"publish_markers": True},
-            {"camera_frame_id": "camera_link_optical"},
+            {"camera_frame_id": "camera_link_optical_lane"},
             {"marker_frame_id": "base_footprint"},
             {"flip_method": 0},
             {"invert": True},

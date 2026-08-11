@@ -27,13 +27,38 @@ setup(
             os.path.join("share", package_name, "launch"),
             glob("launch/*.launch.py"),
         ),
-        (os.path.join("share", package_name, "urdf"), glob("urdf/*")),
+
+        (os.path.join("share", package_name, "urdf"), [f for f in glob("urdf/*") if os.path.isfile(f)]),
         (os.path.join("share", package_name, "rviz"), glob("rviz/*")),
         (os.path.join("share", package_name, "config"), glob("config/*")),
-        (os.path.join("share", package_name, "worlds"), glob("worlds/*.world")),
-        (os.path.join("share", package_name, "worlds"), glob("worlds/*.sdf")),
-        (os.path.join("share", package_name, "meshes"), glob("meshes/*")),
+        (os.path.join("share", package_name, "worlds"), glob("worlds/*.world") + glob("worlds/*.sdf")),
         (os.path.join("share", package_name, "worlds", "materials"), glob("worlds/materials/*")),
+        (os.path.join("share", package_name, "meshes"), glob("meshes/*")),
+        
+        (
+            os.path.join("share", package_name, "materials", "road_assets", "road_textures"),
+            glob("materials/road_assets/road_textures/*.png"),
+        ),
+        (
+            os.path.join("share", package_name, "materials", "road_assets", "road_curves"),
+            glob("materials/road_assets/road_curves/*.png"),
+        ),
+        (
+            os.path.join("share", package_name, "materials", "road_assets", "road_variants"),
+            glob("materials/road_assets/road_variants/*.png"),
+        ),
+        (
+            os.path.join("share", package_name, "materials", "road_assets", "road_variants_lot2"),
+            glob("materials/road_assets/road_variants_lot2/*.png"),
+        ),
+        (
+            os.path.join("share", package_name, "materials", "road_assets", "road_tiles"),
+            glob("materials/road_assets/road_tiles/*.png"),
+        ),
+        (
+            os.path.join("share", package_name, "materials", "road_assets", "tracks"),
+            glob("materials/road_assets/tracks/*.png"),
+        ),
     ],
     install_requires=[
         "setuptools",

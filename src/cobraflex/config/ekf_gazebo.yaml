@@ -15,8 +15,14 @@ ekf_filter_node:
 # Whether to publish the acceleration state. Defaults to false if unspecified.
         publish_acceleration: false
 
-# Whether to broadcast the transformation over the /tf topic. Defaultsto true if unspecified.
-        publish_tf: true
+# Whether to broadcast the transformation over the /tf topic. Defaults to true if unspecified.
+# OFF: the ground-truth OdometryPublisher (robot.gazebo) owns the odom->base_footprint
+# TF in sim. With the ekf also broadcasting it, ROS /tf had two (three, with the
+# DiffDrive) competing odom->base_footprint transforms and RViz jumped between them.
+# The ekf still publishes /odometry/filtered for any consumer that wants the fused
+# estimate; it just no longer fights for /tf. Re-enable if you run a localisation/nav
+# stack that must own odom->base_footprint (and then disable the ground-truth TF).
+        publish_tf: false
 
 # 1. Set the map_frame, odom_frame, and base_link frames to the appropriate frame names for your system.
 #     1a. If your system does not have a map_frame, just remove it, and make sure "world_frame" is set to the value of odom_frame.

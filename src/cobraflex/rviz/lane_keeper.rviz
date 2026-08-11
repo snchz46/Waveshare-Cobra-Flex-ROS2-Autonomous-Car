@@ -1,18 +1,12 @@
 Panels:
   - Class: rviz_common/Displays
-    Help Height: 70
+    Help Height: 0
     Name: Displays
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /TF1
-        - /RobotModel1
-        - /Lane Camera1
-        - /Lane Overlay1
-        - /Lane Histogram1
-        - /Lane Markers1
       Splitter Ratio: 0.5
-    Tree Height: 70
+    Tree Height: 742
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Views
@@ -48,6 +42,8 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/TF
       Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: true
@@ -59,7 +55,11 @@ Visualization Manager:
           Value: true
         camera_link:
           Value: true
+        camera_link_lane:
+          Value: true
         camera_link_optical:
+          Value: true
+        camera_link_optical_lane:
           Value: true
         front_left_wheel:
           Value: true
@@ -69,21 +69,11 @@ Visualization Manager:
           Value: true
         lidar_link:
           Value: true
+        odom:
+          Value: true
         rear_left_wheel:
           Value: true
         rear_right_wheel:
-          Value: true
-        zed_camera_center:
-          Value: true
-        zed_camera_link:
-          Value: true
-        zed_left_camera_frame:
-          Value: true
-        zed_left_camera_frame_optical:
-          Value: true
-        zed_right_camera_frame:
-          Value: true
-        zed_right_camera_frame_optical:
           Value: true
       Marker Scale: 0.699999988079071
       Name: TF
@@ -91,32 +81,29 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        zed_camera_link:
-          base_footprint:
-            base_link:
-              body_link:
-                camera_link:
-                  camera_link_optical:
-                    {}
-                imu_link:
+        base_footprint:
+          base_link:
+            body_link:
+              camera_link:
+                camera_link_optical:
                   {}
-                lidar_link:
+              camera_link_lane:
+                camera_link_optical_lane:
                   {}
-              front_left_wheel:
+              imu_link:
                 {}
-              front_right_wheel:
+              lidar_link:
                 {}
-              rear_left_wheel:
-                {}
-              rear_right_wheel:
-                {}
-          zed_camera_center:
-            zed_left_camera_frame:
-              zed_left_camera_frame_optical:
-                {}
-            zed_right_camera_frame:
-              zed_right_camera_frame_optical:
-                {}
+            front_left_wheel:
+              {}
+            front_right_wheel:
+              {}
+            rear_left_wheel:
+              {}
+            rear_right_wheel:
+              {}
+        odom:
+          {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -156,7 +143,16 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        camera_link_lane:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         camera_link_optical:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_link_optical_lane:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -189,31 +185,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        zed_camera_center:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        zed_camera_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        zed_left_camera_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        zed_left_camera_frame_optical:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        zed_right_camera_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        zed_right_camera_frame_optical:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Mass Properties:
         Inertia: false
         Mass: false
@@ -222,29 +193,20 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz_default_plugins/Camera
+    - Class: rviz_default_plugins/Image
       Enabled: true
-      Far Plane Distance: 100
-      Image Rendering: background and overlay
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
       Name: Lane Camera
-      Overlay Alpha: 0.5
+      Normalize Range: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /lane/image_raw
+        Value: /camera/image_raw_lane
       Value: true
-      Visibility:
-        Grid: false
-        Lane Histogram: true
-        Lane Markers: true
-        Lane Mask: true
-        Lane Overlay: true
-        RobotModel: true
-        TF: true
-        Value: false
-      Zoom Factor: 1
     - Class: rviz_default_plugins/Image
       Enabled: true
       Max Value: 1
@@ -264,40 +226,14 @@ Visualization Manager:
       Max Value: 1
       Median window: 5
       Min Value: 0
-      Name: Lane Mask
+      Name: Lane Mask (filter)
       Normalize Range: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /lane/image_mask
-      Value: true
-    - Class: rviz_default_plugins/Image
-      Enabled: true
-      Max Value: 1
-      Median window: 5
-      Min Value: 0
-      Name: Lane Histogram
-      Normalize Range: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /lane/image_histogram
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: Lane Markers
-      Namespaces:
-        lane_keeper: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /lane/markers
+        Value: /lane/mask
       Value: true
   Enabled: true
   Global Options:
@@ -346,13 +282,11 @@ Window Geometry:
   Hide Right Dock: false
   Lane Camera:
     collapsed: false
-  Lane Histogram:
-    collapsed: false
-  Lane Mask:
+  Lane Mask (filter):
     collapsed: false
   Lane Overlay:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000027c0000032afc0200000008fb00000018004c0061006e00650020004f007600650072006c00610079010000003d000000c60000002800fffffffb00000016004c0061006e0065002000430061006d0065007200610100000109000000c40000002800fffffffb0000001c004c0061006e006500200048006900730074006f006700720061006d01000001d3000000ca0000002800fffffffb00000012004c0061006e00650020004d00610073006b01000002a3000000c40000002800fffffffb000000100044006900730070006c0061007900730000000153000000c9000000c900fffffffb0000001200530065006c0065006300740069006f006e0000000241000000b10000005c00fffffffb0000000a005600690065007700730000000233000000e0000000a400fffffffb0000000800540069006d006500000002d6000000910000003900ffffff000003be0000032a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000002000000000000027c00000326fc0200000008fb0000001c004c0061006e006500200048006900730074006f006700720061006d000000003f000000a50000000000000000fb00000012004c0061006e00650020004d00610073006b000000003f000000840000000000000000fb00000016004c0061006e0065002000430061006d006500720061010000003f000001130000001700fffffffb00000018004c0061006e00650020004f007600650072006c0061007901000001580000010e0000001700fffffffb0000001200530065006c0065006300740069006f006e00000002df000000860000005d00fffffffb0000000a005600690065007700730000000233000000e0000000a900fffffffb0000000800540069006d006500000002d6000000910000003c00fffffffb00000024004c0061006e00650020004d00610073006b0020002800660069006c0074006500720029010000026c000000f90000001700ffffff000000010000015600000326fc0200000001fb000000100044006900730070006c006100790073010000003f00000326000000cc00ffffff000002620000032600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -361,4 +295,4 @@ Window Geometry:
     collapsed: false
   Width: 1600
   X: 120
-  Y: 73
+  Y: 69

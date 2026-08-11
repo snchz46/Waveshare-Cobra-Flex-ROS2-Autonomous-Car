@@ -4,6 +4,8 @@
     <xacro:include filename="$(find cobraflex)/urdf/robot.gazebo" />
 
     <xacro:include filename="inertial_macros.xacro" />
+
+    <xacro:include filename="$(find cobraflex)/urdf/zed_macro.urdf.xacro" />
     
     <xacro:property name="chassis_length" value="0.228" />
     <xacro:property name="chassis_width" value="0.130" />
@@ -179,32 +181,42 @@
         <origin xyz="0 0 ${body_height/2 + 0.04}" rpy="0 0 ${pi}"/>
     </joint>
 
-    <link name="camera_link">
+    <xacro:zed_camera name="zedm" model="zedm">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </xacro:zed_camera>
+
+    <joint name="zedm_mount_joint" type="fixed">
+        <parent link="body_link"/>
+        <child link="zedm_camera_link"/>
+        <origin xyz="${body_length/2 - 0.0475} 0 ${0.02 - 0.0265/2}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="camera_link_lane">
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="0 -1 0"/>
             <geometry>
-                <box size="0.01 0.01 0.01"/>
+                <cylinder radius="0.005" length="0.002"/>
             </geometry>
-            <material name="black" />
+            <material name="yellow" />
         </visual>
         <collision>
              <geometry>
-                <box size="0.01 0.1 0.02"/>
+                <cylinder radius="0.005" length="0.002"/>
             </geometry>
         </collision>
     </link>
 
-    <joint name="camera_joint" type="fixed">
+    <joint name="camera_joint_lane" type="fixed">
         <parent link="body_link"/>
-        <child link="camera_link"/>
-        <origin xyz="${body_length/2} 0 0.02" rpy="0 0 0"/>
+        <child link="camera_link_lane"/>
+        <origin xyz="${body_length/2 + 0.01} 0 -0.03" rpy="0 0.30 0"/>
     </joint>
 
-    <link name="camera_link_optical"></link>
+    <link name="camera_link_optical_lane"></link>
 
-    <joint name="camera_optical_joint" type="fixed">
-        <parent link="camera_link"/>
-        <child link="camera_link_optical"/>
+    <joint name="camera_optical_joint_lane" type="fixed">
+        <parent link="camera_link_lane"/>
+        <child link="camera_link_optical_lane"/>
         <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
     </joint>
 

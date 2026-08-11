@@ -15,9 +15,15 @@
             <min_linear_acceleration>-10</min_linear_acceleration>
             
             <topic>cmd_vel</topic>
-            
+
             <odom_topic>odom</odom_topic>
-            <tf_topic>tf</tf_topic>
+            <!-- Dead-reckoning TF kept off ROS tf. The DiffDrive, the ground
+                 truth OdometryPublisher below and the ekf_node all emit the
+                 odom to base_footprint transform, so all three reached ROS tf
+                 and RViz alternated between them so the robot model jumped every
+                 cycle. The ground truth OdometryPublisher is the sole tf owner
+                 now. This plugin still drives the wheels and publishes encoder odom. -->
+            <tf_topic>tf_diffdrive</tf_topic>
             <frame_id>odom</frame_id>
             <child_frame_id>base_footprint</child_frame_id>
         </plugin>
@@ -29,8 +35,19 @@
             <odom_frame>odom</odom_frame>
             <robot_base_frame>base_footprint</robot_base_frame>
             <odom_publish_frequency>50</odom_publish_frequency>
-            <odom_topic>/odom</odom_topic>
-            <tf_topic>/tf</tf_topic>
+            <!-- Ground-truth pose on a dedicated topic so it does NOT collide
+                 with the DiffDrive plugin's dead-reckoning /odom. Both plugins
+                 previously published /odom, so subscribers saw interleaved
+                 truth + drift samples; after a set_pose teleport the dead-
+                 reckoning half does not jump, which corrupted RL pose on every
+                 episode reset. RL training reads /odom_truth; the F2 stack
+                 keeps the encoder /odom. -->
+            <odom_topic>/odom_truth</odom_topic>
+            <!-- Sole owner of the odom to base_footprint transform on ROS tf
+                 (the bridge maps the gz tf topic to ROS tf). Ground truth so RViz
+                 shows the true pose and follows set_pose teleports. The DiffDrive
+                 encoder and the ekf no longer publish this transform. -->
+            <tf_topic>tf</tf_topic>
             <dimensions>2</dimensions>
         </plugin>
 <!--
@@ -121,12 +138,76 @@
         </sensor>
     </gazebo>
 
-    <gazebo reference="camera_link">
-        <sensor name="ZEDm Cam" type="camera">
+    <!-- ZED Mini front stereo pair. Two independent render sensors, one per
+         lens, mounted on the macro's left/right frames (63 mm baseline). Per-eye
+         intrinsics kept identical to the former mono sensor; the real ZED Mini
+         FOV is wider (~102 deg H) and can be calibrated later if the scene
+         camera is ever consumed. Topics follow the zed-ros2 convention. -->
+    <gazebo reference="zedm_left_camera_frame">
+        <sensor name="ZEDm Left Cam" type="camera">
             <camera>
                 <horizontal_fov>1.3962634</horizontal_fov>
                 <image>
-                    <width>480</width>
+                    <width>640</width>
+                    <height>480</height>
+                    <format>R8G8B8</format>
+                </image>
+                <clip>
+                    <near>0.1</near>
+                    <far>15</far>
+                </clip>
+                <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.007</stddev>
+                </noise>
+                <optical_frame_id>zedm_left_camera_frame_optical</optical_frame_id>
+                <camera_info_topic>camera/left/camera_info</camera_info_topic>
+            </camera>
+            <always_on>1</always_on>
+            <update_rate>20</update_rate>
+            <visualize>true</visualize>
+            <topic>camera/left/image_raw</topic>
+        </sensor>
+    </gazebo>
+
+    <gazebo reference="zedm_right_camera_frame">
+        <sensor name="ZEDm Right Cam" type="camera">
+            <camera>
+                <horizontal_fov>1.3962634</horizontal_fov>
+                <image>
+                    <width>640</width>
+                    <height>480</height>
+                    <format>R8G8B8</format>
+                </image>
+                <clip>
+                    <near>0.1</near>
+                    <far>15</far>
+                </clip>
+                <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.007</stddev>
+                </noise>
+                <optical_frame_id>zedm_right_camera_frame_optical</optical_frame_id>
+                <camera_info_topic>camera/right/camera_info</camera_info_topic>
+            </camera>
+            <always_on>1</always_on>
+            <update_rate>20</update_rate>
+            <visualize>true</visualize>
+            <topic>camera/right/image_raw</topic>
+        </sensor>
+    </gazebo>
+
+    <gazebo reference="camera_link_lane">
+        <!-- Mirrors the real IMX219-160 as consumed by lane_keeper_node.py
+             on HW (proc frames 640x360, effective hfov 90 deg, timer 20 Hz);
+             capture is 1280x720@60 but only the processed stream matters. -->
+        <sensor name="Lane Cam" type="camera">
+            <camera>
+                <horizontal_fov>1.5707963</horizontal_fov>
+                <image>
+                    <width>640</width>
                     <height>360</height>
                     <format>R8G8B8</format>
                 </image>
@@ -139,13 +220,14 @@
                     <mean>0.0</mean>
                     <stddev>0.007</stddev>
                 </noise>
-                <optical_frame_id>camera_link_optical</optical_frame_id>
+                <optical_frame_id>camera_link_optical_lane</optical_frame_id>
                 <camera_info_topic>camera/camera_info</camera_info_topic>
             </camera>
             <always_on>1</always_on>
-            <update_rate>15</update_rate>
-            <visualize>false</visualize>
-            <topic>camera/image_raw</topic>            
+            <update_rate>20</update_rate>
+            <visualize>true</visualize>
+            <topic>camera/image_raw_lane</topic>            
         </sensor>
     </gazebo>
+
 </robot>

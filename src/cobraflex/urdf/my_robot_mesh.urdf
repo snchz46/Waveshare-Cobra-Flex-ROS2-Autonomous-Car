@@ -78,7 +78,7 @@
     <joint name="body_joint" type="fixed">
         <parent link="base_link"/>
         <child link="body_link"/>
-        <origin xyz="0 0 ${body_height/2 + chassis_height/2}"/> 
+        <origin xyz="0 0 ${body_height/2 + chassis_height/2 - 0.01}"/> 
     </joint>
 
     <xacro:macro name="left_wheel_link" params="prefix x_location y_location">
@@ -204,7 +204,7 @@
     <joint name="camera_joint" type="fixed">
         <parent link="body_link"/>
         <child link="camera_link"/>
-        <origin xyz="${body_length/2 - 0.04} 0 0.02" rpy="0 0 0"/>
+        <origin xyz="${body_length/2 - 0.0475} 0 0.02" rpy="0 0 0"/>
     </joint>
 
     <link name="camera_link_optical"></link>
@@ -215,10 +215,39 @@
         <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
     </joint>
 
+
+    <link name="camera_link_lane">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 -1 0"/>
+            <geometry>
+                <cylinder radius="0.005" length="0.002"/>
+            </geometry>
+            <material name="yellow" />
+        </visual>
+        <collision>
+             <geometry>
+                <cylinder radius="0.005" length="0.002"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="camera_joint_lane" type="fixed">
+        <parent link="body_link"/>
+        <child link="camera_link_lane"/>
+        <origin xyz="${body_length/2 + 0.01} 0 -0.03" rpy="0 0.30 0"/>
+    </joint>
+
+    <link name="camera_link_optical_lane"></link>
+
+    <joint name="camera_optical_joint_lane" type="fixed">
+        <parent link="camera_link_lane"/>
+        <child link="camera_link_optical_lane"/>
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+
     <link name="imu_link" />
 
     <joint name="imu_joint" type="fixed">
-        <origin xyz="${body_length/2 - 0.04} 0 0.02" rpy="0 0 0" />
+        <origin xyz="${body_length/2 - 0.0475} 0 0.02" rpy="0 0 0" />
         <parent link="body_link"/>
         <child link="imu_link" />
     </joint>

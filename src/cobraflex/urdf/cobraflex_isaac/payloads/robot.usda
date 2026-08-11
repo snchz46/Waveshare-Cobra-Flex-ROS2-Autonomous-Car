@@ -1,0 +1,180 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.2"
+    }
+    defaultPrim = "cobraflex_robot"
+    doc = """Generated from Composed Stage of root layer /tmp/tmprk3ixicc/cobraflex_robot.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_cobraflex_isaac_3xw2p1gc/usdex_cobraflex_isaac/cobraflex_robot.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_cobraflex_isaac_3xw2p1gc/temp_cobraflex_isaac/cobraflex_isaac.usd
+"""
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+over "cobraflex_robot" (
+    prepend apiSchemas = ["IsaacRobotAPI"]
+)
+{
+    prepend rel isaac:physics:robotJoints = [
+        </cobraflex_robot/Physics/body_joint>,
+        </cobraflex_robot/Physics/front_left_wheel_joint>,
+        </cobraflex_robot/Physics/front_right_wheel_joint>,
+        </cobraflex_robot/Physics/rear_left_wheel_joint>,
+        </cobraflex_robot/Physics/rear_right_wheel_joint>,
+        </cobraflex_robot/Physics/lidar_joint>,
+        </cobraflex_robot/Physics/zedm_mount_joint>,
+        </cobraflex_robot/Physics/camera_joint_lane>,
+        </cobraflex_robot/Physics/zedm_camera_center_joint>,
+    ]
+    prepend rel isaac:physics:robotLinks = [
+        </cobraflex_robot/Geometry/base_footprint/base_link>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/body_link>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/body_link/lidar_link>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/body_link/zedm_camera_link>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/body_link/zedm_camera_link/zedm_camera_center>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/body_link/camera_link_lane>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/front_left_wheel>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/front_right_wheel>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/rear_left_wheel>,
+        </cobraflex_robot/Geometry/base_footprint/base_link/rear_right_wheel>,
+    ]
+    token isaac:robotType = "Default"
+
+    over "Geometry"
+    {
+        over "base_footprint"
+        {
+            over "base_link" (
+                prepend apiSchemas = ["IsaacLinkAPI"]
+            )
+            {
+                over "body_link" (
+                    prepend apiSchemas = ["IsaacLinkAPI"]
+                )
+                {
+                    over "lidar_link" (
+                        prepend apiSchemas = ["IsaacLinkAPI"]
+                    )
+                    {
+                    }
+
+                    over "zedm_camera_link" (
+                        prepend apiSchemas = ["IsaacLinkAPI"]
+                    )
+                    {
+                        over "zedm_camera_center" (
+                            prepend apiSchemas = ["IsaacLinkAPI"]
+                        )
+                        {
+                        }
+                    }
+
+                    over "camera_link_lane" (
+                        prepend apiSchemas = ["IsaacLinkAPI"]
+                    )
+                    {
+                        over "camera_link_optical_lane" (
+                            prepend apiSchemas = ["IsaacSiteAPI"]
+                        )
+                        {
+                        }
+                    }
+
+                    over "imu_link" (
+                        prepend apiSchemas = ["IsaacSiteAPI"]
+                    )
+                    {
+                    }
+                }
+
+                over "front_left_wheel" (
+                    prepend apiSchemas = ["IsaacLinkAPI"]
+                )
+                {
+                }
+
+                over "front_right_wheel" (
+                    prepend apiSchemas = ["IsaacLinkAPI"]
+                )
+                {
+                }
+
+                over "rear_left_wheel" (
+                    prepend apiSchemas = ["IsaacLinkAPI"]
+                )
+                {
+                }
+
+                over "rear_right_wheel" (
+                    prepend apiSchemas = ["IsaacLinkAPI"]
+                )
+                {
+                }
+            }
+        }
+    }
+
+    over "Physics"
+    {
+        over "body_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "front_left_wheel_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "front_right_wheel_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "rear_left_wheel_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "rear_right_wheel_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "lidar_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "zedm_camera_center_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "zedm_mount_joint" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+
+        over "camera_joint_lane" (
+            prepend apiSchemas = ["IsaacJointAPI"]
+        )
+        {
+        }
+    }
+}
+

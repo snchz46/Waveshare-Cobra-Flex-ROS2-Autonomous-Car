@@ -11,7 +11,12 @@
     <!-- robot_state_publisher                        -->
     <!-- =========================================== -->
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
-        <param name="robot_description" value="$(command 'xacro $(var urdf_file)')"/>
+        <!-- type="str" is required, not cosmetic: without it launch_ros runs
+             yaml.safe_load() on the xacro output to infer the parameter type,
+             and any "key: value"-looking text in the URDF - an XML comment is
+             enough - makes that parse fail with "mapping values are not
+             allowed here". Forcing str skips the inference entirely. -->
+        <param name="robot_description" type="str" value="$(command 'xacro $(var urdf_file)')"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
@@ -27,7 +32,7 @@
     <!-- =========================================== -->
     <group if="$(var use_rviz)">
         <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
-              args="-d $(find-pkg-share cobraflex)/rviz/bot.rviz"/>
+              args="-d $(find-pkg-share cobraflex)/rviz/bot_S2R.rviz"/>
     </group>
 
 </launch>

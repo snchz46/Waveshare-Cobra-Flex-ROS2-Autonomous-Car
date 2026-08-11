@@ -1,0 +1,289 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.2"
+    }
+    defaultPrim = "cobraflex_robot"
+    doc = """Generated from Composed Stage of root layer /tmp/tmprk3ixicc/cobraflex_robot.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_cobraflex_isaac_3xw2p1gc/usdex_cobraflex_isaac/cobraflex_robot.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_cobraflex_isaac_3xw2p1gc/temp_cobraflex_isaac/cobraflex_isaac.usd
+
+
+Generated from Composed Stage of root layer /media/samuel/Fast_SSD/SE4AI/thesis_repo/src/cobraflex/urdf/isaac_usd/cobraflex_isaac/payloads/base.usd
+"""
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+over "cobraflex_robot"
+{
+    over "Geometry"
+    {
+        over "base_footprint"
+        {
+            over "base_link" (
+                prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsArticulationRootAPI", "NewtonArticulationRootAPI", "PhysicsMassAPI"]
+            )
+            {
+                bool newton:selfCollisionEnabled = 0
+                point3f physics:centerOfMass = (0, 0, 0.03)
+                float3 physics:diagonalInertia = (0.008541667, 0.02316, 0.028701667)
+                float physics:mass = 5
+                quatf physics:principalAxes = (1, 0, 0, 0)
+
+                over "body_link" (
+                    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                )
+                {
+                    point3f physics:centerOfMass = (0, 0, 0.05)
+                    float3 physics:diagonalInertia = (0.0035333333, 0.0051653334, 0.007032)
+                    float physics:mass = 1
+                    quatf physics:principalAxes = (1, 0, 0, 0)
+
+                    over "lidar_link" (
+                        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                    )
+                    {
+                        point3f physics:centerOfMass = (0, 0, 0)
+                        float3 physics:diagonalInertia = (0.000092130205, 0.000092130205, 0.00013359376)
+                        float physics:mass = 0.19
+                        quatf physics:principalAxes = (1, 0, 0, 0)
+
+                        over "cylinder" (
+                            prepend apiSchemas = ["NewtonCollisionAPI"]
+                        )
+                        {
+                        }
+                    }
+
+                    over "zedm_camera_link" (
+                        prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+                    )
+                    {
+                        over "zedm_camera_center" (
+                            prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+                        )
+                        {
+                        }
+                    }
+
+                    over "camera_link_lane" (
+                        prepend apiSchemas = ["PhysicsRigidBodyAPI"]
+                    )
+                    {
+                        over "cylinder_1" (
+                            prepend apiSchemas = ["NewtonCollisionAPI"]
+                        )
+                        {
+                        }
+                    }
+
+                    over "box" (
+                        prepend apiSchemas = ["NewtonCollisionAPI"]
+                    )
+                    {
+                    }
+                }
+
+                over "front_left_wheel" (
+                    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                )
+                {
+                    point3f physics:centerOfMass = (0, 0, 0)
+                    float3 physics:diagonalInertia = (0.000038022397, 0.000038022397, 0.000069378126)
+                    float physics:mass = 0.1
+                    quatf physics:principalAxes = (1, 0, 0, 0)
+
+                    over "cylinder" (
+                        prepend apiSchemas = ["NewtonCollisionAPI"]
+                    )
+                    {
+                    }
+                }
+
+                over "front_right_wheel" (
+                    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                )
+                {
+                    point3f physics:centerOfMass = (0, 0, 0)
+                    float3 physics:diagonalInertia = (0.000038022397, 0.000038022397, 0.000069378126)
+                    float physics:mass = 0.1
+                    quatf physics:principalAxes = (1, 0, 0, 0)
+
+                    over "cylinder" (
+                        prepend apiSchemas = ["NewtonCollisionAPI"]
+                    )
+                    {
+                    }
+                }
+
+                over "rear_left_wheel" (
+                    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                )
+                {
+                    point3f physics:centerOfMass = (0, 0, 0)
+                    float3 physics:diagonalInertia = (0.000038022397, 0.000038022397, 0.000069378126)
+                    float physics:mass = 0.1
+                    quatf physics:principalAxes = (1, 0, 0, 0)
+
+                    over "cylinder" (
+                        prepend apiSchemas = ["NewtonCollisionAPI"]
+                    )
+                    {
+                    }
+                }
+
+                over "rear_right_wheel" (
+                    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+                )
+                {
+                    point3f physics:centerOfMass = (0, 0, 0)
+                    float3 physics:diagonalInertia = (0.000038022397, 0.000038022397, 0.000069378126)
+                    float physics:mass = 0.1
+                    quatf physics:principalAxes = (1, 0, 0, 0)
+
+                    over "cylinder" (
+                        prepend apiSchemas = ["NewtonCollisionAPI"]
+                    )
+                    {
+                    }
+                }
+
+                over "box" (
+                    prepend apiSchemas = ["NewtonCollisionAPI"]
+                )
+                {
+                }
+            }
+        }
+    }
+
+    over "Physics"
+    {
+        def PhysicsRevoluteJoint "front_left_wheel_joint" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token physics:axis = "Z"
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/front_left_wheel>
+            point3f physics:localPos0 = (0.06, 0.077, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (-0.70710677, 0.70710677, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsRevoluteJoint "front_right_wheel_joint" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token physics:axis = "Z"
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/front_right_wheel>
+            point3f physics:localPos0 = (0.06, -0.077, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (-0.70710677, 0.70710677, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsRevoluteJoint "rear_left_wheel_joint" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token physics:axis = "Z"
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/rear_left_wheel>
+            point3f physics:localPos0 = (-0.06, 0.077, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (-0.70710677, 0.70710677, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsRevoluteJoint "rear_right_wheel_joint" (
+            prepend apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+            uniform token physics:axis = "Z"
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/rear_right_wheel>
+            point3f physics:localPos0 = (-0.06, -0.077, 0)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (-0.70710677, 0.70710677, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsFixedJoint "body_joint"
+        {
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link>
+            point3f physics:localPos0 = (0, 0, 0.07)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsFixedJoint "lidar_joint"
+        {
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link/lidar_link>
+            point3f physics:localPos0 = (0, 0, 0.09)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsFixedJoint "zedm_camera_center_joint"
+        {
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link/zedm_camera_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link/zedm_camera_link/zedm_camera_center>
+            point3f physics:localPos0 = (0, 0, 0.01325)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsFixedJoint "zedm_mount_joint"
+        {
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link/zedm_camera_link>
+            point3f physics:localPos0 = (0.0665, 0, 0.00675)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+
+        def PhysicsFixedJoint "camera_joint_lane"
+        {
+            custom rel physics:body0
+            prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link>
+            custom rel physics:body1
+            prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link/camera_link_lane>
+            point3f physics:localPos0 = (0.124, 0, -0.03)
+            point3f physics:localPos1 = (0, 0, 0)
+            quatf physics:localRot0 = (0.9887711, 0, 0.14943811, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+    }
+}
+

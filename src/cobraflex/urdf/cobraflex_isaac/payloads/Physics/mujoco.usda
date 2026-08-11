@@ -1,0 +1,248 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.2"
+    }
+    defaultPrim = "cobraflex_robot"
+    doc = """Generated from Composed Stage of root layer /tmp/tmprk3ixicc/cobraflex_robot.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_cobraflex_isaac_3xw2p1gc/usdex_cobraflex_isaac/cobraflex_robot.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_cobraflex_isaac_3xw2p1gc/temp_cobraflex_isaac/cobraflex_isaac.usd
+
+
+Generated from Composed Stage of root layer /media/samuel/Fast_SSD/SE4AI/thesis_repo/src/cobraflex/urdf/isaac_usd/cobraflex_isaac/payloads/base.usd
+"""
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    subLayers = [
+        @./physics.usda@
+    ]
+    upAxis = "Z"
+)
+
+over "cobraflex_robot"
+{
+    over "Physics"
+    {
+        def MjcActuator "front_left_wheel_joint_actuator"
+        {
+            uniform double mjc:forceRange:max = inf
+            uniform double mjc:forceRange:min = -inf
+            custom rel mjc:target
+            prepend rel mjc:target = </cobraflex_robot/Physics/front_left_wheel_joint>
+        }
+
+        def MjcActuator "front_right_wheel_joint_actuator"
+        {
+            uniform double mjc:forceRange:max = inf
+            uniform double mjc:forceRange:min = -inf
+            custom rel mjc:target
+            prepend rel mjc:target = </cobraflex_robot/Physics/front_right_wheel_joint>
+        }
+
+        def MjcActuator "rear_left_wheel_joint_actuator"
+        {
+            uniform double mjc:forceRange:max = inf
+            uniform double mjc:forceRange:min = -inf
+            custom rel mjc:target
+            prepend rel mjc:target = </cobraflex_robot/Physics/rear_left_wheel_joint>
+        }
+
+        def MjcActuator "rear_right_wheel_joint_actuator"
+        {
+            uniform double mjc:forceRange:max = inf
+            uniform double mjc:forceRange:min = -inf
+            custom rel mjc:target
+            prepend rel mjc:target = </cobraflex_robot/Physics/rear_right_wheel_joint>
+        }
+
+        over "body_joint"
+        {
+        }
+
+        over "front_left_wheel_joint" (
+            delete apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+        }
+
+        over "front_right_wheel_joint" (
+            delete apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+        }
+
+        over "rear_left_wheel_joint" (
+            delete apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+        }
+
+        over "rear_right_wheel_joint" (
+            delete apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+        )
+        {
+        }
+
+        over "lidar_joint"
+        {
+        }
+
+        over "zedm_camera_center_joint"
+        {
+        }
+
+        over "zedm_mount_joint"
+        {
+        }
+
+        over "camera_joint_lane"
+        {
+        }
+    }
+
+    over "Geometry"
+    {
+        over "base_footprint"
+        {
+            over "base_link"
+            {
+                over "body_link"
+                {
+                    over "lidar_link"
+                    {
+                        over "tn__rplidara2m4r1_mJC"
+                        {
+                        }
+
+                        over "cylinder"
+                        {
+                        }
+                    }
+
+                    over "zedm_camera_link"
+                    {
+                        over "zedm_camera_center"
+                        {
+                            over "zedmini_camera"
+                            {
+                            }
+
+                            over "zedmini_camera_1"
+                            {
+                            }
+
+                            over "zedm_left_camera_frame"
+                            {
+                                over "zedm_left_camera_frame_optical"
+                                {
+                                }
+                            }
+
+                            over "zedm_right_camera_frame"
+                            {
+                                over "zedm_right_camera_frame_optical"
+                                {
+                                }
+                            }
+                        }
+                    }
+
+                    over "camera_link_lane"
+                    {
+                        over "camera_link_optical_lane"
+                        {
+                        }
+
+                        over "cylinder"
+                        {
+                        }
+
+                        over "cylinder_1"
+                        {
+                        }
+                    }
+
+                    over "imu_link"
+                    {
+                    }
+
+                    over "cobraflex_body"
+                    {
+                    }
+
+                    over "box"
+                    {
+                    }
+                }
+
+                over "front_left_wheel"
+                {
+                    over "cobraflex_wheel"
+                    {
+                    }
+
+                    over "cylinder"
+                    {
+                    }
+                }
+
+                over "front_right_wheel"
+                {
+                    over "cobraflex_wheel"
+                    {
+                    }
+
+                    over "cylinder"
+                    {
+                    }
+                }
+
+                over "rear_left_wheel"
+                {
+                    over "cobraflex_wheel"
+                    {
+                    }
+
+                    over "cylinder"
+                    {
+                    }
+                }
+
+                over "rear_right_wheel"
+                {
+                    over "cobraflex_wheel"
+                    {
+                    }
+
+                    over "cylinder"
+                    {
+                    }
+                }
+
+                over "cobraflex_chassis"
+                {
+                }
+
+                over "box"
+                {
+                }
+            }
+        }
+    }
+
+    over "Materials"
+    {
+        over "yellow"
+        {
+        }
+    }
+
+    over "VisualMaterials"
+    {
+    }
+}
+

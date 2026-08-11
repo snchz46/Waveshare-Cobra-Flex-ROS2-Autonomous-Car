@@ -12,19 +12,28 @@
   gz_type_name: "gz.msgs.Model"
   direction: GZ_TO_ROS
 
-# gz topic published by DiffDrive plugin
+# gz topic published by DiffDrive plugin (dead-reckoning encoder odom)
 - ros_topic_name: "odom"
   gz_topic_name: "odom"
   ros_type_name: "nav_msgs/msg/Odometry"
   gz_type_name: "gz.msgs.Odometry"
   direction: GZ_TO_ROS
 
-# gz topic published by DiffDrive plugin (Turned off for now since ekf node publishes tf)
-#- ros_topic_name: "tf"
-#  gz_topic_name: "tf"
-#  ros_type_name: "tf2_msgs/msg/TFMessage"
-#  gz_type_name: "gz.msgs.Pose_V"
-#  direction: GZ_TO_ROS
+# gz topic published by OdometryPublisher plugin (ground-truth pose).
+# RL training (cobraflex_rl ros_interface) reads this so set_pose teleports
+# are reflected immediately; the encoder /odom above does not track teleports.
+- ros_topic_name: "odom_truth"
+  gz_topic_name: "odom_truth"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# gz topic published by DiffDrive plugin
+- ros_topic_name: "tf"
+  gz_topic_name: "tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
 
 # gz topic subscribed to by DiffDrive plugin
 - ros_topic_name: "cmd_vel"
@@ -47,15 +56,39 @@
   gz_type_name: "gz.msgs.LaserScan"
   direction: GZ_TO_ROS
 
-# gz topic published by Sensors plugin (Camera)
+# gz topics published by Sensors plugin (ZED Mini front stereo pair)
+- ros_topic_name: "camera/left/camera_info"
+  gz_topic_name: "camera/left/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "camera/left/image_raw"
+  gz_topic_name: "camera/left/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "camera/right/camera_info"
+  gz_topic_name: "camera/right/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "camera/right/image_raw"
+  gz_topic_name: "camera/right/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
 - ros_topic_name: "camera/camera_info"
   gz_topic_name: "camera/camera_info"
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-- ros_topic_name: "camera/image_raw"
-  gz_topic_name: "camera/image_raw"
+- ros_topic_name: "camera/image_raw_lane"
+  gz_topic_name: "camera/image_raw_lane"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS

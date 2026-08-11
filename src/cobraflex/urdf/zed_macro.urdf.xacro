@@ -25,7 +25,14 @@
       - model: the type of camera, one of zed, zedm, zed2, zed2i, zedx, zedxm, virtual
       - enable_gnss: if true enable the URDF link
   -->
-  <xacro:macro name="zed_camera" params="name=zed model=zed enable_gnss=false custom_baseline=0 *gnss_origin">
+  <!-- mat_override: optional rgba replacing the per-model shell colour. The
+       default sentinel 'none' keeps every existing caller byte-identical -
+       my_robot_gazebo.urdf and my_robot_gazebo_mesh.urdf must NOT change,
+       because their cameras render this mesh and they are the models behind
+       the recorded campaign evidence. Only zed_descr.urdf.xacro (RViz /
+       hardware description) passes it, to lift the zedm shell off rgba 0,0,0,
+       which RViz shades to an unlit void. -->
+  <xacro:macro name="zed_camera" params="name=zed model=zed enable_gnss=false custom_baseline=0 mat_override=none *gnss_origin">
     <xacro:if value="${model == 'zed'}">
       <xacro:property name="baseline" value="0.12" />
       <xacro:property name="height" value="0.03" />
@@ -157,6 +164,10 @@
       <xacro:property name="mat" value="0.25 0.25 0.25 1.0" />
     </xacro:if>
 
+    <xacro:if value="${mat_override != 'none'}">
+      <xacro:property name="mat" value="${mat_override}" />
+    </xacro:if>
+
     <!-- Camera mounting point (the threaded screw hole in the bottom) -->
     <link name="${name}_camera_link" />
     
@@ -210,7 +221,7 @@
       <joint name="${name}_left_camera_joint" type="fixed">
         <parent link="${name}_camera_center"/>
         <child link="${name}_left_camera_frame"/>
-        <origin xyz="${optical_offset_x} ${baseline/2} 0" rpy="0 0 0" />
+        <origin xyz="${optical_offset_x + 0.02} ${baseline/2 - 0.007} 0" rpy="0 0 0" />
       </joint>
 
       <link name="${name}_left_camera_frame_optical"/>
@@ -243,7 +254,7 @@
       <joint name="${name}_right_camera_joint" type="fixed">
         <parent link="${name}_camera_center"/>
         <child link="${name}_right_camera_frame"/>
-        <origin xyz="${optical_offset_x} -${baseline/2} 0" rpy="0 0 0" />
+        <origin xyz="${optical_offset_x + 0.02} -${baseline/2 + 0.007} 0" rpy="0 0 0" />
       </joint>
 
       <link name="${name}_right_camera_frame_optical"/>

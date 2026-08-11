@@ -18,14 +18,9 @@ def generate_launch_description():
 
     world = LaunchConfiguration("world")
     rviz = LaunchConfiguration("rviz")
-    gui = LaunchConfiguration("gui")
     use_sim_time = LaunchConfiguration("use_sim_time")
-    spawn_x = LaunchConfiguration("spawn_x")
-    spawn_y = LaunchConfiguration("spawn_y")
-    spawn_z = LaunchConfiguration("spawn_z")
-    spawn_yaw = LaunchConfiguration("spawn_yaw")
 
-    world_path = os.path.join(package_share, "worlds", "road_carpet.world")
+    world_path = os.path.join(package_share, "worlds", "obstacles.world")
     urdf_path = os.path.join(package_share, "urdf", "my_robot_gazebo.urdf")
     bridge_params = os.path.join(package_share, "config", "gz_bridge.yaml")
     rviz_config = os.path.join(package_share, "rviz", "bot.rviz")
@@ -54,20 +49,15 @@ def generate_launch_description():
         }.items(),
     )
 
-    gazebo_client = GroupAction(
-        condition=IfCondition(gui),
-        actions=[
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("ros_gz_sim"),
-                        "launch",
-                        "gz_sim.launch.py",
-                    )
-                ),
-                launch_arguments={"gz_args": "-g "}.items(),
+    gazebo_client = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("ros_gz_sim"),
+                "launch",
+                "gz_sim.launch.py",
             )
-        ],
+        ),
+        launch_arguments={"gz_args": "-g "}.items(),
     )
 
     spawn_robot = Node(
@@ -78,14 +68,8 @@ def generate_launch_description():
             "robot_description",
             "-name",
             "cobraflex_robot",
-            "-x",
-            spawn_x,
-            "-y",
-            spawn_y,
             "-z",
-            spawn_z,
-            "-Y",
-            spawn_yaw,
+            "0.2",
         ],
         output="screen",
     )
@@ -137,34 +121,9 @@ def generate_launch_description():
                 description="Open RViz alongside Gazebo.",
             ),
             DeclareLaunchArgument(
-                "gui",
-                default_value="true",
-                description="Open the Gazebo graphical client.",
-            ),
-            DeclareLaunchArgument(
                 "use_sim_time",
                 default_value="true",
                 description="Use simulation time if true.",
-            ),
-            DeclareLaunchArgument(
-                "spawn_x",
-                default_value="0.0",
-                description="Robot spawn X position in Gazebo.",
-            ),
-            DeclareLaunchArgument(
-                "spawn_y",
-                default_value="0.0",
-                description="Robot spawn Y position in Gazebo.",
-            ),
-            DeclareLaunchArgument(
-                "spawn_z",
-                default_value="0.2",
-                description="Robot spawn Z position in Gazebo.",
-            ),
-            DeclareLaunchArgument(
-                "spawn_yaw",
-                default_value="0.0",
-                description="Robot spawn yaw in radians.",
             ),
             rsp,
             gazebo_server,

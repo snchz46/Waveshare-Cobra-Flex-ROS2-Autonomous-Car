@@ -3,11 +3,16 @@
     <!-- Base bringup for the physical robot: model, sensors and serial driver. -->
 
     <arg name="use_rviz" default="true"/>
+    <arg name="serial_port" default="/dev/ttyACM1"/>
+    <arg name="baudrate" default="115200"/>
 
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_description.launch.xml">
         <arg name="use_rviz" value="$(var use_rviz)"/>
     </include>
 
-    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml" />
+    <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml">
+        <arg name="serial_port" value="$(var serial_port)"/>
+        <arg name="baudrate" value="$(var baudrate)"/>
+    </include>
 
 </launch>

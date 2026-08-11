@@ -61,6 +61,7 @@ class AvoidanceWithLights(Node):
         self.get_logger().info("CobraFlex avoidance node started")
 
     def _scan_callback(self, msg):
+        """Classify the latest scan into front/left/right minima and decide avoidance."""
         now = self.get_clock().now()
         dt = (now - self.last_scan_time).nanoseconds / 1e9
         if dt <= 0.0:
@@ -137,6 +138,7 @@ class AvoidanceWithLights(Node):
         self.target_ang = centering
 
     def _handle_obstacle(self, front, left, right, now):
+        """Choose and latch the avoidance manoeuvre for a detected obstacle."""
         elapsed = (now - self.state_enter_time).nanoseconds / 1e9
         if self.state.startswith("TURN") and elapsed < self.min_turn_time:
             return
@@ -152,6 +154,7 @@ class AvoidanceWithLights(Node):
         self.target_lin = 0.0 if front < self.hard_stop_distance else 0.15
 
     def _cmd_timer_cb(self):
+        """Publish the current (cruise or avoidance) command at the control rate."""
         twist = Twist()
         twist.linear.x = float(self.target_lin)
         twist.angular.z = float(self.target_ang)
