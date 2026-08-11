@@ -79,7 +79,7 @@ Industrial autonomous mobile robots need a tightly integrated software stack to 
 
 | Parameter | Value |
 |-----------|-------|
-| Total mass | 5.95 kg |
+| Total mass | 3.5 kg |
 | Dimensions (L x W x H) | 0.228 x 0.18 x 0.21 m |
 | Wheel radius | 0.0375 m |
 | Max torque | 20 N*m per wheel |
