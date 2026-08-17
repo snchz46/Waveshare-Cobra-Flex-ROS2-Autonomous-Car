@@ -33,6 +33,17 @@ class CobraFlexROSDriver(Node):
         # Cap on feedback lines drained per read tick, so a chatty firmware
         # cannot starve the keep-alive timer that shares this executor thread.
         self.declare_parameter("max_lines_per_read", 20)
+        # Stiction floor for turning on the spot. The firmware maps a twist to
+        # wheel RPM linearly (`rosCtrl` in movtion_module.h) with no deadband
+        # compensation of its own, so a small yaw command with zero forward
+        # speed asks for a wheel RPM the motors cannot break static friction
+        # with: the robot buzzes and does not move, and nothing reports an
+        # error. Waveshare's own ugv_bringup lifts such commands to 0.2 rad/s,
+        # which is the value used here. Applies ONLY when linear.x is exactly
+        # zero, so lane following and the RL policy (both always driving
+        # forward) never see it, and a full stop (wz == 0.0) is never lifted.
+        # Set to 0.0 to disable.
+        self.declare_parameter("min_angular_in_place", 0.2)
 
         port = str(self.get_parameter("port").value)
         baud = int(self.get_parameter("baud").value)
@@ -42,6 +53,7 @@ class CobraFlexROSDriver(Node):
         self.turn_threshold = float(self.get_parameter("turn_threshold").value)
         self.cmd_timeout = float(self.get_parameter("cmd_timeout").value)
         self.max_lines_per_read = int(self.get_parameter("max_lines_per_read").value)
+        self.min_angular_in_place = float(self.get_parameter("min_angular_in_place").value)
 
         self.last_vx = 0.0
         self.last_wz = 0.0
@@ -87,10 +99,26 @@ class CobraFlexROSDriver(Node):
         else:
             self._turn_lights(True, True)
 
+    def _lift_in_place_yaw(self, vx, wz):
+        """Raise a small pure-rotation yaw command to the stiction floor.
+
+        See the `min_angular_in_place` declaration for why this exists. Guarded
+        so it can only ever affect a turn on the spot: a zero yaw stays zero,
+        and any command with forward speed passes through untouched.
+        """
+        if self.min_angular_in_place <= 0.0 or vx != 0.0 or wz == 0.0:
+            return wz
+
+        if abs(wz) < self.min_angular_in_place:
+            return self.min_angular_in_place if wz > 0.0 else -self.min_angular_in_place
+
+        return wz
+
     def _cmd_callback(self, msg):
         """Translate an incoming /cmd_vel into the serial JSON drive command."""
         vx = max(-self.max_linear, min(self.max_linear, msg.linear.x))
         wz = max(-self.max_angular, min(self.max_angular, msg.angular.z))
+        wz = self._lift_in_place_yaw(vx, wz)
 
         self.last_vx = vx
         self.last_wz = wz
@@ -148,16 +176,47 @@ class CobraFlexROSDriver(Node):
         self.get_logger().info("Requested feedback stream (T=131)")
 
     def _publish_feedback(self, raw):
-        """Parse one feedback line and republish it on the ROS topics."""
+        """Parse one feedback line and republish it on the ROS topics.
+
+        The T=1001 frame is built by `base_info_feedback()` in the stock
+        Cobra_Flex firmware (Cobra_Driver/ugv_advance.h). What that build
+        actually puts on the wire, which is less than the protocol comment in
+        json_cmd.h advertises:
+
+          odl, odr  cumulative distance travelled by each side, as
+                    `(long int)(en_odom_l * 100)` -- INTEGER CENTIMETRES, and
+                    monotonic. They are odometers, not speeds (see below).
+          v         battery, as `(int)(loadVoltage_V * 100)` -- CENTIVOLTS.
+          M1..M4    per-motor feedback, but `ddsm_fb_*` is initialised to 0 and
+                    the line that would refresh it is commented out upstream,
+                    so these are always 0. Do not build anything on them.
+
+        The IMU fields (gx/gy/gz, ax/ay/az, mx/my/mz) that json_cmd.h documents
+        in this frame are commented out in the shipped build, as is the whole
+        T=1002 frame. The chassis does carry an ICM-20948, so it is a recompile
+        away, not a wiring problem -- but nothing arrives today.
+
+        The firmware rate-limits this frame to `feedbackFlowExtraDelay` = 50 ms,
+        i.e. 20 Hz. `_read_serial` polls at 50 Hz only so the OS buffer never
+        backs up; it does not make the data any fresher.
+        """
         data = json.loads(raw)
         self.feedback_pub.publish(String(data=json.dumps(data)))
 
         if data.get("T", -1) != 1001:
             return
 
-        battery = float(data.get("v", 0.0))
+        # Centivolts -> volts. Publishing the raw field put ~1180 on a topic
+        # named `battery`, where 11.80 V was meant.
+        battery = float(data.get("v", 0.0)) / 100.0
         self.battery_pub.publish(Float32(data=battery))
 
+        # NOT speeds, despite the topic name: these are the two odometers
+        # described above, republished raw (integer centimetres, cumulative).
+        # Nothing subscribes to this topic today. Converting them into a real
+        # nav_msgs/Odometry is deliberately still open -- it needs the wheel
+        # geometry question settled first (see parameters.md 1.4), and the 1 cm
+        # quantisation makes them a poor speed source without filtering.
         twist = Twist()
         twist.linear.x = float(data.get("odl", 0.0))
         twist.linear.y = float(data.get("odr", 0.0))

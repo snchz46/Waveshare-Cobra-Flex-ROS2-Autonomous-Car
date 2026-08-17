@@ -28,10 +28,101 @@
 
 | Wheel | Position $(x, y, z)$ [m] | Joint |
 |-------|---------------------------|-------|
-| Wheel 1 (FL) | (0.06, 0.0745, 0) | `front_left_wheel_joint` |
-| Wheel 2 (RL) | (-0.06, 0.0745, 0) | `rear_left_wheel_joint` |
-| Wheel 3 (RR) | (-0.06, -0.0745, 0) | `rear_right_wheel_joint` |
-| Wheel 4 (FR) | (0.06, -0.0745, 0) | `front_right_wheel_joint` |
+| Wheel 1 (FL) | (0.06, 0.077, 0) | `front_left_wheel_joint` |
+| Wheel 2 (RL) | (-0.06, 0.077, 0) | `rear_left_wheel_joint` |
+| Wheel 3 (RR) | (-0.06, -0.077, 0) | `rear_right_wheel_joint` |
+| Wheel 4 (FR) | (0.06, -0.077, 0) | `front_right_wheel_joint` |
+
+The lateral offset is `wheel_off_y` in the URDFs, computed as
+`chassis_width/2 + wheel_width/2 + 0.002` = 0.077 m, so the pair is 0.154 m
+apart and agrees with §1.2. This table used to read 0.0745, which is the wheel
+*diameter* (2 x 0.03725) pasted into the position column, and which implied a
+0.149 m separation contradicting §1.2 five lines above.
+
+### 1.4 Firmware kinematic constants — UNRESOLVED disagreement
+
+Waveshare published the Cobra Flex ESP32-S3 firmware source after this model was
+built. It declares its own geometry, and it does **not** match §1.1–§1.3:
+
+```c
+// Cobra_Driver/ugv_config.h, block labelled "mainType:02 Cobra_Flex"
+double WHEEL_D          = 0.0739;   // wheel diameter
+double TRACK_WIDTH      = 0.159;
+int    ONE_CIRCLE_PLUSES = 32767;   // encoder counts per revolution
+```
+
+| Quantity | This model | Measured on the car | Firmware | Firmware vs measured |
+|---|---|---|---|---|
+| Wheel diameter | 0.0745 (r = 0.03725) | 0.0745 | **0.0739** | −0.8 % |
+| Track | 0.154 | **0.153** | **0.159** | **+3.9 %** |
+
+This is not a documentation detail: the firmware uses both constants to
+interpret *every* twist we send it, in `rosCtrl` (`Cobra_Driver/movtion_module.h`):
+
+```c
+setpointA = rosX - (rosZ * TRACK_WIDTH / 2.0);   // left wheel, m/s
+setpointB = rosX + (rosZ * TRACK_WIDTH / 2.0);   // right wheel, m/s
+setpointA = setpointA * 60 / (M_PI * WHEEL_D);   // -> RPM
+setpointB = setpointB * 60 / (M_PI * WHEEL_D);
+```
+
+So a commanded yaw rate is realised on hardware through 0.159 while Gazebo's
+DiffDrive realises it through 0.154. If our figure is the true one the robot
+turns ~3.2 % faster than commanded, i.e. a systematic sim-to-real gain error in
+exactly the channel a lane-following policy controls. The linear channel is
+~0.8 % the other way.
+
+**Nothing has been changed, and the reason is that these are two different
+quantities that happen to share a name.** Our 0.154 is geometric, derived from
+the URDF (`chassis_width/2 + wheel_width/2 + 0.002`), and the tape says the real
+track is 0.153 — so the geometry is right to 0.65 %. The firmware's 0.159 is not
+a geometric claim at all: it is the constant that converts a twist into wheel
+RPM, and it sits **3.9 % above the measured track**, which is the direction and
+rough magnitude of a scrub compensation. A skid-steer needs a larger wheel-speed
+difference than ideal differential kinematics predict, because the wheels drag
+sideways; inflating the track constant is the cheapest way to buy some of that
+back.
+
+That suggests the correct resolution is *not* to copy 0.159 into everything:
+
+- The **URDF** describes the physical robot. It should carry the measured track
+  (0.153, or the present 0.154), never a control constant with scrub baked in.
+- The **DiffDrive plugin** in `robot.gazebo` plays the same role in simulation
+  that `rosCtrl` plays on hardware — twist in, wheel speeds out. For sim-to-real
+  parity *this* is the one that should match the firmware's 0.159.
+
+Today both are 0.154, so Gazebo turns the ideal amount and the car turns through
+a constant that is 3.9 % wider — a systematic yaw gain error, in exactly the
+channel a lane-following policy controls.
+
+Confirm before changing anything: command `wz = 1.0 rad/s` with `vx = 0` for
+10 s on the floor and measure the angle actually turned. That single number says
+how much of the scrub the 0.159 really absorbs, and whether the plugin should
+follow it. Note the reachable yaw rate is already known to be roughly half the
+ideal, so 3.9 % cannot be the whole story.
+
+### 1.5 Firmware odometry and feedback
+
+From the same source, for whoever wires up wheel odometry later:
+
+| Field | Meaning | Units |
+|---|---|---|
+| `odl`, `odr` | Cumulative distance per side, `(long int)(en_odom_l * 100)` | **integer centimetres**, monotonic |
+| `v` | Battery, `(int)(loadVoltage_V * 100)` | **centivolts** |
+| `M1`..`M4` | Per-motor feedback — but `ddsm_fb_*` is never assigned in the shipped build | always 0 |
+
+Two consequences. The odometers are integrated on the ESP32 from encoder counts
+(`delta / 32767 * pi * WHEEL_D`, with a 10-count deadband ≈ 0.07 mm), so they
+already embed the firmware's `WHEEL_D` — reading them back with a different
+wheel diameter double-counts the error in §1.4. And they are truncated to whole
+centimetres before transmission: at the deployed 0.22 m/s with the frame rate
+limited to 20 Hz (`feedbackFlowExtraDelay = 50`), the robot advances ~11 mm per
+frame, so the quantisation is the same size as the signal. Usable for position,
+not for speed without filtering.
+
+The IMU fields that `json_cmd.h` documents in this frame, and the whole `T=1002`
+frame, are commented out in the shipped build. The chassis carries an ICM-20948,
+so it is a recompile away — but nothing arrives today.
 
 ---
 
