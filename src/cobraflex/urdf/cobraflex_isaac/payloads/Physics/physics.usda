@@ -40,8 +40,8 @@ over "cobraflex_robot"
                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                 )
                 {
-                    point3f physics:centerOfMass = (0, 0, 0.05)
-                    float3 physics:diagonalInertia = (0.00315456, 0.0046116096, 0.0062781696)
+                    point3f physics:centerOfMass = (0, 0, 0.037415)
+                    float3 physics:diagonalInertia = (0.00206253, 0.00210198, 0.00359719)
                     float physics:mass = 0.8928
                     quatf physics:principalAxes = (1, 0, 0, 0)
 

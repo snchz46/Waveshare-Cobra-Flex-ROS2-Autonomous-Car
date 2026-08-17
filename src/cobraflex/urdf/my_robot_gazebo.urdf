@@ -65,9 +65,42 @@
             </geometry>
         </collision>
 
-        <xacro:inertial_box mass="${body_mass}" x="${body_length}" y="${body_width}" z="${body_height}">
-            <origin xyz="0 0 ${body_height/2}" rpy="0 0 0"/>
-        </xacro:inertial_box>
+        <!-- ==== body_link inertia is MEASURED, not macro-derived. Do not
+             restore inertial_box here. The box smears body_mass uniformly
+             through 0.228 x 0.180 x 0.100, but the real deck is dominated by
+             the 550 g powerbank sitting compact and low in the centre shell,
+             so the box overstates every moment by 35-54 %:
+
+                        macro          measured
+                 ixx    0.00315456     0.00206253    -34.6 %
+                 iyy    0.00461161     0.00210198    -54.4 %
+                 izz    0.00627817     0.00359719    -42.7 %
+
+             Source is the Inventor assembly with every component at its
+             weighed density (composite 0.908 g/cm3, and the PLA shells at the
+             0.539 g/cm3 that reproduces their measured 277.8 g). The tensor is
+             about the link CoG, scaled from the CAD mass 898.7 g to body_mass.
+
+             The CoG also sits 12.6 mm below the box centre - the CAD puts it
+             52.6 mm under the lidar, which lidar_joint fixes at 0.090 - hence
+             the 0.037415 origin instead of body_height/2.
+
+             The CAD reports ixz = 1.26e-04 (6 % of ixx, the sensor mast being
+             forward and high while the powerbank is low). It is left at zero
+             until the CAD +X direction is confirmed: the macro cannot express
+             it anyway, and a sign error there couples pitch the wrong way,
+             which is worse than omitting the term.
+
+             base_link, the wheels and the lidar were checked the same way and
+             all three land within 5-6 % of their macro values, so they keep
+             the macros. See assets/Mathematical Model/parameters.md 2.1. -->
+        <inertial>
+            <origin xyz="0 0 0.037415" rpy="0 0 0"/>
+            <mass value="${body_mass}" />
+            <inertia ixx="0.00206253" ixy="0.0" ixz="0.0"
+                     iyy="0.00210198" iyz="0.0"
+                     izz="0.00359719" />
+        </inertial>
     </link>
 
     <joint name="body_joint" type="fixed">

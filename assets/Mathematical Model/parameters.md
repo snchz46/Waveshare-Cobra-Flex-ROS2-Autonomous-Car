@@ -363,7 +363,7 @@ PARAMS_CONTROL = {
 - **Kinematics**: [Kinematics.md](./Kinematics.md) uses these geometric parameters
 - **Control**: [Control.md](./Control.md) uses limits and frequencies
 - **Source files**:
-  - Main model: `src/cobraflex/urdf/robot.urdf`
+  - Main model: `src/cobraflex/urdf/my_robot_mesh.urdf`
   - Nav2 parameters: `src/cobraflex/config/nav2_params.yaml`
   - SLAM parameters: `src/cobraflex/config/slam_params.yaml`
 
