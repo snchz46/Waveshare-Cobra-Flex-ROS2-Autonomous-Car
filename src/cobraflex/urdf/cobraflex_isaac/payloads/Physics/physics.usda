@@ -32,8 +32,8 @@ over "cobraflex_robot"
             {
                 bool newton:selfCollisionEnabled = 0
                 point3f physics:centerOfMass = (0, 0, 0.03)
-                float3 physics:diagonalInertia = (0.008541667, 0.02316, 0.028701667)
-                float physics:mass = 5
+                float3 physics:diagonalInertia = (0.00344605, 0.00934367, 0.0115794)
+                float physics:mass = 2.0172
                 quatf physics:principalAxes = (1, 0, 0, 0)
 
                 over "body_link" (
@@ -41,8 +41,8 @@ over "cobraflex_robot"
                 )
                 {
                     point3f physics:centerOfMass = (0, 0, 0.05)
-                    float3 physics:diagonalInertia = (0.0035333333, 0.0051653334, 0.007032)
-                    float physics:mass = 1
+                    float3 physics:diagonalInertia = (0.00315456, 0.0046116096, 0.0062781696)
+                    float physics:mass = 0.8928
                     quatf physics:principalAxes = (1, 0, 0, 0)
 
                     over "lidar_link" (

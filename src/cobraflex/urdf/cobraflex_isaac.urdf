@@ -34,8 +34,8 @@
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0.03" />
-      <mass value="2.20" />
-      <inertia ixx="0.008541666666666666" ixy="0.0" ixz="0.0" iyy="0.02316" iyz="0.0" izz="0.028701666666666664" />
+      <mass value="2.0172" />
+      <inertia ixx="0.0034460499999999995" ixy="0.0" ixz="0.0" iyy="0.009343670399999999" iyz="0.0" izz="0.011579400399999999" />
     </inertial>
   </link>
   <joint name="base_joint" type="fixed">
@@ -59,8 +59,8 @@
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0.05" />
-      <mass value="0.71" />
-      <inertia ixx="0.003533333333333333" ixy="0.0" ixz="0.0" iyy="0.005165333333333333" iyz="0.0" izz="0.007032" />
+      <mass value="0.8928" />
+      <inertia ixx="0.00315456" ixy="0.0" ixz="0.0" iyy="0.0046116096" iyz="0.0" izz="0.0062781695999999994" />
     </inertial>
   </link>
   <joint name="body_joint" type="fixed">

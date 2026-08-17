@@ -39,21 +39,79 @@
 
 ### 2.1 Total Robot Mass
 
-Measured total of the built robot: **3.5 kg**. The breakdown below is what the
-URDFs actually declare — `chassis_mass` and `body_mass` in
-`src/cobraflex/urdf/my_robot_*.urdf`, the wheel macro, and the LiDAR link.
+Measured total of the built robot: **3.5 kg** (bench measurement, 13.08.2026).
 
-| Component | Quantity | Unit Mass | Total Mass |
-|-----------|----------|-----------|------------|
-| Base Link (chassis, motors, drivetrain) | 1 | 2.20 kg | 2.20 kg |
-| Body Link (upper deck, Jetson, LiPo, wiring) | 1 | 0.71 kg | 0.71 kg |
-| Wheels (`wheel_1...4`) | 4 | 0.10 kg | 0.40 kg |
-| LiDAR (`lidar_link`, RPLidar A2) | 1 | 0.19 kg | 0.19 kg |
-| **TOTAL** | - | - | **3.50 kg** |
+#### Bill of materials
 
-The ZED Mini (~62 g) carries no separate inertial in the URDF; its mass is
-folded into the body link it is bolted to. `camera_link` is a frame only.
+Every row is tagged with how the figure was obtained. Only the first block is a
+direct measurement of *this* robot.
 
+| Component | Qty | Unit | Total | Provenance |
+|---|---|---|---|---|
+| PLA shell — bottom (carries the mono lane camera) | 1 | 91.3 g | 91.3 g | **weighed** |
+| PLA shell — centre (carries the ZED + powerbank + cables) | 1 | 118.5 g | 118.5 g | **weighed** |
+| PLA shell — top cover (carries the LiDAR) | 1 | 68.0 g | 68.0 g | **weighed** |
+| *PLA subtotal* | 3 | — | *277.8 g* | **weighed** |
+| Powerbank XTPower XT-27000DC | 1 | 550 g | 550 g | datasheet |
+| LiDAR RPLIDAR A2 | 1 | 190 g | 190 g | datasheet |
+| ZED Mini | 1 | 60 g | 60 g | datasheet |
+| Jetson Orin Nano Developer Kit | 1 | 175 g | 175 g | datasheet |
+| Mono lane camera (IMX219 CSI) | 1 | ~5 g | ~5 g | estimate |
+| Wheels | 4 | 100 g | 400 g | assumption |
+| Rolling chassis: frame, 4 motors, driver board, motor battery, wiring, fasteners | 1 | — | **1842.2 g** | **derived remainder** |
+| **TOTAL** | | | **3500.0 g** | **measured** |
+
+Accounting of confidence:
+
+| | Mass | Share |
+|---|---|---|
+| Weighed or from a datasheet | 1252.8 g | 35.8 % |
+| Estimated (lane camera) | 5.0 g | 0.1 % |
+| Assumed (wheels) | 400.0 g | 11.4 % |
+| Derived remainder (rolling chassis) | 1842.2 g | 52.6 % |
+
+
+
+#### URDF mass distribution
+
+What the URDFs declare, derived from the bill of materials above:
+
+| Link | Mass | Contents |
+|---|---|---|
+| `base_link` (chassis) | **2.0172 kg** | frame, 4 motors, driver board, motor battery, Jetson Orin Nano DevKit, wiring |
+| `body_link` (upper deck) | **0.8928 kg** | PLA shells 0.2778 + powerbank 0.550 + ZED Mini 0.060 + lane camera ~0.005 |
+| `wheel_1…4` | **0.1 kg** ×4 = 0.4 kg | unchanged; not measured |
+| `lidar_link` (RPLidar A2) | **0.190 kg** | manufacturer |
+| **TOTAL** | **3.5000 kg** | |
+
+The **Jetson rides on the chassis, not in the body** (confirmed by the platform
+team, 17.08.2026). The ZED Mini carries no separate inertial — `zed_macro.urdf.xacro`
+declares no `<inertial>` element at all — so its 60 g is folded into the body link
+it is bolted to. `camera_link` is a frame only.
+
+Inertia tensors follow from the `inertial_box` / `inertial_cylinder` macros at these
+masses (chassis box 0.228 × 0.130 × 0.060; body box 0.228 × 0.180 × 0.100; wheel
+cylinder r = 0.03725, l = 0.02; lidar cylinder r = 0.0375, l = 0.04):
+
+| Link | ixx | iyy | izz |
+|---|---|---|---|
+| `base_link` | 0.00344605 | 0.00934367 | 0.01157940 |
+| `body_link` | 0.00315456 | 0.00461161 | 0.00627817 |
+| wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 |
+| `lidar_link` | 9.213021e-05 | 9.213021e-05 | 1.335938e-04 |
+
+#### Centre of gravity — reference frame unresolved
+
+The supplied CoG is `(x, y, z) = (0.006, −0.004, 0.030) m`. Read in `base_link` it
+is not reachable by this link layout: the powerbank (550 g) sits in the centre
+shell and the LiDAR (190 g) on the top cover, so **740 g — 21 % of the vehicle —
+is in the upper two layers**, and the itemised composite lands at **0.0566 m**
+above `base_link` (0.0938 m above ground).
+
+Read from the **chassis box centre** — which is itself 0.030 m above `base_link` —
+the supplied figure becomes 0.060 m, **3.4 mm from the model**. That is the working
+hypothesis for the reference frame, pending confirmation. Until it is confirmed, no
+inertial origin has been moved.
 
 ### 2.2 Chassis, Body and Camera Inertia Tensors
 

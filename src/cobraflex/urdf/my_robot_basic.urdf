@@ -10,12 +10,20 @@
          The link masses below have to sum to that, or Gazebo simulates a
          different vehicle than the one the controllers were tuned on:
 
-             chassis   2.20 kg   plate, 4 motors, drivetrain
-             body      0.71 kg   upper deck, Jetson, LiPo, wiring
-             wheels    0.40 kg   4 x 0.10
-             lidar     0.19 kg   RPLidar A2
+             chassis   2.0172 kg   frame, 4 motors, driver board, motor
+                                   battery, Jetson Orin Nano, wiring
+             body      0.8928 kg   PLA shells 0.2778 + powerbank 0.550 +
+                                   ZED Mini 0.060 + lane camera 0.005
+             wheels    0.40   kg   4 x 0.10
+             lidar     0.19   kg   RPLidar A2
 
-             total     3.50 kg
+             total     3.5000 kg
+
+         The chassis/body split is no longer a guess: it comes from the
+         weighed bill of materials in assets/Mathematical Model/parameters.md
+         section 2.1. The Jetson rides on the chassis, not on the upper deck,
+         which is why the deck is the lighter of the two despite carrying the
+         550 g powerbank.
 
          These were 5.0 + 1.0 kg, i.e. a 6.59 kg robot, while the README
          claimed 3.5 and assets/Mathematical Model/parameters.md claimed 5.525
@@ -25,12 +33,12 @@
     <xacro:property name="chassis_length" value="0.228" />
     <xacro:property name="chassis_width" value="0.130" />
     <xacro:property name="chassis_height" value="0.060" />
-    <xacro:property name="chassis_mass" value="2.20" />
+    <xacro:property name="chassis_mass" value="2.0172" />
 
     <xacro:property name="body_length" value="0.228" />
     <xacro:property name="body_width" value="0.180" />
     <xacro:property name="body_height" value="0.100" />
-    <xacro:property name="body_mass" value="0.71" />
+    <xacro:property name="body_mass" value="0.8928" />
     
     <xacro:property name="wheel_radius" value="0.03725" /> 
     <xacro:property name="wheel_width" value="0.02" />
