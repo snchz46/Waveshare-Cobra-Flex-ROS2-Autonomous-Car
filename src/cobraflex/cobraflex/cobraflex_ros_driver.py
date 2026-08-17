@@ -33,17 +33,31 @@ class CobraFlexROSDriver(Node):
         # Cap on feedback lines drained per read tick, so a chatty firmware
         # cannot starve the keep-alive timer that shares this executor thread.
         self.declare_parameter("max_lines_per_read", 20)
-        # Stiction floor for turning on the spot. The firmware maps a twist to
-        # wheel RPM linearly (`rosCtrl` in movtion_module.h) with no deadband
-        # compensation of its own, so a small yaw command with zero forward
-        # speed asks for a wheel RPM the motors cannot break static friction
-        # with: the robot buzzes and does not move, and nothing reports an
-        # error. Waveshare's own ugv_bringup lifts such commands to 0.2 rad/s,
-        # which is the value used here. Applies ONLY when linear.x is exactly
-        # zero, so lane following and the RL policy (both always driving
-        # forward) never see it, and a full stop (wz == 0.0) is never lifted.
-        # Set to 0.0 to disable.
-        self.declare_parameter("min_angular_in_place", 0.2)
+        # Stiction floor for turning on the spot -- OFF BY DEFAULT, and the
+        # reason it is off matters more than the feature.
+        #
+        # The firmware maps a twist to wheel RPM linearly (`rosCtrl` in
+        # movtion_module.h) with no deadband compensation of its own, so a small
+        # yaw command with zero forward speed asks for an RPM the motors cannot
+        # break static friction with: the robot buzzes, does not move, and
+        # nothing reports an error. Waveshare's own ugv_bringup lifts such
+        # commands to 0.2 rad/s, and that is the right value -- but only on a
+        # stack where a stall is never a deliberate command.
+        #
+        # On this one it is. `safe_action_to_cmd_2d` (cobraflex_rl/cage_bridge)
+        # derives linear_x and angular_z independently: a throttle below
+        # `throttle_deadband` yields linear_x == 0.0 while the steer still maps
+        # through `steering_to_yaw_rate_gain` (0.8). So the cage attenuating
+        # C-04 down to a true stall -- which SR-009 explicitly requires to be
+        # commandable -- reaches this node as vx == 0 with |wz| < 0.2 for any
+        # steer inside a quarter of its range. Lifting that would spin a robot
+        # the cage had just brought to a stop, which is the opposite of what
+        # every layer above intended.
+        #
+        # Set it to 0.2 for Nav2 bring-up or teleop, where `rotate_to_goal`
+        # otherwise stalls silently with no error. Leave it at 0.0 whenever the
+        # cage or the RL policy is driving.
+        self.declare_parameter("min_angular_in_place", 0.0)
 
         port = str(self.get_parameter("port").value)
         baud = int(self.get_parameter("baud").value)
