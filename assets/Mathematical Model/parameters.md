@@ -31,9 +31,19 @@ it is labelled — see §1.4, §2.1 and §3.2 in particular.
 | Chassis height | - | 0.060 m | `chassis_height` |
 
 $L$ does not appear in the kinematic equations — an ideal differential drive has
-no wheelbase. It appears in [Kinematics.md §3.3](./Kinematics.md), because a
-0.120 m gap between the two axles is exactly what forces this robot to scrub
-sideways when it turns.
+no wheelbase. It appears in [Kinematics.md §3.3](./Kinematics.md), because a gap
+between the two axles is exactly what forces this robot to scrub sideways when
+it turns.
+
+> **The URDF wheelbase is 22 % short of the real one.** Three values have been
+> in circulation: the URDF's `wheel_off_x = ±0.060` → **0.120 m**; an earlier
+> revision of this document → **0.1356 m** "(calculated)", which had no source
+> and has been removed; and the physical measurement (13.08.2026) →
+> **0.154 m**. The table above reports the URDF value, because that is what the
+> simulated robot has. Gazebo's `DiffDrive` is unaffected — it is kinematic and
+> consumes only `wheel_separation` — so this changes no simulation result, but
+> it does mean the modelled chassis is shorter than the real one, and any
+> future dynamic model has to use 0.154 m.
 
 **NOTE**: `my_robot_mesh.urdf` and `my_robot_gazebo_mesh.urdf` render the
 chassis with custom meshes (`cobraflex_chasis.stl`), but the box dimensions
@@ -102,7 +112,17 @@ exactly the channel a lane-following policy controls. The linear channel is
 **Nothing has been changed, and the reason is that these are two different
 quantities that happen to share a name.** Our 0.154 is geometric, derived from
 the URDF (`chassis_width/2 + wheel_width/2 + 0.002`), and the tape says the real
-track is 0.153 — so the geometry is right to 0.65 %. The firmware's 0.159 is not
+track is 0.153 — so the geometry is right to 0.65 %.
+
+> **Unsettled: where the 0.154 actually came from.** The companion RL/thesis
+> repository records a different provenance in `src/cobraflex/urdf/robot.gazebo`
+> — that 0.154 is the measured **wheelbase** (0.154 m) rather than the measured
+> **track** (0.153 m), and the two agreeing to 0.65 % is a coincidence that
+> hid the swap. Both accounts land on the same number and neither changes any
+> result, so this is a provenance question, not a numerical one. Worth noting
+> that the URDF derivation above yields 0.154 m *exactly* by construction from
+> `chassis_width`, which is evidence for the geometric reading — but the two
+> repositories should agree on one story. **Not resolved here.** The firmware's 0.159 is not
 a geometric claim at all: it is the constant that converts a twist into wheel
 RPM, and it sits **3.9 % above the measured track**, which is the direction and
 rough magnitude of a scrub compensation. A skid-steer needs a larger wheel-speed
@@ -122,11 +142,38 @@ Today both are 0.154, so Gazebo turns the ideal amount and the car turns through
 a constant that is 3.9 % wider — a systematic yaw gain error, in exactly the
 channel a lane-following policy controls.
 
-Confirm before changing anything: command `wz = 1.0 rad/s` with `vx = 0` for
-10 s on the floor and measure the angle actually turned. That single number says
-how much of the scrub the 0.159 really absorbs, and whether the plugin should
-follow it. Note the reachable yaw rate is already known to be roughly half the
-ideal, so 3.9 % cannot be the whole story.
+**That measurement has since been made, and it settles the question — against
+the firmware.** In-place rotation on the physical car, 10 s per point:
+
+| Commanded | Expected | Measured | Achieved | Gain |
+|---|---|---|---|---|
+| 0.20 rad/s | 114.6° | 55.6° | 0.097 rad/s | 0.485 |
+| 0.40 rad/s | 229.2° | 114.5° | 0.200 rad/s | 0.500 |
+| 0.53 rad/s | 303.7° | 150.4° | 0.263 rad/s | 0.495 |
+| 0.80 rad/s | 458.4° | 226.9° | 0.396 rad/s | 0.495 |
+
+Least squares through the origin gives **k = 0.4954**, no offset: the car
+delivers **half** the commanded yaw rate. Straight-line motion over the same
+10 s tracks at ~0.99 (1.998/2.000, 3.964/4.000, 5.207/5.300), so the deficit is
+**purely rotational** — the four fixed wheels scrub. The implied effective track
+is `0.153 / 0.4954 = 0.309 m`, about **2.02×** the physical track.
+
+So the 0.159 m firmware constant absorbs 3.9 % of a 102 % deficit. It is not the
+scrub compensation it looked like — it is a rounding correction against an error
+two orders of magnitude larger. Copying 0.159 into the URDF or the plugin would
+have bought nothing.
+
+**Still nothing has been changed**, and now for a stronger reason: the honest
+correction is not a new track constant but a yaw gain of ~2 somewhere in the
+chain, and applying it would perturb the plant that produced every frozen
+evaluation result. The measurement is recorded in the companion RL/thesis
+repository (`docs/14_isaacsim_handover_spec.md` §2.3a); it is reproduced here
+because it is a property of this robot.
+
+One consequence worth carrying forward: **the 6.0 rad/s driver ceiling is not
+reachable.** Ideal differential drive gives `2 × 0.53 / 0.153 = 6.93 rad/s`;
+with k = 0.4954 the real ceiling is ≈ **3.4 rad/s**, and the calibration
+campaign only reached 0.396 rad/s. 6.0 is a clamp constant, not a capability.
 
 ### 1.5 Firmware odometry and feedback
 
@@ -358,6 +405,16 @@ chassis's maximum *velocity* in m/s, copied into an acceleration field, and the
 `-10` braking limit was twenty times the acceleration limit. Both now match the
 Nav2 column in §3.1.
 
+> **Caveat on the replacement.** The 2.5 m/s² that replaced 0.53 has **no
+> stated measurement provenance either.** The 13.08.2026 bench sheet
+> independently reports "≈ 0.5–0.53 m/s²" for linear acceleration — which is the
+> same copied number arriving from a second direction, not a confirmation.
+> Treat **0.53 as refuted** and **2.5 as the platform spec**, not as a
+> measurement. Deceleration is informed, not closed. This has no practical
+> effect on any result recorded so far: at the 0.22 m/s speed cap used for
+> lane-following work, commanded acceleration is bounded to 0.22 m/s², an order
+> of magnitude under either limit.
+
 **Torque is not configured anywhere.** This section previously also listed a
 `<max_wheel_torque>20</max_wheel_torque>` tag and "maximum torque per wheel
 20 N·m". That tag appears nowhere in this repository: it belongs to the Gazebo
@@ -366,6 +423,12 @@ Classic `libgazebo_ros_diff_drive.so` plugin, whereas this project runs
 has no source anywhere in the repo, so it has been removed rather than
 corrected — there is no measured value to put in its place, and any real limit
 would come from the DDSM motor spec, which is not recorded here.
+
+> **The 20 N·m still circulates downstream.** The companion RL/thesis
+> repository quotes it — in `src/cobraflex/urdf/robot.gazebo` and in
+> `docs/14` — citing *this section* as its source. That citation is now
+> circular: it was never sourced here in the first place. It should be dropped
+> there too, or replaced with a figure from the DDSM datasheet.
 
 
 ---

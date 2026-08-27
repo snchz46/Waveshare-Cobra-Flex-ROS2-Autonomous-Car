@@ -168,18 +168,38 @@ Where this stands in this repository:
 | Measured on the car (tape) | 0.153 m | — |
 | URDF + Gazebo `DiffDrive` | 0.154 m | 1.00 (uncorrected) |
 | Waveshare firmware `TRACK_WIDTH` | 0.159 m | ≈ 1.04 |
+| **Measured yaw transfer** | **0.309 m effective** | **≈ 2.02** |
 
-Simulation therefore turns the *ideal* amount, while the hardware turns through
-a constant 3.9 % wider than the measured track — a systematic sim-to-real gain
-error in exactly the channel a lane-following policy controls. The reachable yaw
-rate on the real robot is known to be roughly half the ideal, so the true $\chi$
-is well above 1.04 and the firmware constant absorbs only part of it.
+**$\chi$ has been measured, and it is about 2.** In-place rotation on the
+physical car, 10 s per point, least squares through the origin:
 
-**Nothing has been changed on either side.** Resolving it needs a bench
-measurement, not a guess: command $\omega = 1.0$ rad/s with $v = 0$ for 10 s and
-measure the angle actually turned. The full argument — including why the URDF
-and the plugin should probably *not* end up with the same number — is in
-[parameters.md §1.4](./parameters.md).
+| Commanded | Expected | Measured | Achieved | Gain |
+|---|---|---|---|---|
+| 0.20 rad/s | 114.6° | 55.6° | 0.097 rad/s | 0.485 |
+| 0.40 rad/s | 229.2° | 114.5° | 0.200 rad/s | 0.500 |
+| 0.53 rad/s | 303.7° | 150.4° | 0.263 rad/s | 0.495 |
+| 0.80 rad/s | 458.4° | 226.9° | 0.396 rad/s | 0.495 |
+
+The plant yaw gain is $k = 0.4954$ with no offset — **the real robot turns at
+half the commanded rate.** Straight-line motion over the same 10 s tracks at
+~0.99, so the deficit is *purely rotational*: the four fixed wheels scrub,
+exactly as §3.3 predicts. The implied effective track is
+$W/k = 0.309$ m, about **2.02×** the physical 0.153 m.
+
+That reframes the firmware constant. The 0.159 m `TRACK_WIDTH` buys back 3.9 %
+of a deficit that is actually **102 %** — it is a rounding correction against an
+error two orders of magnitude larger. The sim-to-real yaw gap is not the 3.9 %
+constant mismatch; it is the factor of two.
+
+**Nothing has been changed on either side**, deliberately: correcting the plugin
+would perturb the plant that produced every frozen evaluation result. The full
+argument is in [parameters.md §1.4](./parameters.md), and the measurement is
+recorded in the RL repository's handover spec (§2.3a).
+
+> Source: the measurement lives in the companion RL/thesis repository
+> (`docs/14_isaacsim_handover_spec.md` §2.3a). It is reproduced here because it
+> is a property of *this* robot, and this is the document that was asking for
+> it.
 
 Everything that follows is the $\chi = 1$ model, which is what the code
 currently implements.
@@ -423,6 +443,12 @@ $$
 \lvert v \rvert \le 0.53 \ \text{m/s}, \qquad
 \lvert \omega \rvert \le 6.0 \ \text{rad/s}
 $$
+
+> **The 6.0 rad/s ceiling is not reachable.** It is the driver's clamp constant,
+> not a measurement. Ideal differential drive would give
+> $2 v_{\max}/W = 2 \times 0.53 / 0.153 = 6.93$ rad/s; with the measured
+> $k = 0.4954$ scrub factor (§3.3) the real ceiling is about **3.4 rad/s**, and
+> the calibration campaign only ever reached 0.396 rad/s.
 
 Nav2 never approaches the platform ceiling; the driver's clamp exists to catch
 any *other* publisher on `/cmd_vel`. In simulation only the ±2.5 m/s²
