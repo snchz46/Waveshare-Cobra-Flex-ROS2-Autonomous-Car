@@ -207,16 +207,45 @@ team, 17.08.2026). The ZED Mini carries no separate inertial — `zed_macro.urdf
 declares no `<inertial>` element at all — so its 60 g is folded into the body link
 it is bolted to. `camera_link` is a frame only.
 
-Inertia tensors follow from the `inertial_box` / `inertial_cylinder` macros at these
-masses (chassis box 0.228 × 0.130 × 0.060; body box 0.228 × 0.180 × 0.100; wheel
-cylinder r = 0.03725, l = 0.02; lidar cylinder r = 0.0375, l = 0.04):
+Three of the four links take their inertia from the `inertial_box` /
+`inertial_cylinder` macros at these masses (chassis box 0.228 × 0.130 × 0.060;
+wheel cylinder r = 0.03725, l = 0.02; lidar cylinder r = 0.0375, l = 0.04).
+**`body_link` does not** — the values below are what the URDFs actually declare:
 
-| Link | ixx | iyy | izz |
+| Link | ixx | iyy | izz | Origin of the numbers |
+|---|---|---|---|---|
+| `base_link` | 0.00344605 | 0.00934367 | 0.01157940 | `inertial_box` macro |
+| `body_link` | **0.00206253** | **0.00210198** | **0.00359719** | **hand-written, from CAD** |
+| wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 | `inertial_cylinder` macro |
+| `lidar_link` | 9.213021e-05 | 9.213021e-05 | 1.335938e-04 | `inertial_cylinder` macro |
+
+The `body_link` row previously carried 0.00315456 / 0.00461161 / 0.00627817 —
+what `inertial_box` *would* produce for a 0.8928 kg 0.228 × 0.180 × 0.100 box.
+That is not what the URDFs contain, and the difference is not small:
+
+| | macro | declared | delta |
 |---|---|---|---|
-| `base_link` | 0.00344605 | 0.00934367 | 0.01157940 |
-| `body_link` | 0.00315456 | 0.00461161 | 0.00627817 |
-| wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 |
-| `lidar_link` | 9.213021e-05 | 9.213021e-05 | 1.335938e-04 |
+| ixx | 0.00315456 | 0.00206253 | −34.6 % |
+| iyy | 0.00461161 | 0.00210198 | −54.4 % |
+| izz | 0.00627817 | 0.00359719 | −42.7 % |
+
+`body_link` is the one link whose box model was measurably wrong. An Inventor
+assembly with every component at its weighed density (composite 0.908 g/cm³,
+PLA shells at the 0.539 g/cm³ that reproduces their measured 277.8 g) puts the
+tensor 35–54 % below the macro, because the 550 g powerbank sits compact and low
+in the centre shell rather than smeared through the whole 0.228 × 0.180 × 0.100
+box. Its inertial origin is `0 0 0.037415`, not `body_height/2`, for the same
+reason — the CAD CoG is 12.6 mm below the box centre.
+
+`base_link`, the wheels and the lidar were checked the same way and all land
+within 5–6 % of their macro values, so they keep the macros. Do not "finish the
+job" by hand-writing those too, and do not restore `inertial_box` on
+`body_link`.
+
+Still open: the CAD reports `ixz` = 1.26e−04 for `body_link` (6 % of `ixx`),
+left at zero until the CAD's +X direction is confirmed. The macro cannot express
+it anyway, and a sign error there couples pitch the wrong way, which is worse
+than omitting the term.
 
 #### Centre of gravity — reference frame unresolved
 
@@ -231,7 +260,7 @@ the supplied figure becomes 0.060 m, **3.4 mm from the model**. That is the work
 hypothesis for the reference frame, pending confirmation. Until it is confirmed, no
 inertial origin has been moved.
 
-### 2.2 Chassis, Body and Camera Inertia Tensors
+### 2.2 Chassis and Body Inertia Tensors
 
 **Box Inertia** :
 
@@ -331,12 +360,12 @@ Nav2 column in §3.1.
 
 **Torque is not configured anywhere.** This section previously also listed a
 `<max_wheel_torque>20</max_wheel_torque>` tag and "maximum torque per wheel
-20 N·m". That tag appears nowhere in this repository, and it cannot: it belongs
-to the Gazebo Classic `libgazebo_ros_diff_drive.so` plugin, while this project
-runs `gz-sim-diff-drive-system`, whose SDF schema has no such element. The
-figure is not sourced from the DDSM motor datasheet either. It has been removed
-rather than corrected, because there is no measured value to put in its place —
-the simulated wheels are torque-unlimited.
+20 N·m". That tag appears nowhere in this repository: it belongs to the Gazebo
+Classic `libgazebo_ros_diff_drive.so` plugin, whereas this project runs
+`gz-sim-diff-drive-system`, which commands wheel *velocity*. The 20 N·m figure
+has no source anywhere in the repo, so it has been removed rather than
+corrected — there is no measured value to put in its place, and any real limit
+would come from the DDSM motor spec, which is not recorded here.
 
 
 ---

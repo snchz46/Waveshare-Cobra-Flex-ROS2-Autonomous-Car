@@ -425,8 +425,10 @@ $$
 $$
 
 Nav2 never approaches the platform ceiling; the driver's clamp exists to catch
-any *other* publisher on `/cmd_vel`. The simulated `DiffDrive` plugin enforces
-only the ±2.5 m/s² acceleration limits — it has no velocity ceiling of its own.
+any *other* publisher on `/cmd_vel`. In simulation only the ±2.5 m/s²
+acceleration limits are configured on the `DiffDrive` plugin — no velocity
+ceiling is set there, so a rogue publisher is unbounded in Gazebo in a way it
+would not be on the real robot.
 
 ### 7.2 Wheel Limits
 

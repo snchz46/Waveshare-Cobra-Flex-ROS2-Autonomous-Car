@@ -142,8 +142,8 @@ angular.z : desired angular velocity [rad/s]
 2. Apply inverse kinematics (see [Kinematics.md §5](./Kinematics.md)):
    - $\omega_L = \dfrac{v - \omega \cdot W/2}{r}$
    - $\omega_R = \dfrac{v + \omega \cdot W/2}{r}$
-3. Rate-limit the linear velocity to ±2.5 m/s². There is no velocity ceiling
-   and no angular acceleration limit in the plugin.
+3. Rate-limit the linear velocity to ±2.5 m/s². No velocity ceiling and no
+   angular acceleration limit are configured on the plugin.
 4. Command the resulting angular velocity to all four wheel joints, in
    synchronised left/right pairs.
 5. Integrate wheel motion into dead-reckoning odometry.
