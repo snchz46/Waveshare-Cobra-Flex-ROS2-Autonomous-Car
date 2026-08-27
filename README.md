@@ -50,6 +50,7 @@ Welcome to the **Waveshare Cobra Flex ROS 2 Autonomous Car** project. This repos
     - [Autonomous Navigation](#autonomous-navigation)
     - [Useful Commands](#useful-commands)
   - [Project structure](#project-structure)
+  - [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -200,10 +201,11 @@ The Nav2 stack integrates the NavFn global planner (Dijkstra), the DWB local con
 | Parameter | Value |
 | --------- | ----- |
 | Wheel radius | $r = 0.03725$ m |
-| Wheel separation | $W = 0.154$ m |
+| Wheel separation (track) | $W = 0.154$ m |
+| Wheelbase | $L = 0.120$ m |
 | Total mass | $m = 3.5$ kg |
-| Max linear velocity | $v_{max} = 0.53$ m/s |
-| Max angular velocity | $\omega_{max} = 6.0$ rad/s |
+| Max linear velocity | $0.35$ m/s planned by Nav2, $0.53$ m/s platform clamp |
+| Max angular velocity | $2.0$ rad/s planned by Nav2, $6.0$ rad/s platform clamp |
 | Max linear acceleration | $a_{max} = 2.5$ m/s² |
 | Max angular acceleration | $\alpha_{max} = 3.2$ rad/s² |
 
@@ -472,5 +474,29 @@ directory, and `colcon build` from the top level picks up all four packages.
     ├── safety_cage/                 # Runtime safety monitor over the controllers
     └── cobraflex_safety_msgs/       # CageStatus.msg (CMake / message generation)
 ```
+
+---
+
+## Acknowledgements
+
+This project started from **[Axioma_robot](https://github.com/MrDavidAlv/Axioma_robot)**
+by [MrDavidAlv](https://github.com/MrDavidAlv) — *"Robot autónomo ROS2 Humble |
+SLAM + Nav2 + Gazebo | Navegación autónoma para logística industrial"*, released
+under the BSD licence.
+
+Axioma_robot is a ROS 2 Humble autonomous robot built on a 4WD skid-steer
+chassis with SLAM Toolbox and Nav2. It is the same class of platform and the
+same software stack as this one, and it is where the idea for this project came
+from. Its documentation — in particular the way the robot's mathematical model
+is organised into kinematics, control and parameters — is the direct basis for
+[`assets/Mathematical Model/`](./assets/Mathematical%20Model/README.md).
+
+The two robots are **different chassis**, and none of the numbers carry over:
+Axioma runs a 0.0381 m wheel radius, a 0.1679 m effective track and a 0.26 m/s
+top speed, against 0.03725 m, 0.154 m and 0.35 m/s here. Every figure in this
+repository's documentation has been re-derived from its own URDFs, configuration
+files, firmware source and bench measurements.
+
+Thanks to MrDavidAlv for publishing the work openly.
 
 ---
