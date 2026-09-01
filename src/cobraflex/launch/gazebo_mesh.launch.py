@@ -50,6 +50,7 @@ def generate_launch_description():
     spawn_y = LaunchConfiguration("spawn_y")
     spawn_z = LaunchConfiguration("spawn_z")
     spawn_yaw = LaunchConfiguration("spawn_yaw")
+    depth_cloud = LaunchConfiguration("depth_cloud")
 
     world_path = os.path.join(package_share, "worlds", "lane_following_oval_complex.world")
     urdf_path = os.path.join(package_share, "urdf", "my_robot_gazebo_mesh.urdf")
@@ -145,6 +146,21 @@ def generate_launch_description():
         output="screen",
     )
 
+    # /camera/left/points, reprojected from the ZED depth image. OFF here,
+    # unlike in gazebo.launch.py: this is the stack the lane keeper and the RL
+    # runs sit on, and the projection costs about a fifth of a core, which
+    # comes straight out of the real time factor those runs are scored on. The
+    # depth IMAGE is bridged either way, so RViz can still show it; only the
+    # cloud is opt-in. See zed_depth_cloud.launch.py for why the cloud has to
+    # be rebuilt rather than bridged.
+    depth_cloud_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(package_share, "launch", "zed_depth_cloud.launch.py")
+        ),
+        condition=IfCondition(depth_cloud),
+        launch_arguments={"use_sim_time": use_sim_time}.items(),
+    )
+
     rviz_node = GroupAction(
         condition=IfCondition(rviz),
         actions=[
@@ -220,6 +236,14 @@ def generate_launch_description():
                 default_value="0.0",
                 description="Robot spawn yaw in radians.",
             ),
+            DeclareLaunchArgument(
+                "depth_cloud",
+                default_value="false",
+                description="Reproject the ZED depth image into "
+                            "/camera/left/points. Off by default here: it "
+                            "costs real time factor the lane keeping and RL "
+                            "runs need. Turn it on to debug depth in RViz.",
+            ),
             rsp,
             gazebo_server_running,
             gazebo_server_paused,
@@ -227,6 +251,7 @@ def generate_launch_description():
             ros_gz_bridge,
             spawn_robot,
             ekf_node,
+            depth_cloud_node,
             rviz_node,
         ]
     )

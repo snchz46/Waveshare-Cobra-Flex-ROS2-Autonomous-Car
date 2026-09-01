@@ -56,15 +56,63 @@
   gz_type_name: "gz.msgs.LaserScan"
   direction: GZ_TO_ROS
 
-# gz topics published by Sensors plugin (ZED Mini front stereo pair)
+# gz topics published by Sensors plugin (ZED Mini front stereo pair).
+# The left eye is an rgbd_camera (see urdf/robot.gazebo), so it advertises
+# four topics under the camera/left prefix. Three of them are bridged here.
+#
+# THE FOURTH, camera/left/points, IS DELIBERATELY ABSENT, and it must stay
+# absent. gz-sensors gives the sensor's four outputs one single frame_id -
+# whatever <optical_frame_id> says - but they do not share one axis
+# convention:
+#
+#   image / depth_image / camera_info   optical: z forward, x right, y down.
+#                                       camera_info carries a pinhole K and
+#                                       the depth measures along the optical
+#                                       axis, so optical is the only frame
+#                                       either can mean.
+#
+#   points                              body: x forward, y left, z up. The
+#                                       depth shader ends on
+#                                         point = vec3(-vsPos.z, -vsPos.x,
+#                                                       vsPos.y)
+#                                       under the comment "convert to z up"
+#                                       (gz-rendering8, depth_camera_fs.glsl),
+#                                       and nothing swaps it back: gz-sensors8
+#                                       PointCloudUtil::FillMsg copies x, y, z
+#                                       verbatim, then RgbdCameraSensor.cc:397
+#                                       stamps the cloud with OpticalFrameId().
+#
+# One frame_id cannot label both, so bridging the raw cloud and letting the
+# optical frame apply the URDF's -90/0/-90 a second time lays it on its side
+# in RViz, rotated 90 degrees. Instead gazebo.launch.py reprojects the depth
+# image through camera_info's intrinsics, which lands in the optical frame
+# every ROS consumer assumes and is the same projection the ZED SDK performs
+# on the real robot.
+#
+# Verified against the Gazebo sources, not guessed: the behaviour is identical
+# in Fortress (gz-sensors6, RgbdCameraSensor.cc:469) and Harmonic, and the
+# shader math is untouched between ign-rendering6 and gz-rendering8 - the only
+# differences there are the Vulkan/Ogre GLSL syntax migration.
 - ros_topic_name: "camera/left/camera_info"
   gz_topic_name: "camera/left/camera_info"
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-- ros_topic_name: "camera/left/image_raw"
-  gz_topic_name: "camera/left/image_raw"
+# Was camera/left/image_raw while this eye was a mono camera. An rgbd_camera
+# builds its topic names off the <topic> prefix and always calls this one
+# /image; the name is not configurable.
+- ros_topic_name: "camera/left/image"
+  gz_topic_name: "camera/left/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+# Depth, as 32FC1 metres. ros_gz converts gz's R_FLOAT32 pixel format to
+# 32FC1 both ways (ros_gz_bridge convert/sensor_msgs.cpp), so no extra node
+# is needed to make it readable.
+- ros_topic_name: "camera/left/depth_image"
+  gz_topic_name: "camera/left/depth_image"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS

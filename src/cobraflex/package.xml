@@ -43,6 +43,12 @@
 
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
+  <!-- zed_depth_cloud.launch.py: the simulated ZED's depth image is turned
+       into a point cloud here rather than bridged out of Gazebo, because
+       gz-sensors' own cloud is in body axes but carries the optical frame_id.
+       PointCloudXyzrgbNode is a component, so it needs the container too. -->
+  <exec_depend>depth_image_proc</exec_depend>
+  <exec_depend>rclcpp_components</exec_depend>
   <!-- lane_keeper_gazebo_node shares the CV lane estimator + controller -->
   <exec_depend>cobraflex_rl</exec_depend>
   

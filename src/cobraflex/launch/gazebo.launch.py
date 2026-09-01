@@ -19,6 +19,7 @@ def generate_launch_description():
     world = LaunchConfiguration("world")
     rviz = LaunchConfiguration("rviz")
     use_sim_time = LaunchConfiguration("use_sim_time")
+    depth_cloud = LaunchConfiguration("depth_cloud")
 
     world_path = os.path.join(package_share, "worlds", "obstacles.world")
     urdf_path = os.path.join(package_share, "urdf", "my_robot_gazebo.urdf")
@@ -85,6 +86,17 @@ def generate_launch_description():
         output="screen",
     )
 
+    # /camera/left/points, reprojected from the depth image rather than
+    # bridged straight out of Gazebo. The why is a frame-convention trap and
+    # it lives in zed_depth_cloud.launch.py, next to the node it explains.
+    depth_cloud_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(package_share, "launch", "zed_depth_cloud.launch.py")
+        ),
+        condition=IfCondition(depth_cloud),
+        launch_arguments={"use_sim_time": use_sim_time}.items(),
+    )
+
     rviz_node = GroupAction(
         condition=IfCondition(rviz),
         actions=[
@@ -125,12 +137,21 @@ def generate_launch_description():
                 default_value="true",
                 description="Use simulation time if true.",
             ),
+            DeclareLaunchArgument(
+                "depth_cloud",
+                default_value="true",
+                description="Reproject the ZED depth image into "
+                            "/camera/left/points for RViz. Costs roughly a "
+                            "fifth of a core, which this stack can afford and "
+                            "gazebo_mesh.launch.py cannot.",
+            ),
             rsp,
             gazebo_server,
             gazebo_client,
             ros_gz_bridge,
             spawn_robot,
             ekf_node,
+            depth_cloud_node,
             rviz_node,
         ]
     )

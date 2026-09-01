@@ -507,13 +507,31 @@ single `ZEDm Cam` on a link called `camera_link`, publishing `camera/image_raw`
 | | ZED Mini left | ZED Mini right | Lane camera |
 |---|---|---|---|
 | Sensor name | `ZEDm Left Cam` | `ZEDm Right Cam` | `Lane Cam` |
+| Sensor type | `rgbd_camera` | `camera` | `camera` |
 | Attached to | `zedm_left_camera_frame` | `zedm_right_camera_frame` | `camera_link_lane` |
-| Topic | `camera/left/image_raw` | `camera/right/image_raw` | `camera/image_raw_lane` |
-| Resolution | 640 × 480 | 640 × 480 | 640 × 360 |
-| Horizontal FOV | 1.3962634 rad (80°) | 1.3962634 rad (80°) | 1.5707963 rad (90°) |
+| Topic | `camera/left` (prefix) | `camera/right/image_raw` | `camera/image_raw_lane` |
+| Resolution | 480 × 270 | 640 × 480 | 640 × 360 |
+| Horizontal FOV | 1.7802358 rad (102°) | 1.3962634 rad (80°) | 1.5707963 rad (90°) |
 | Clip near / far | 0.1 / 15 m | 0.1 / 15 m | 0.1 / 15 m |
 | Rate | 20 Hz | 20 Hz | 20 Hz |
 | Noise stddev | 0.007 | 0.007 | 0.007 |
+
+The left eye is an `rgbd_camera`, so its `<topic>` is a **prefix**: gz appends
+`/image`, `/depth_image`, `/points` and `/camera_info` to it. It is the only one
+of the three that yields depth, and it yields it the way the real ZED Mini does
+— computed on the GPU and registered to the left eye — rather than by matching
+two rendered images, which is what the SDK's output actually looks like to ROS.
+Its FOV and 16:9 aspect are the real camera's; the vertical then falls out near
+70° against the real 57°, because a pinhole cannot reproduce a 2.1 mm lens.
+480 × 270 rather than a full WVGA 640 × 360 because the reprojection downstream,
+not the render, is what costs real time factor.
+
+`camera/left/points` is deliberately **not** bridged to ROS. gz-sensors emits
+that cloud in body axes (x forward, y left, z up) while stamping it with the
+optical frame, so bridging it lands it in RViz rotated 90°. The cloud is rebuilt
+from the depth image and `camera_info` by `zed_depth_cloud.launch.py` instead,
+which is also the projection the real ZED SDK performs. The full argument, with
+the Gazebo source references, is in `src/cobraflex/config/gz_bridge.yaml`.
 
 **Mounts** (both parented to `body_link`):
 

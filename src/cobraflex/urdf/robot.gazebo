@@ -147,18 +147,47 @@
         </sensor>
     </gazebo>
 
-    <!-- ZED Mini front stereo pair. Two independent render sensors, one per
-         lens, mounted on the macro's left/right frames (63 mm baseline). Per-eye
-         intrinsics kept identical to the former mono sensor; the real ZED Mini
-         FOV is wider (~102 deg H) and can be calibrated later if the scene
-         camera is ever consumed. Topics follow the zed-ros2 convention. -->
+    <!-- ZED Mini front stereo pair, and the depth the real camera returns.
+         Both eyes sit on the macro's left/right frames (63 mm baseline) and
+         follow the zed-ros2 topic convention.
+
+         The LEFT eye is an rgbd_camera, not a camera. That is not a shortcut
+         around simulating stereo. The real ZED Mini never hands ROS two raw
+         images to match: it hands over depth already computed on the GPU and
+         registered to the left eye, which is also the frame the SDK expresses
+         its point cloud and its tracking in. One RGBD sensor posed on that
+         frame reproduces the SDK's OUTPUT; two mono cameras plus a stereo
+         matcher in ROS would reproduce its ALGORITHM, at a cost the
+         simulation cannot afford and with nothing gained sim-to-real. The
+         render is not what changes - gz-sensors extracts the RGB image out of
+         the very buffer it fills the depth from, so this is one pass either
+         way, the same as the mono sensor it replaces.
+
+         The RIGHT eye stays a plain camera. Nothing subscribes to it; it is
+         kept so the render matches the two lenses that physically exist.
+         Delete it if the scene ever needs that render pass back.
+
+         FOV corrected to the real ZED Mini's 102 deg horizontal, which the
+         comment that used to live here flagged as pending "if the scene
+         camera is ever consumed". It now is. At 16:9 a pinhole with 102 deg
+         horizontal comes out near 70 deg vertical against the real camera's
+         57 - the 2.1 mm lens is not a pinhole and faking the difference buys
+         nothing. The aspect ratio matters more than either figure, and 4:3
+         was simply wrong here: every ZED Mini mode (HD1080, HD720, WVGA) is
+         16:9.
+
+         480x270 rather than the 640x360 that would mirror WVGA. The cost that
+         drove this is not the render, it is the reprojection into a cloud
+         downstream: depth_image_proc has no decimation parameter, so this
+         resolution is the only knob for it. 640x360 costs about a third of a
+         core and drags the real time factor to roughly 0.76. -->
     <gazebo reference="zedm_left_camera_frame">
-        <sensor name="ZEDm Left Cam" type="camera">
+        <sensor name="ZEDm Left Cam" type="rgbd_camera">
             <camera>
-                <horizontal_fov>1.3962634</horizontal_fov>
+                <horizontal_fov>1.7802358</horizontal_fov>
                 <image>
-                    <width>640</width>
-                    <height>480</height>
+                    <width>480</width>
+                    <height>270</height>
                     <format>R8G8B8</format>
                 </image>
                 <clip>
@@ -170,13 +199,25 @@
                     <mean>0.0</mean>
                     <stddev>0.007</stddev>
                 </noise>
+                <!-- Labels image, depth_image AND camera_info, and all three
+                     really are optical, so it is right for them. gz-sensors
+                     stamps the sensor's own /points with it too, where it is
+                     WRONG - which is why that topic is not bridged. The full
+                     argument is in config/gz_bridge.yaml. -->
                 <optical_frame_id>zedm_left_camera_frame_optical</optical_frame_id>
-                <camera_info_topic>camera/left/camera_info</camera_info_topic>
+                <!-- No <camera_info_topic> on purpose: RgbdCameraSensor
+                     hardcodes Topic() + "/camera_info" and ignores the tag
+                     (gz-sensors8, RgbdCameraSensor.cc:252), unlike the plain
+                     camera below. The prefix underneath yields exactly the
+                     name the old mono sensor advertised. -->
             </camera>
             <always_on>1</always_on>
             <update_rate>20</update_rate>
             <visualize>true</visualize>
-            <topic>camera/left/image_raw</topic>
+            <!-- A PREFIX, not a full topic: gz appends /image, /depth_image,
+                 /points and /camera_info to it. The RGB stream is therefore
+                 camera/left/image, no longer camera/left/image_raw. -->
+            <topic>camera/left</topic>
         </sensor>
     </gazebo>
 

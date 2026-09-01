@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>cobraflex_teleop_gui</name>
+  <version>0.1.0</version>
+  <description>
+    Qt teleoperation window for the CobraFlex chassis: a button pad, a virtual
+    joystick and a pair of velocity sliders, all publishing geometry_msgs/Twist
+    on cmd_vel.
+
+    It is a package of its own rather than another executable inside cobraflex
+    so that PyQt5 stays out of the dependency set of the package every machine
+    needs. Nothing else in the workspace depends on this one, and a robot that
+    is never driven by hand does not have to build it.
+  </description>
+  <maintainer email="sasamt02@hs-esslingen.de">Samuel Sanchez</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>geometry_msgs</depend>
+  <depend>python3-pyqt5</depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
