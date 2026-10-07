@@ -42,7 +42,7 @@ ros2 launch cobraflex navigation.launch.py          # Nav2 (needs a saved map)
 ros2 launch cobraflex lane_keeper_gazebo.launch.py  # lane following
 ```
 
-Full setup in **[docs/INSTALLATION.md](docs/INSTALLATION.md)** · everyday commands in **[docs/USAGE.md](docs/USAGE.md)**.
+Full setup in **[docs/INSTALLATION.md](docs/INSTALLATION.md)** · everyday commands in **[docs/USAGE.md](docs/USAGE.md)** · how and why it works in **[docs/concepts](docs/concepts/README.md)**.
 
 ---
 
@@ -313,6 +313,7 @@ Road textures are **generated**, not hand-painted, by the scripts under
 | --- | --- |
 | **[Installation](docs/INSTALLATION.md)** | Clean-machine setup, hardware-only dependencies, troubleshooting |
 | **[Usage](docs/USAGE.md)** | SLAM, navigation, lane keeping, physical bring-up, debugging |
+| **[Concepts](docs/concepts/README.md)** | The theory behind each subsystem and where this repository implements it: ROS 2, architecture, state estimation, SLAM, navigation, lane perception, RL, safety cage, networking |
 | **[Mathematical Model](assets/Mathematical%20Model/README.md)** | Kinematics, control architecture, full parameter reference |
 | **[Gazebo Simulation](assets/Gazebo%20Simulation/README.md)** | Simulation setup fundamentals |
 | **[Worlds](src/cobraflex/worlds/README.md)** | Every SDF world and the texture generators |
