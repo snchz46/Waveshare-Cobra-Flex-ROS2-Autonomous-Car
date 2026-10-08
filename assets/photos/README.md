@@ -14,6 +14,13 @@ High-resolution build photos and documentation shots live here. Embed them direc
 | ![Hardware iteration comparison](Physical%20comparison.jpg) | Side-by-side comparison of mounting plate revisions. |
 | ![Point cloud fusion overlay](pointcloud%20fusion.png) | RViz capture illustrating fused LiDAR and ZED data. |
 | ![Depth agreement plot between LiDAR and ZED](Lidar_ZED_Distance.png) | Analysis plot comparing range measurements from both sensors. |
+| ![Current build on the lab circuit](cobraflex_v3.jpg) | Current (V3) build on the lab circuit: RPLIDAR, ZED Mini, CSI lane camera on the front bumper. |
+| ![Lab circuit](lab_circuit.jpg) | The lab circuit, a still from the physical emergency-stop clip. |
+| ![Gazebo twin](gazebo_twin.png) | The robot model in Gazebo Harmonic, cropped from `digital_twin.png`. |
+| ![Isaac Sim twin](isaac_sim_twin.png) | The robot's USD asset rendered in NVIDIA Isaac Sim. |
+| ![Gazebo lane following](gazebo_lane_following.png) | `complex_b` circuit in Gazebo, with RViz drawing the lane boundaries the safety cage watches. |
+| ![RViz lane camera](rviz_lane_camera.png) | Lane camera in RViz: CV lane estimate overlay and the grayscale frame the CNN policy sees. |
+| ![Safety cage node chain](safety_cage_node_chain.png) | Perception → policy → safety cage → vehicle control, with the topics between them. |
 
 When adding new media:
 1. Place the file in this directory (or a dated subfolder).
