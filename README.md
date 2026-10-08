@@ -8,10 +8,9 @@
 
 <table>
 <tr>
-<td width="25%" align="center"><img src="assets/photos/Car Prototype V3_1.png" width="100%"/><br><sub><b>CAD</b> · Autodesk Inventor</sub></td>
-<td width="25%" align="center"><img src="assets/photos/gazebo_twin.png" width="100%"/><br><sub><b>Digital twin</b> · Gazebo Harmonic</sub></td>
-<td width="25%" align="center"><img src="assets/photos/isaac_sim_twin.png" width="100%"/><br><sub><b>Digital twin</b> · NVIDIA Isaac Sim</sub></td>
-<td width="25%" align="center"><img src="assets/photos/cobraflex_v3.jpg" width="100%"/><br><sub><b>Physical robot</b> · Jetson Orin Nano</sub></td>
+<td width="30%" align="center"><img src="assets/photos/Full Car.png" width="100%"/><br><sub><b>CAD</b> · Autodesk Inventor</sub></td>
+<td width="30%" align="center"><img src="assets/photos/digital_twin.png" width="80%"/><br><sub><b>Digital twin</b> · Gazebo Harmonic</sub></td>
+<td width="25%" align="center"><img src="assets/photos/cobraflex_v3.jpg" width="80%"/><br><sub><b>Physical robot</b> · Jetson Orin Nano</sub></td>
 </tr>
 </table>
 
@@ -50,10 +49,10 @@
 | <img src="assets/videos/sim_camera_policy_cage.gif" width="400"/> | <img src="assets/videos/navigation.gif" width="400"/> |
 | <sub>Gazebo: PPO driving <code>complex_b</code>; RViz shows the CV lane estimate and what the CNN sees</sub> | <sub>Nav2 driving to a goal in a mapped world</sub> |
 
-| SLAM and mapping | LiDAR → point cloud |
+| SLAM and mapping | Navigation |
 |:---:|:---:|
-| <img src="assets/videos/mapping.gif" width="400"/> | <img src="assets/videos/Lidar to pointcloud.gif" width="400"/> |
-| <sub>Real-time occupancy grid with SLAM Toolbox</sub> | <sub>Scan lifted into a 3D point cloud</sub> |
+| <img src="assets/videos/mapping.gif" width="400"/> | <img src="assets/videos/navigation2_with_slam.gif" width="400"/> |
+| <sub>Real-time occupancy grid with SLAM Toolbox</sub> | <sub>Real-time navigation and mapping</sub> |
 
 </div>
 
@@ -61,7 +60,7 @@
 
 ## For the lab
 
-<img align="right" src="assets/photos/lab_circuit.jpg" width="380"/>
+<img align="right" src="assets/photos/assembly.gif" width="380"/>
 
 This repository is the foundation of the practical sessions of the
 autonomous-driving module in the **Automotive Systems M.Sc.** It turns what is
@@ -375,42 +374,6 @@ any of them with `ros2 launch cobraflex gazebo_mesh.launch.py world:=<name>`.
 Road textures are **generated**, not hand-painted, by the scripts under
 `materials/road_assets/`. Full list:
 [`src/cobraflex/worlds/README.md`](src/cobraflex/worlds/README.md).
-
----
-
-## Gallery
-
-<div align="center">
-<table>
-  <tr>
-    <td width="50%"><img src="assets/photos/cobraflex_v3.jpg" width="100%"/><br><sub>The current build on the lab circuit: RPLIDAR on top, ZED Mini in front, lane camera on the front bumper</sub></td>
-    <td width="50%"><img src="assets/photos/Car Prototype V3_2.png" width="100%"/><br><sub>CAD of the same build — Autodesk Inventor</sub></td>
-  </tr>
-  <tr>
-    <td><img src="assets/photos/rviz_lane_camera.png" width="100%"/><br><sub>Lane camera in RViz: the CV lane estimate overlaid (top) and the grayscale frame the CNN policy sees (bottom)</sub></td>
-    <td><img src="assets/videos/Assembly Video Mockup V2.gif" width="100%"/><br><sub>Mechanical assembly</sub></td>
-  </tr>
-  <tr>
-    <td><img src="assets/photos/digital_wtin_rviz.png" width="100%"/><br><sub>The robot model and its frames in RViz2</sub></td>
-    <td><img src="assets/videos/Lidar to projection.gif" width="100%"/><br><sub>LiDAR scan projected onto the camera image</sub></td>
-  </tr>
-</table>
-</div>
-
-<details>
-<summary><b>Build history</b> — earlier prototypes</summary>
-<br>
-<table>
-  <tr>
-    <td width="50%"><img src="assets/photos/Mockup V2 Front.jpg" width="100%"/><br><sub>Mockup V2 — front</sub></td>
-    <td width="50%"><img src="assets/photos/Mockup V2 side 2.jpg" width="100%"/><br><sub>Mockup V2 — sensor stack</sub></td>
-  </tr>
-  <tr>
-    <td><img src="assets/photos/Mockup V1 Front.jpg" width="100%"/><br><sub>Mockup V1</sub></td>
-    <td><img src="assets/photos/Initial prototype front.jpg" width="100%"/><br><sub>First bench-top build</sub></td>
-  </tr>
-</table>
-</details>
 
 ---
 
