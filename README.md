@@ -314,6 +314,7 @@ Road textures are **generated**, not hand-painted, by the scripts under
 | **[Installation](docs/INSTALLATION.md)** | Clean-machine setup, hardware-only dependencies, troubleshooting |
 | **[Usage](docs/USAGE.md)** | SLAM, navigation, lane keeping, physical bring-up, debugging |
 | **[Concepts](docs/concepts/README.md)** | The theory behind each subsystem and where this repository implements it: ROS 2, architecture, state estimation, SLAM, navigation, lane perception, RL, safety cage, networking |
+| **[Lab](lab/README.md)** | Code for the lab sessions of the module: the half-made nodes students complete in their workbooks |
 | **[Mathematical Model](assets/Mathematical%20Model/README.md)** | Kinematics, control architecture, full parameter reference |
 | **[Gazebo Simulation](assets/Gazebo%20Simulation/README.md)** | Simulation setup fundamentals |
 | **[Worlds](src/cobraflex/worlds/README.md)** | Every SDF world and the texture generators |
