@@ -6,7 +6,7 @@
       <real_time_factor>1.0</real_time_factor>
     </physics>
 
-    <!-- Template systems kept from empty.world -->
+    <!-- Systems from empty.world -->
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
@@ -29,7 +29,7 @@
       <direction>-0.5 0.1 -0.9</direction>
     </light>
 
-    <!-- Base floor kept below the carpet patch -->
+    <!-- Ground plane below the road patch -->
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
@@ -56,8 +56,8 @@
       </link>
     </model>
 
-    <!-- Textured carpet patch built from /mnt/data/road1.png.
-         Scaled so the road width in the texture corresponds to 0.50 m total.
+    <!-- Textured road patch from materials/road1.png, scaled so that the
+         road width of the texture corresponds to 0.50 m.
          Patch size: 1.19 m x 3.85 m x 0.01 m -->
     <model name="road_carpet">
       <static>true</static>

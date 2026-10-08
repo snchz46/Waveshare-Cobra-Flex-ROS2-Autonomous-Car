@@ -6,9 +6,9 @@
 
     <xacro:include filename="inertial_macros.xacro" />
 
-    <!-- ==== Mass budget. Measured total of the built robot: 3.5 kg.
-         The link masses below have to sum to that, or Gazebo simulates a
-         different vehicle than the one the controllers were tuned on:
+    <!-- ==== Mass budget. Measured total mass of the robot: 3.5 kg.
+         The link masses below sum to this value, so that Gazebo simulates the
+         vehicle on which the controllers are tuned:
 
              chassis   2.0172 kg   frame, 4 motors, driver board, motor
                                    battery, Jetson Orin Nano, wiring
@@ -19,16 +19,13 @@
 
              total     3.5000 kg
 
-         The chassis/body split is no longer a guess: it comes from the
-         weighed bill of materials in assets/Mathematical Model/parameters.md
-         section 2.1. The Jetson rides on the chassis, not on the upper deck,
-         which is why the deck is the lighter of the two despite carrying the
-         550 g powerbank.
+         The chassis/body split is derived from the weighed bill of materials
+         in assets/Mathematical Model/parameters.md section 2.1. The Jetson is
+         mounted on the chassis, not on the upper deck; the deck is therefore
+         the lighter part despite carrying the 550 g powerbank.
 
-         These were 5.0 + 1.0 kg, i.e. a 6.59 kg robot, while the README
-         claimed 3.5 and assets/Mathematical Model/parameters.md claimed 5.525
-         three different robots across three files. Change one, change all
-         three. -->
+         The mass budget is also stated in the root README and in
+         parameters.md; all files are changed together. -->
 
     <xacro:property name="chassis_length" value="0.228" />
     <xacro:property name="chassis_width" value="0.130" />
@@ -46,7 +43,7 @@
     <xacro:property name="wheel_off_x" value="0.060" />
     <xacro:property name="wheel_off_y" value="${(chassis_width/2) + (wheel_width/2) + 0.002}" />
 
-    <!-- ==== cosmetic materials. The URDF is a visualisation of the real car, so the colours are chosen to match the actual parts. -->
+    <!-- ==== Visual materials. Colours match the parts of the physical robot. -->
     <material name="carbon">      <color rgba="0.34 0.35 0.39 1"/></material>
     <material name="dark_grey">   <color rgba="0.46 0.48 0.52 1"/></material>
     <material name="mid_grey">    <color rgba="0.64 0.66 0.70 1"/></material>
@@ -61,20 +58,20 @@
     <material name="copper">      <color rgba="0.85 0.53 0.24 1"/></material>
     <material name="anodised">    <color rgba="0.16 0.45 0.82 1"/></material>
 
-    <!-- base_footprint is the ROOT of this description, and that is load-bearing.
+    <!-- base_footprint is the root of this description.
          robot_localization publishes odom -> <base_link_frame>, and
          robot_state_publisher publishes this tree from its root; if the two name
-         different frames, one of them ends up with two parents and the TF tree is
-         invalid. config/ekf_hw.yaml names base_footprint, ekf_gazebo.yaml and the
-         Gazebo descriptions already root here, and every rviz config's Fixed Frame
-         is base_footprint.
+         different frames, one frame has two parents and the TF tree is invalid.
+         config/ekf_hw.yaml uses base_footprint, ekf_gazebo.yaml and the Gazebo
+         descriptions use it as root, and the Fixed Frame of every RViz
+         configuration is base_footprint.
 
-         The ZED therefore hangs off body_link (zed_mount_joint, further down)
-         rather than the reverse. Rooting the tree at zed_camera_link also yields a
-         consistent tree, but it makes the ekf's two_d_mode pin the CAMERA to z=0
-         (sinking base_footprint to z=-0.13725) and moves the velocity reference
-         0.11 m forward, so the speed the cage reads picks up an omega*0.11 term in
-         curves (~+8% at the deployed 0.22 m/s contract). -->
+         The ZED is therefore attached to body_link (zed_mount_joint, below).
+         A tree rooted at zed_camera_link is also consistent, but two_d_mode of
+         the EKF would then fix the camera at z=0 (base_footprint at z=-0.13725)
+         and move the velocity reference 0.11 m forward, adding an omega*0.11
+         term to the speed read by the cage in curves (about +8 % at the
+         deployed 0.22 m/s). -->
     <link name="base_footprint"/>
 
     <link name="base_link">
@@ -144,14 +141,14 @@
     </link>
     <joint name="viz_bumpers_joint" type="fixed"><parent link="base_link"/><child link="viz_bumpers"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
-    <!-- Axle housings, driveshaft and the four body mounts. The body mounts
-         exist because body_joint lifts body_link 0.080 m, which left the
-         electronics deck hovering 17 mm above the chassis rails with nothing
-         in between - the deck read as floating in RViz. They run from the
-         chassis plate's top face (z=-0.019) to the deck's underside
-         (z=+0.030), so length 0.049 centred at z=+0.0055, at |y|=0.036 to
-         clear the side rails (0.045..0.065) and |x|=0.078 to clear the servo,
-         motor can and driveshaft. Cylinder axis is Z, hence the rotations. -->
+    <!-- Axle housings, driveshaft and the four body mounts. body_joint raises
+         body_link by 0.080 m, which leaves a 17 mm gap between the electronics
+         deck and the chassis rails; the mounts close this gap in RViz. They
+         run from the top face of the chassis plate (z=-0.019) to the underside
+         of the deck (z=+0.030): length 0.049, centred at z=+0.0055, at
+         |y|=0.036 to clear the side rails (0.045..0.065) and |x|=0.078 to
+         clear the servo, motor and driveshaft. The cylinder axis is Z, hence
+         the rotations. -->
     <link name="viz_drivetrain">
         <visual>
             <origin xyz="${wheel_off_x} 0 -0.012" rpy="${pi/2} 0 0"/>
@@ -222,10 +219,9 @@
     <joint name="viz_servo_joint" type="fixed"><parent link="base_link"/><child link="viz_servo"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
     <link name="body_link">
-        <!-- ELECTRONICS DECK. Was a single 0.228x0.180x0.100 grey box; now a
-             two-plate stack on standoffs carrying the Jetson and the LiPo,
-             which is what actually occupies this volume on the car. The side
-             skirts keep the original 0.180 m width silhouette. -->
+        <!-- Electronics deck: two plates on standoffs carrying the Jetson and
+             the LiPo, which occupy this volume on the physical robot. The side
+             skirts keep the 0.180 m width of the body. -->
 
         <!-- lower deck plate -->
         <visual>
@@ -247,18 +243,17 @@
 
         <!-- ===== SENSOR MAST =====================================
              The three front sensors are children of body_link at fixed
-             offsets that no code may change (the lane camera's 0.3 rad pitch
-             and mount height feed the IPM in camera_geometry.py, and the ZED
-             root frame is the tree's root). They sat in mid-air ahead of the
-             deck with no structure under them. These visuals are that missing
-             structure - no sensor frame moves:
+             offsets that must not change (the 0.3 rad pitch and mount height
+             of the lane camera feed the IPM in camera_geometry.py). These
+             visuals represent the supporting structure ahead of the deck; no
+             sensor frame is moved:
 
                nose shelf   deck front edge -> under camera_link_lane (x 0.124)
                mast         shelf -> ZED height, seated 1 mm into the deck
                cross-bar    top plate the ZED body (z 0.020..0.047) rests on,
                             in viz_mast_plate below because it is anodised
 
-             The mast is held at x 0.099..0.109 to pass 2 mm clear of the LiPo
+             The mast is placed at x 0.099..0.109, 2 mm clear of the LiPo
              pack, which ends at x=0.097. -->
         <visual>
             <origin xyz="0.116 0 -0.0445" rpy="0 0 0"/>
@@ -278,35 +273,35 @@
             </geometry>
         </collision>
 
-        <!-- ==== body_link inertia is MEASURED, not macro-derived. Do not
-             restore inertial_box here. The box smears body_mass uniformly
-             through 0.228 x 0.180 x 0.100, but the real deck is dominated by
-             the 550 g powerbank sitting compact and low in the centre shell,
-             so the box overstates every moment by 35-54 %:
+        <!-- ==== body_link inertia derived from CAD, not from a macro.
+             inertial_box is not to be restored here. The box model distributes
+             body_mass uniformly over 0.228 x 0.180 x 0.100, whereas the real
+             deck is dominated by the 550 g powerbank, compact and low in the
+             centre shell; the box overestimates every moment by 35-54 %:
 
-                        macro          measured
+                        macro          CAD
                  ixx    0.00315456     0.00206253    -34.6 %
                  iyy    0.00461161     0.00210198    -54.4 %
                  izz    0.00627817     0.00359719    -42.7 %
 
-             Source is the Inventor assembly with every component at its
-             weighed density (composite 0.908 g/cm3, and the PLA shells at the
-             0.539 g/cm3 that reproduces their measured 277.8 g). The tensor is
-             about the link CoG, scaled from the CAD mass 898.7 g to body_mass.
+             Source: Inventor assembly with every component at its weighed
+             density (composite 0.908 g/cm3; PLA shells at 0.539 g/cm3, which
+             reproduces their measured 277.8 g). The tensor refers to the link
+             CoG and is scaled from the CAD mass of 898.7 g to body_mass.
 
-             The CoG also sits 12.6 mm below the box centre - the CAD puts it
-             52.6 mm under the lidar, which lidar_joint fixes at 0.090 - hence
-             the 0.037415 origin instead of body_height/2.
+             The CoG lies 12.6 mm below the box centre (52.6 mm below the
+             LiDAR, which lidar_joint places at 0.090); hence the origin
+             0.037415 instead of body_height/2.
 
-             The CAD reports ixz = 1.26e-04 (6 % of ixx, the sensor mast being
-             forward and high while the powerbank is low). It is left at zero
-             until the CAD +X direction is confirmed: the macro cannot express
-             it anyway, and a sign error there couples pitch the wrong way,
+             The CAD reports ixz = 1.26e-04 (6 % of ixx; the sensor mast is
+             forward and high, the powerbank low). It is set to zero until the
+             +X direction of the CAD is confirmed: the macro cannot represent
+             it, and a sign error would couple pitch in the wrong direction,
              which is worse than omitting the term.
 
-             base_link, the wheels and the lidar were checked the same way and
-             all three land within 5-6 % of their macro values, so they keep
-             the macros. See assets/Mathematical Model/parameters.md 2.1. -->
+             base_link, the wheels and the LiDAR were checked with the same
+             method and are within 5-6 % of their macro values; they keep the
+             macros. See assets/Mathematical Model/parameters.md 2.1. -->
         <inertial>
             <origin xyz="0 0 0.037415" rpy="0 0 0"/>
             <mass value="${body_mass}" />
@@ -380,12 +375,11 @@
     </link>
     <joint name="viz_lipo_joint" type="fixed"><parent link="body_link"/><child link="viz_lipo"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
-    <!-- Side skirts: preserve the original 0.180 m body width. Dropped 8 mm
-         (z -0.030 -> -0.034, height 0.040 -> 0.048) so their lower edge
-         reaches base_link z=+0.022 instead of +0.030 and closes onto the
-         chassis rails. Not lower than that: the wheels crown at base_link
-         z=+0.01725 and the skirts overlap them in y, so this leaves 4.75 mm
-         of wheel-arch clearance. -->
+    <!-- Side skirts: 0.180 m body width. Lowered by 8 mm
+         (z -0.030 -> -0.034, height 0.040 -> 0.048), so that the lower edge
+         reaches base_link z=+0.022 and meets the chassis rails. The wheels
+         reach base_link z=+0.01725 and overlap the skirts in y; this leaves
+         4.75 mm of wheel-arch clearance. -->
     <link name="viz_skirts">
         <visual>
             <origin xyz="0 0.086 -0.034" rpy="0 0 0"/>
@@ -423,9 +417,9 @@
         </joint>
 
         <link name="${prefix}_wheel">
-            <!-- Tyre. The link's Z axis is the axle (the joint rolls it by
-                 -pi/2 about X). Visual width is the real 0.0275 m; the
-                 collision keeps ${wheel_width} untouched. -->
+            <!-- Tyre. The Z axis of the link is the axle (the joint rotates it
+                 by -pi/2 about X). The visual width is the real 0.0275 m; the
+                 collision uses ${wheel_width}. -->
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
@@ -443,10 +437,9 @@
             </xacro:inertial_cylinder>
         </link>
 
-        <!-- Rim + hub nut, split off so RViz paints them separately from the
-             tyre. Both share the axle axis; the hub uses the rim material
-             rather than alu because at r=0.0075 the difference is invisible
-             and it saves a frame. -->
+        <!-- Rim and hub nut, separate from the tyre for distinct colours in
+             RViz. Both share the axle axis; the hub uses the rim material,
+             since at r=0.0075 a separate material is not visible. -->
         <link name="viz_${prefix}_rim">
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -480,9 +473,9 @@
         </joint>
 
         <link name="${prefix}_wheel">
-            <!-- Tyre. The link's Z axis is the axle (the joint rolls it by
-                 -pi/2 about X). Visual width is the real 0.0275 m; the
-                 collision keeps ${wheel_width} untouched. -->
+            <!-- Tyre. The Z axis of the link is the axle (the joint rotates it
+                 by -pi/2 about X). The visual width is the real 0.0275 m; the
+                 collision uses ${wheel_width}. -->
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
@@ -500,10 +493,9 @@
             </xacro:inertial_cylinder>
         </link>
 
-        <!-- Rim + hub nut, split off so RViz paints them separately from the
-             tyre. Both share the axle axis; the hub uses the rim material
-             rather than alu because at r=0.0075 the difference is invisible
-             and it saves a frame. -->
+        <!-- Rim and hub nut, separate from the tyre for distinct colours in
+             RViz. Both share the axle axis; the hub uses the rim material,
+             since at r=0.0075 a separate material is not visible. -->
         <link name="viz_${prefix}_rim">
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -545,13 +537,11 @@
     </gazebo>
 
     <link name="lidar_link">
-        <!-- RPLidar A2M8: base ring + rotating head + cap + laser window, on
-             three standoffs down to the deck.
-             NOTE the visual now sits at the link origin, matching <collision>.
-             It used to be offset z=-0.04, which put its lower half INSIDE the
-             body box (the lidar looked half-buried). Visual-only correction —
-             the joint, the collision and the lidar_link frame are unchanged,
-             so the sensor's actual pose is exactly as before. -->
+        <!-- RPLIDAR A2M8: base ring, rotating head, cap and laser window, on
+             three standoffs to the deck.
+             The visual is at the link origin, consistent with <collision>.
+             The joint, the collision and the lidar_link frame determine the
+             sensor pose; the visual does not. -->
 
         <!-- base ring -->
         <visual>
@@ -625,20 +615,18 @@
     <joint name="viz_lidar_standoffs_joint" type="fixed"><parent link="lidar_link"/><child link="viz_lidar_standoffs"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
     <!-- ZED Mini mount. zed_camera_link is the root link of the zed_camera macro
-         (zed_descr.urdf.xacro), so this joint is what attaches the whole ZED
-         subtree to the robot — without it base_footprint and zed_camera_link are
-         two disconnected roots and robot_state_publisher emits a broken tree.
+         (zed_descr.urdf.xacro); this joint attaches the ZED subtree to the
+         robot. Without it, base_footprint and zed_camera_link are two separate
+         roots and robot_state_publisher publishes an incomplete tree.
 
-         Offset: zed_camera_link sits 0.11 m ahead of and 0.13725 m above
-         base_footprint (the geometry the previous footprint_joint encoded, kept
-         exactly). body_link is 0.11725 m up (base_joint 0.03725 + body_joint
-         0.08), so from body_link that is (0.11, 0, 0.02).
+         Offset: zed_camera_link is 0.11 m ahead of and 0.13725 m above
+         base_footprint. body_link is 0.11725 m above it (base_joint 0.03725 +
+         body_joint 0.08), which gives (0.11, 0, 0.02) from body_link.
 
-         The 4 mm: camera_link below sits at body_length/2 = 0.114 in x and its
-         comment claims the two frames are coincident — they are 4 mm apart. The
-         ZED keeps 0.11 because that is the geometry the recorded runs were taken
-         against; do NOT reconcile by moving the camera. Measure the real mount
-         and fix both (docs/17 §2 [VERIFY]). -->
+         camera_link below is at body_length/2 = 0.114 in x, 4 mm from
+         zed_camera_link. The ZED keeps 0.11, the geometry of the recorded runs;
+         the camera is not moved to reconcile the two. Open item: measure the
+         physical mount and correct both (docs/17 §2 [VERIFY]). -->
     <joint name="zed_mount_joint" type="fixed">
         <parent link="body_link"/>
         <child link="zed_camera_link"/>
@@ -646,13 +634,11 @@
     </joint>
 
     <link name="camera_link">
-        <!-- Legacy mono-camera frame. Deliberately has NO visual: it sits at
-             body_link (0.114, 0, 0.02), i.e. inside the ZED Mini body that
-             zed_camera_link already draws there, and no sensor in
-             robot.gazebo references it. The detailing pass briefly gave it a
-             PCB + lens, which rendered as a green block half-buried in the
-             ZED. Link, joint and collision are untouched, so the frame that
-             the rviz configs list still exists. -->
+        <!-- Former mono-camera frame, without visual: it lies at body_link
+             (0.114, 0, 0.02), inside the ZED Mini body drawn by
+             zed_camera_link, and no sensor in robot.gazebo references it.
+             Link, joint and collision are kept, since the RViz configurations
+             list this frame. -->
         <collision>
              <geometry>
                 <box size="0.01 0.1 0.02"/>
@@ -676,10 +662,10 @@
 
 
     <link name="camera_link_lane">
-        <!-- THE LANE CAMERA the RL policy sees (IMX219 CSI module): green PCB,
-             lens barrel along +X. The link is pitched 0.30 rad down by its
-             joint, which is left untouched — the IPM in camera_geometry.py
-             depends on that pitch and on the mount height. -->
+        <!-- Lane camera read by the RL policy (IMX219 CSI module): green PCB,
+             lens barrel along +X. The joint pitches the link 0.30 rad down;
+             the IPM in camera_geometry.py depends on this pitch and on the
+             mount height, which must not change. -->
         <visual>
             <origin xyz="-0.002 0 0" rpy="0 0 0"/>
             <geometry><box size="0.004 0.025 0.024"/></geometry>

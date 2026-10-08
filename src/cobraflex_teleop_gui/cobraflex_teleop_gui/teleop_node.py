@@ -1,8 +1,8 @@
 """ROS 2 side of the teleoperation GUI: one Twist publisher and a watchdog.
 
-Kept apart from the Qt widgets deliberately. The widgets live in Qt's event
-loop and this node spins in a thread of its own, so the only state they share
-is the velocity pair below, behind one lock, in one file.
+Separate from the Qt widgets: the widgets run in the Qt event loop and this
+node spins in its own thread. The only shared state is the velocity pair
+below, protected by one lock.
 """
 
 import threading
@@ -19,42 +19,38 @@ class TeleopNode(Node):
         """Declare the parameters, create the publisher and start the timer."""
         super().__init__("cobraflex_teleop_gui")
 
-        # cmd_vel is the right topic and the SI one: linear.x in m/s, angular.z
-        # in rad/s, which is what cobraflex_ros_driver and the DiffDrive plugin
-        # both read.
+        # cmd_vel uses SI units: linear.x in m/s and angular.z in rad/s, as read
+        # by cobraflex_ros_driver and the DiffDrive plugin.
         #
-        # Do NOT point this at /raw_action to "go through the safety cage". That
-        # chain speaks a different contract - the cage takes linear.x as a
-        # throttle in [-1, 1] and angular.z as a normalised steering, and
-        # vehicle_control_node is what turns those back into m/s and rad/s. A
-        # 0.3 arriving there means 30 % throttle, not 0.3 m/s. The cage is also
-        # a lane-following cage: it decides on /state_obs lateral offsets, which
-        # say nothing about a human driving by hand.
+        # /raw_action is not a valid target. The safety-cage chain uses a
+        # different interface: the cage interprets linear.x as throttle in
+        # [-1, 1] and angular.z as normalised steering, and vehicle_control_node
+        # converts them back to m/s and rad/s. A value of 0.3 there means 30 %
+        # throttle, not 0.3 m/s. The cage also decides on /state_obs lateral
+        # offsets, which carry no information about manual driving.
         #
-        # What actually protects the robot here is the driver's own cmd_timeout
-        # deadman, plus the ui_watchdog below.
+        # Protection in this mode is provided by the cmd_timeout deadman of the
+        # driver and by the ui_watchdog below.
         self.declare_parameter("cmd_vel_topic", "cmd_vel")
 
-        # The envelope the rest of the stack plans inside (nav2_params.yaml's
-        # max_vel_x and max_vel_theta), NOT what the driver will accept - it
-        # clamps at 0.53 m/s and 6.0 rad/s. The smaller pair on purpose: a
-        # slider promising a speed the robot then silently refuses is worse
-        # than one that stays inside what everything else already agrees on.
+        # Planning envelope of the rest of the stack (max_vel_x and
+        # max_vel_theta of nav2_params.yaml), not the driver limits of 0.53 m/s
+        # and 6.0 rad/s. With these values the interface offers no speed that
+        # the driver would clamp.
         self.declare_parameter("max_linear", 0.35)
         self.declare_parameter("max_angular", 2.0)
 
         self.declare_parameter("publish_rate", 15.0)
 
-        # A Qt event loop that wedges does not stop the ROS thread: without
-        # this, the timer below would happily republish the last non-zero
-        # velocity forever while the window is frozen, and the driver's
-        # cmd_timeout would never fire because commands ARE still arriving.
-        # So the window pets this node from inside its own event loop, and a
-        # pet that goes stale zeroes the command. Same idea, and the same
-        # default, as vehicle_control_node's safe_action_timeout_s.
+        # A blocked Qt event loop does not stop the ROS thread. Without this
+        # watchdog, the timer below would keep publishing the last non-zero
+        # velocity while the window is frozen, and the cmd_timeout of the
+        # driver would not trigger because commands keep arriving. The window
+        # therefore sends a heartbeat from its event loop; a stale heartbeat
+        # sets the command to zero. Mechanism and default value match
+        # safe_action_timeout_s of vehicle_control_node.
         #
-        # 0 disables it, which is only ever right when working on the GUI
-        # itself with no robot attached.
+        # 0 disables the watchdog; only for GUI development without a robot.
         self.declare_parameter("ui_watchdog", 0.5)
 
         self.max_linear = abs(float(self.get_parameter("max_linear").value))
@@ -92,8 +88,8 @@ class TeleopNode(Node):
     def publish_stop(self):
         """Command zero and put it on the wire now, without waiting a tick.
 
-        Used on the way out: the timer is about to be destroyed, so a stop
-        that only sets the state would never reach the robot.
+        Used at shutdown: the timer is about to be destroyed, so a stop that
+        only sets the state would not reach the robot.
         """
         self.stop()
         self._publisher.publish(Twist())

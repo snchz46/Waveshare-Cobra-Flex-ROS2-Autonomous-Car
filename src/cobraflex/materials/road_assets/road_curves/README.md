@@ -1,12 +1,12 @@
 # Curved road modules
 
-Sixteen curved road tiles for building modular circuits in Gazebo. Four radii
-(30, 50, 80, 120 cm to centreline) by four arc angles (30°, 45°, 90°, 180°).
+Sixteen curved road tiles for modular circuits in Gazebo: four centreline radii
+(30, 50, 80, 120 cm) combined with four arc angles (30°, 45°, 90°, 180°).
 
-All tiles share the specification of the straight textures: two-lane road
+All tiles follow the specification of the straight textures: two-lane road
 (52 cm total width, 24.5 cm useful per lane), 1 cm white lines, dashed
-centreline with 10 cm dashes and 10 cm gaps measured along the arc,
-500 px/m resolution. **Backgrounds are transparent (RGBA PNG).**
+centreline with 10 cm dashes and 10 cm gaps measured along the arc, 500 px/m
+resolution. **Backgrounds are transparent (RGBA PNG).**
 
 ## Tile catalogue
 
@@ -17,7 +17,7 @@ centreline with 10 cm dashes and 10 cm gaps measured along the arc,
 | 80 cm | `curve_R080cm_A030deg.png` | `curve_R080cm_A045deg.png` | `curve_R080cm_A090deg.png` | `curve_R080cm_A180deg.png` |
 | 120 cm | `curve_R120cm_A030deg.png` | `curve_R120cm_A045deg.png` | `curve_R120cm_A090deg.png` | `curve_R120cm_A180deg.png` |
 
-### Bounding box dimensions (for Gazebo box sizes)
+### Bounding boxes (Gazebo box sizes)
 
 | Tile | Width | Height |
 |---|---|---|
@@ -38,63 +38,39 @@ centreline with 10 cm dashes and 10 cm gaps measured along the arc,
 | R=120, 90° | 1.500 m | 1.500 m |
 | R=120, 180° | 1.500 m | 2.960 m |
 
-## Geometry of the tile
+## Tile geometry
 
-Each tile represents a **left turn**. The convention:
+Each tile represents a **left turn**:
 
-- The **entry** of the road is at the bottom of the image, with the road
-  heading pointing up (+Y on the ground).
-- The **centre of curvature** is to the left of the entry heading (at
-  local coordinate `(-R, 0)` where `R` is the centreline radius).
-- The arc sweeps counter-clockwise by `angle_deg`.
-- The **exit** of the road is at the point on the centreline circle
-  corresponding to `-90° + angle_deg` in standard math convention.
+- The road **entry** is at the bottom of the image, with the road heading
+  upwards (+Y on the ground).
+- The **centre of curvature** lies to the left of the entry, at the local
+  coordinate `(-R, 0)`, where `R` is the centreline radius.
+- The arc sweeps counter-clockwise by the angle α.
 
-### Entry and exit points in the tile's local frame
+### Exit point relative to the entry
 
-The entry is always at world coordinate `(0, 0)` with heading `+Y`.
-The exit is at:
+With the entry at `(0, 0)` and heading `+Y`, the exit lies on the circle of
+radius `R` around `(-R, 0)`, rotated by α:
 
 ```
-exit_x = -R + R·cos(-π/2 + angle_rad) = -R · (1 − sin(angle_rad))
-exit_y = R · sin(-π/2 + angle_rad) + 0 = R · (1 − cos(angle_rad))
+exit_x = -R + R·cos(α) = -R · (1 − cos α)
+exit_y =      R·sin(α)
+exit_heading = +α
 ```
 
-Wait — that's wrong. Let me recompute:
-
-```
-exit_x = -R + R · cos(theta_end)  where theta_end = -π/2 + angle_rad
-exit_y =       R · sin(theta_end)
-
-cos(-π/2 + α) = sin(α)
-sin(-π/2 + α) = -cos(α)
-
-So:
-exit_x = -R + R · sin(α) = R · (sin(α) - 1)      → negative, i.e. to the left
-exit_y = -R · cos(α) · (-1) = R · (−cos(α))      → hmm, let me redo
-```
-
-Actually using the unrotated convention where entry points +Y (up) and
-centre of curvature is to the **left** at `(-R, 0)`:
-
-```
-At θ = -π/2 (entry):  point is at (-R + R·0, -R·1) = wait no
-```
-
-Let me just give the numeric table which I computed programmatically:
-
-| Angle | exit_x (relative) | exit_y (relative) | exit_heading |
+| Angle | exit_x | exit_y | exit_heading |
 |---|---|---|---|
-| 30° | `−R · (1 − cos30°) = −0.134 R` | `R · sin30° = 0.500 R` | +30° |
-| 45° | `−R · (1 − cos45°) = −0.293 R` | `R · sin45° = 0.707 R` | +45° |
-| 90° | `−R · (1 − cos90°) = −R` | `R · sin90° = R` | +90° |
-| 180° | `−R · (1 − cos180°) = −2R` | `R · sin180° = 0` | +180° |
+| 30° | `−0.134 R` | `0.500 R` | +30° |
+| 45° | `−0.293 R` | `0.707 R` | +45° |
+| 90° | `−R` | `R` | +90° |
+| 180° | `−2R` | `0` | +180° |
 
-For a right turn (mirror the tile), negate `exit_x` and `exit_heading`.
+For a right turn (mirrored tile), `exit_x` and `exit_heading` change sign.
 
-### Concrete exit positions per tile (in metres, relative to entry)
+### Exit positions per tile (metres, relative to the entry)
 
-| Tile | dx | dy | heading |
+| Tile | dx | dy | Heading |
 |---|---|---|---|
 | R=30, 30° | −0.040 | +0.150 | +30° |
 | R=30, 45° | −0.088 | +0.212 | +45° |
@@ -113,9 +89,9 @@ For a right turn (mirror the tile), negate `exit_x` and `exit_heading`.
 | R=120, 90° | −1.200 | +1.200 | +90° |
 | R=120, 180° | −2.400 | 0.000 | +180° |
 
-## Using in Gazebo
+## Use in Gazebo
 
-Each tile goes onto a flat `<box>` with the size matching its bounding box:
+Each tile is applied to a flat `<box>` with the size of its bounding box:
 
 ```xml
 <model name="curve_R080_A090">
@@ -147,37 +123,22 @@ Each tile goes onto a flat `<box>` with the size matching its bounding box:
 </model>
 ```
 
-Because the PNG is RGBA with a transparent background, only the actual road
-surface appears — the area outside the arc is invisible and the ground
-plane (or your grass model) shows through.
+The transparent RGBA background shows only the road surface; the ground plane
+or grass model remains visible outside the arc.
 
-### Aligning the tile in world coordinates
+### Placement in world coordinates
 
-The entry point of the tile is at:
+The entry point lies on the bottom edge of the bounding box; its exact pixel
+position is printed by the generator as `entry_px`. Placement procedure:
 
-```
-(bbox_width − xmin_world) / 2    ← horizontal position inside the bounding box
-bottom edge                         ← vertical position (Y in world if Z is up)
-```
-
-The `entry_px` metadata printed by the generator gives the exact pixel
-position. For placement:
-
-1. Pose the preceding straight/curve tile so its **exit** is at some world
+1. Place the preceding tile so that its **exit** is at the world pose
    `(x0, y0, θ0)`.
-2. Compute the world position of the next tile's **entry** = `(x0, y0, θ0)`.
-3. Work backwards to find the `<pose>` of the next tile's box centre:
+2. Set the **entry** of the next tile to `(x0, y0, θ0)`.
+3. Derive the `<pose>` of the box centre of the next tile from the entry
+   offset within its bounding box.
 
-```
-tile_entry_offset_in_bbox = (0 − xmin_tile, 0 − ymin_tile)
-                          = (xmin_tile_to_centre_of_bbox, ymin_tile_to_bottom)
-```
-
-This is fiddly. In practice most builders write a short Python helper
-that takes a list of `(tile_name, rotation)` and emits the SDF, carrying the
-pose along the chain. I include a minimal version below.
-
-### Circuit builder script (Python)
+A short script that converts a list of `(tile_name, mirror)` into SDF poses,
+carrying the pose along the chain, simplifies this procedure:
 
 ```python
 import math
@@ -190,9 +151,11 @@ TILES = {
 }
 
 def build_circuit(sequence):
-    """sequence: list of (tile_name, mirror_bool).
-       mirror_bool=True flips a left curve into a right curve.
-       Returns list of (tile_name, world_pose) to write into SDF."""
+    """Return (tile_name, mirror, entry_pose) for each tile of the sequence.
+
+    sequence: list of (tile_name, mirror); mirror=True converts a left curve
+    into a right curve.
+    """
     x, y, theta = 0.0, 0.0, 0.0
     placements = []
     for name, mirror in sequence:
@@ -216,16 +179,17 @@ def build_circuit(sequence):
 
 ## Example circuits
 
-### 1. Simple oval (6 m by 2 m footprint)
+### 1. Oval (6 m × 2 m footprint)
 
 ```
-2 × straight_10m   ↓  (actually use 2 m straights — cut from 10m)
-2 × curve_R80_A180 ↷  (or 4 × curve_R80_A90 for squarer corners)
+2 × straight, 2 m each (cut from the 10 m texture)
+2 × curve_R80_A180 (or 4 × curve_R80_A90 for squarer corners)
 ```
 
-Straights of 2 m each connect by a U-turn of R=80 (160 × 216 cm bbox each).
+The 2 m straights are connected by R=80 U-turns (bounding box 1.10 × 2.16 m
+each).
 
-### 2. Figure-eight
+### 2. Figure eight
 
 ```
 straight_5m
@@ -234,10 +198,10 @@ straight_5m
 curve_R50_A180   (right, mirrored)
 ```
 
-Produces a closed figure-eight. Total track length ≈ 25 m. Fits in roughly
+Closed figure eight, total track length about 25 m, footprint about
 3 m × 5 m.
 
-### 3. Test-track with mixed curvature
+### 3. Test track with mixed curvature
 
 ```
 straight_10m
@@ -245,43 +209,37 @@ curve_R120_A45   (gentle left)
 straight_5m
 curve_R50_A90    (sharp left)
 straight_5m
-curve_R30_A180   (tight U-turn, adversarial)
+curve_R30_A180   (tight U-turn, adverse)
 straight_10m
 curve_R50_A90    (sharp left, mirrored → right)
 straight_5m
 curve_R80_A45    (medium left, mirrored → right)
 ```
 
-Gives the RL agent exposure to four distinct radii in one loop, useful for
-curriculum stage 3.
+Four different radii in one loop; suitable for curriculum stage 3.
 
-## Mirroring for right turns
+## Right turns
 
-The tiles are all left turns. To create a right turn, **mirror the PNG
-horizontally** in Gazebo by applying a negative scale on the local X axis
-(or pre-flip the PNG with `convert -flop`). This swaps the sign of the
-exit heading and the exit_x offset.
+All tiles are left turns. A right turn is obtained by **mirroring the PNG
+horizontally**, either in Gazebo with a negative scale on the local X axis or
+beforehand with `convert -flop`. Mirroring changes the sign of the exit
+heading and of `exit_x`.
 
-## Regenerating
+## Regeneration
 
-`make_road_curves.py` is included. Edit the `RADII_M` and `ANGLES_DEG` lists
-at the top of the file to add or remove tiles. Supersampling is 3× by
-default for clean arc edges; lower it to 2× for faster generation if the
-resulting aliasing is acceptable for your use case.
+Script: `make_road_curves.py`. The lists `RADII_M` and `ANGLES_DEG` at the top
+of the file define the generated tiles. Supersampling is 3× by default for
+smooth arc edges; 2× generates faster at the cost of visible aliasing.
 
-## Known limitations
+## Limitations
 
-1. **Line width at very tight radii**: at R=30 cm, the inner lane is only
-   4 cm wide (30 − 26). The inner edge line at radius 4 cm is aggressive.
-   This tile is genuinely at the physical limit for a 52 cm wide road and
-   is included mainly for stress testing the cage.
-
-2. **Dashed centreline pacing on short arcs**: for 30° arcs at small radii,
-   the arc length is so short that only one or two dashes fit. This is
-   geometrically correct but can look sparse.
-
-3. **No elevation change / banking**: these are flat tiles. If you want
-   banked curves, you'd need a mesh-based approach rather than a flat box
-   with a texture.
+1. **Line width at small radii**: at R=30 cm the inner lane is only 4 cm wide
+   (30 − 26), and the inner edge line lies at a radius of 4 cm. This tile is at
+   the geometric limit for a 52 cm road and is intended mainly for stress
+   tests of the safety cage.
+2. **Dash spacing on short arcs**: on 30° arcs at small radii, only one or two
+   dashes fit on the arc. This is geometrically correct but appears sparse.
+3. **No elevation or banking**: the tiles are flat. Banked curves require a
+   mesh-based model instead of a textured box.
 
 Requires Pillow.

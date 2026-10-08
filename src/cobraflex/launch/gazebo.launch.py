@@ -86,9 +86,9 @@ def generate_launch_description():
         output="screen",
     )
 
-    # /camera/left/points, reprojected from the depth image rather than
-    # bridged straight out of Gazebo. The why is a frame-convention trap and
-    # it lives in zed_depth_cloud.launch.py, next to the node it explains.
+    # /camera/left/points, reprojected from the depth image instead of being
+    # bridged from Gazebo. The reason (a frame-convention mismatch) is
+    # documented in zed_depth_cloud.launch.py, next to the node.
     depth_cloud_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(package_share, "launch", "zed_depth_cloud.launch.py")

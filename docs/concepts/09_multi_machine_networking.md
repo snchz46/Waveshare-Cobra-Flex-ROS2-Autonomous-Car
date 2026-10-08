@@ -1,65 +1,65 @@
 # 09 · Multi-machine networking
 
-> **In one sentence:** the car and the lab PC form one ROS 2 graph over Wi-Fi as
-> long as they share a domain, discovery traffic gets through, the clocks agree
-> and nobody streams raw images over the air.
+> **Summary:** the robot and the lab PC form one ROS 2 graph over Wi-Fi when
+> they share a domain, discovery traffic is delivered, the clocks are
+> synchronised and raw images are not transmitted over the air.
 
 [← 08 Safety cage](08_safety_cage.md) · [Concepts](README.md)
 
 ---
 
-## Concept
+## Theory
 
 ### Discovery and domains
 
-DDS finds participants without a central master. Each participant announces
-itself by **multicast** (SPDP), then the participants exchange their
+DDS discovers participants without a central master. Each participant
+announces itself by **multicast** (SPDP); the participants then exchange their
 publishers and subscribers (SEDP) and connect by unicast. The **domain ID**
 selects the UDP ports: discovery uses port $7400 + 250 \cdot \text{ROS\_DOMAIN\_ID}$,
-so different domains never see each other even on the same network. On Linux
-the safe range is 0–101. Domain 0 is the default: a machine with nothing set
-joins it.
+so different domains remain isolated on the same network. On Linux the safe
+range is 0–101. Domain 0 is the default for any machine without an explicit
+setting.
 
-For work that must stay on one machine (Gazebo exercises),
-`ROS_LOCALHOST_ONLY=1` (Humble) keeps all traffic local — otherwise a
-simulated `/cmd_vel` can reach a real car on the same domain.
+For work restricted to one machine (Gazebo exercises), `ROS_LOCALHOST_ONLY=1`
+(Humble) keeps all traffic local. Without it, a simulated `/cmd_vel` can reach
+a physical robot in the same domain.
 
-### Wi-Fi is not Ethernet
+### Wi-Fi characteristics
 
-- **Shared air.** All clients of one access point share its channel; every
-  byte one car sends costs airtime for the others.
-- **Multicast is slow and unacknowledged.** Wi-Fi sends multicast at the lowest
-  basic rate without retries, so discovery packets get lost more easily than
-  data. If nodes appear and vanish, look at the access point's multicast
-  settings (IGMP snooping, multicast-to-unicast) first.
-- **Reliable QoS over a lossy link** resends large messages fragment by
-  fragment; one lost fragment delays the whole message. Sensor topics use best
-  effort.
+- **Shared medium.** All clients of an access point share its channel; every
+  byte transmitted by one robot consumes airtime of the others.
+- **Multicast.** Wi-Fi transmits multicast at the lowest basic rate without
+  retransmission, so discovery packets are lost more often than data. When
+  nodes appear and disappear, the multicast settings of the access point
+  (IGMP snooping, multicast-to-unicast) are the first item to check.
+- **Reliable QoS on a lossy link.** Large messages are retransmitted fragment
+  by fragment, and one lost fragment delays the whole message. Sensor topics
+  therefore use best effort.
 
 ### Bandwidth
 
-Raw images are large: width × height × bytes per pixel × rate. Compressed
-transport (`image_transport` JPEG) cuts a 640×360 frame by one to two orders of
-magnitude.
+The raw image rate is width × height × bytes per pixel × frame rate.
+Compressed transport (`image_transport` JPEG) reduces a 640×360 frame by one to
+two orders of magnitude.
 
-### Time
+### Time synchronisation
 
-TF lookups compare time stamps from different machines. If the car's clock is
-off by more than the TF buffer tolerates, RViz on the PC reports
-"extrapolation into the future". The clocks must agree with each other; being
-correct matters less.
+TF lookups compare time stamps from different machines. If the robot clock
+deviates by more than the TF buffer tolerance, RViz on the PC reports
+"extrapolation into the future". The clocks must agree with each other;
+absolute accuracy is secondary.
 
 ---
 
-## In this repository
+## Implementation
 
-### What each sensor would cost raw
+### Raw bandwidth per sensor
 
 Rates from [`zed_common_stereo.yaml`](../../src/cobraflex/config/zed_common_stereo.yaml)
 (`pub_resolution: CUSTOM`, `pub_downscale_factor: 2.0`, `pub_frame_rate: 15.0`,
 `point_cloud_freq: 10.0`) and the CSI camera node (640×360 at 20 Hz). The ZED
-numbers assume the HD720 grab resolution set in the wrapper's camera file; at
-HD1080 they grow by 2.25×.
+values assume the HD720 grab resolution set in the camera file of the wrapper;
+at HD1080 they increase by a factor of 2.25.
 
 | Stream | Format | Raw |
 | --- | --- | --- |
@@ -68,27 +68,29 @@ HD1080 they grow by 2.25×.
 | ZED point cloud, 640×360 at 10 Hz | 16 bytes per point | ≈ 295 Mbit/s |
 | Lane camera, 640×360 at 20 Hz | `bgr8` | ≈ 111 Mbit/s |
 | LiDAR scan at 10 Hz | ~1000 points | < 1 Mbit/s |
-| TF, odometry, `/cmd_vel` | small | < 1 Mbit/s |
+| TF, odometry, `/cmd_vel` | Small | < 1 Mbit/s |
 
-Opening everything raw in RViz on the PC asks for about 630 Mbit/s per car —
-more than a Wi-Fi 5 client delivers, with several cars sharing one channel.
-Compressed RGB and lane images need roughly 10 Mbit/s per car.
+Displaying all raw streams in RViz on the PC requires about 630 Mbit/s per
+robot, which exceeds the throughput of a Wi-Fi 5 client, especially with
+several robots on one channel. Compressed RGB and lane images require about
+10 Mbit/s per robot.
 
-### Rules for the lab network
+### Lab network rules
 
-1. **One domain per setup.** Set `ROS_DOMAIN_ID` (1–N, never 0) in `~/.bashrc`
-   on the car and on its PC.
-2. **Wire what does not move.** PCs on Ethernet; only the cars on Wi-Fi (5 GHz,
-   fixed non-DFS channel 36–48).
-3. **Process on the car.** Raw images and point clouds stay on the Jetson;
-   send compressed images, throttled or downsampled clouds; record rosbags on
-   the car and copy them by cable.
-4. **Same RMW and distro everywhere.** One DDS implementation and one shared
-   DDS configuration for all machines.
-5. **Bind DDS to the lab interface** on PCs that are also on another network
-   (CycloneDDS `NetworkInterface`, Fast DDS interface allowlist), and give that
-   interface no default gateway.
-6. **Synchronise clocks** with chrony against one machine on the lab network.
+1. **One domain per setup.** `ROS_DOMAIN_ID` (1–N, never 0) is set in
+   `~/.bashrc` on the robot and on its PC.
+2. **Wired stationary machines.** PCs on Ethernet; only the robots on Wi-Fi
+   (5 GHz, fixed non-DFS channel 36–48).
+3. **Processing on the robot.** Raw images and point clouds remain on the
+   Jetson; only compressed images and throttled or downsampled clouds are
+   transmitted. Rosbags are recorded on the robot and copied by cable.
+4. **Uniform RMW and distribution.** One DDS implementation and one shared DDS
+   configuration on all machines.
+5. **DDS bound to the lab interface** on PCs connected to another network as
+   well (CycloneDDS `NetworkInterface`, Fast DDS interface allowlist); that
+   interface has no default gateway.
+6. **Clock synchronisation** with chrony against one machine on the lab
+   network.
 
 ### Kernel settings for lossy links
 
@@ -103,26 +105,27 @@ sudo sysctl -w net.core.rmem_max=2147483647
 
 ---
 
-## Pitfalls
+## Common errors
 
-- **Nodes visible but no data.** QoS mismatch (a reliable subscriber on a
+- **Nodes visible, no data.** QoS mismatch (reliable subscriber on a
   best-effort publisher) or a firewall blocking UDP on the lab interface.
-- **Nodes appear and vanish after a few minutes.** Multicast filtered by the
-  network (IGMP snooping without a querier). Fall back to unicast discovery
-  (CycloneDDS peer list or a Fast DDS discovery server).
-- **A Gazebo session drives the real car.** Same domain, no
+- **Nodes disappear after a few minutes.** Multicast filtered by the network
+  (IGMP snooping without a querier). Use unicast discovery instead (CycloneDDS
+  peer list or Fast DDS discovery server).
+- **Gazebo session driving the physical robot.** Same domain without
   `ROS_LOCALHOST_ONLY`.
-- **TF extrapolation errors on the PC only.** Clock offset between car and PC.
+- **TF extrapolation errors on the PC only.** Clock offset between robot and
+  PC.
 
 ---
 
-## Try it
+## Commands
 
 ```bash
-# On both machines
+# Both machines
 echo $ROS_DOMAIN_ID
 
-# From the PC, with the car's layers 1 and 2 running
+# PC, with layers 1 and 2 running on the robot
 ros2 node list
 ros2 topic hz /scan
 ros2 topic bw /zed/zed_node/rgb/image_rect_color             # raw
@@ -132,16 +135,16 @@ ros2 topic bw /zed/zed_node/rgb/image_rect_color/compressed  # compressed
 chronyc tracking
 ```
 
-Exercise: measure `ros2 topic bw` for the raw and the compressed RGB stream,
+Exercise: measure `ros2 topic bw` for the raw and the compressed RGB stream
 over Wi-Fi and over the bench cable, and explain the difference.
 
 ---
 
-## Lecture links
+## Lecture references
 
-None directly: this is lab infrastructure. It explains why the system
-architecture of [02](02_system_architecture.md) keeps the heavy processing on
-the car.
+No direct lecture reference; this page covers lab infrastructure. It explains
+why the system architecture of [02](02_system_architecture.md) keeps the
+computationally intensive processing on the robot.
 
 ## Further reading
 

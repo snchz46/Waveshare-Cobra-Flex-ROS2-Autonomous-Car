@@ -1,45 +1,45 @@
-# 4WD Skid-Steer Kinematics
+# 4WD skid-steer kinematics
 
 ## 1. Introduction
 
-The Cobra Flex is a **4-wheel drive skid-steer** platform. The four wheels are
-fixed: there is no steering joint anywhere in the description, so the robot
-turns by driving the left pair and the right pair at different speeds, exactly
-as a two-wheel differential drive does.
+The Cobra Flex is a **four-wheel-drive skid-steer** platform. The four wheels
+are fixed and the description contains no steering joint; the robot turns by
+driving the left and right wheel pairs at different speeds, as a two-wheel
+differential drive does.
 
-That is why the whole stack — the Gazebo `DiffDrive` plugin, Nav2's DWB
-controller, the serial driver — treats it as a differential drive, and why
+For this reason the whole stack (Gazebo `DiffDrive` plugin, Nav2 DWB
+controller, serial driver) models the robot as a differential drive, and
 sections 4 and 5 derive the ideal differential-drive equations.
 
-It is an approximation. A two-wheel differential drive pivots about a point on
-the wheel axle and its wheels roll without sliding; a skid-steer with a 0.120 m
-wheelbase has no such axle, and it can only turn by **dragging all four wheels
-sideways across the ground**. Section 3.3 states what that costs and where the
-correction is accounted for.
+This model is an approximation. A two-wheel differential drive rotates about a
+point on its wheel axle, and its wheels roll without sliding. A skid-steer
+vehicle with a 0.120 m wheelbase has no such axle and turns by **dragging all
+four wheels sideways**. Section 3.3 quantifies this effect and states where it
+is accounted for.
 
-> **Origin of this document.** The structure and the derivations are adapted
-> from [MrDavidAlv/Axioma_robot](https://github.com/MrDavidAlv/Axioma_robot).
+> **Origin.** The structure and the derivations are adapted from
+> [MrDavidAlv/Axioma_robot](https://github.com/MrDavidAlv/Axioma_robot).
 > See section 10.
 
 ---
 
-## 2. Robot Geometry
+## 2. Robot geometry
 
-### 2.1 Wheel Configuration
+### 2.1 Wheel configuration
 
-The four wheels sit at the corners of a rectangle. **Positions are the wheel
-joint origins relative to `base_link`**, from `urdf/my_robot_gazebo.urdf`
+The four wheels are located at the corners of a rectangle. **Positions are the
+wheel joint origins relative to `base_link`**, from `urdf/my_robot_gazebo.urdf`
 (identical in `my_robot_basic.urdf`, `my_robot_mesh.urdf` and
 `my_robot_gazebo_mesh.urdf`):
 
 | Wheel | Name | Position $(x, y, z)$ [m] | Joint |
 |-------|------|---------------------------|-------|
-| W1 | front left | (+0.060, +0.077, −0.020) | `front_left_wheel_joint` |
-| W2 | rear left | (−0.060, +0.077, −0.020) | `rear_left_wheel_joint` |
-| W3 | rear right | (−0.060, −0.077, −0.020) | `rear_right_wheel_joint` |
-| W4 | front right | (+0.060, −0.077, −0.020) | `front_right_wheel_joint` |
+| W1 | Front left | (+0.060, +0.077, −0.020) | `front_left_wheel_joint` |
+| W2 | Rear left | (−0.060, +0.077, −0.020) | `rear_left_wheel_joint` |
+| W3 | Rear right | (−0.060, −0.077, −0.020) | `rear_right_wheel_joint` |
+| W4 | Front right | (+0.060, −0.077, −0.020) | `front_right_wheel_joint` |
 
-Neither offset is typed in directly:
+Both offsets are derived from xacro properties:
 
 ```xml
 <xacro:property name="wheel_off_x" value="0.060" />
@@ -47,17 +47,18 @@ Neither offset is typed in directly:
 ```
 
 With `chassis_width` = 0.130 m and `wheel_width` = 0.020 m, `wheel_off_y`
-= 0.065 + 0.010 + 0.002 = **0.077 m**, so the two sides are 0.154 m apart.
+= 0.065 + 0.010 + 0.002 = **0.077 m**; the two sides are therefore 0.154 m
+apart.
 
-> **Note on the −0.020 m.** `base_joint` lifts `base_link` by exactly one wheel
-> radius (0.03725 m) above `base_footprint`, which would put the wheel axles at
-> axle height; the wheel joints then drop a further 0.020 m, so the axles sit
-> 0.01725 m above the `base_footprint` plane and the wheels reach 0.020 m below
-> it. Planar kinematics uses only $x$ and $y$, so nothing in this document
-> depends on it — but it does mean `base_footprint` is not at ground level.
-> Left as-is: that is a description question, not a kinematic one.
+> **Vertical offset of −0.020 m.** `base_joint` raises `base_link` by one wheel
+> radius (0.03725 m) above `base_footprint`, which would place the wheel axles
+> at axle height. The wheel joints lower them by a further 0.020 m, so the axles
+> are 0.01725 m above the `base_footprint` plane and the wheels extend 0.020 m
+> below it. Planar kinematics uses only $x$ and $y$ and is not affected, but
+> `base_footprint` is consequently not at ground level. This is a property of
+> the robot description, not of the kinematics, and is left unchanged.
 
-### 2.2 Geometric Parameters
+### 2.2 Geometric parameters
 
 As declared in the URDFs and in the `DiffDrive` plugin (`urdf/robot.gazebo`):
 
@@ -69,11 +70,11 @@ wheel_base       (L) = 0.120   m     # wheelbase, 2 * wheel_off_x
 wheel_width          = 0.02    m
 ```
 
-Only $r$ and $W$ enter the kinematic equations. $L$ never appears in an ideal
-differential-drive model — it shows up in section 3.3, because it is precisely
-what makes this robot *not* one.
+Only $r$ and $W$ appear in the kinematic equations. $L$ does not appear in an
+ideal differential-drive model; it is relevant in section 3.3, as the
+parameter that distinguishes this robot from a differential drive.
 
-### 2.3 Coordinate System
+### 2.3 Coordinate system
 
 Top view, ROS convention: $x$ forward, $y$ left, $z$ up, yaw $\theta$ positive
 counter-clockwise.
@@ -90,36 +91,36 @@ counter-clockwise.
         W2 (RL) o---------------+---------------o W3 (RR)   rear axle,  x = -0.060
                                 |
 
-                |<--------- W = 0.154 m --------->|   track     (left-to-right)
-                          L = 0.120 m                 wheelbase (front-to-rear)
+                |<--------- W = 0.154 m --------->|   track     (left to right)
+                          L = 0.120 m                 wheelbase (front to rear)
 ```
 
 ---
 
-## 3. Kinematic Model
+## 3. Kinematic model
 
-### 3.1 Robot Velocity
+### 3.1 Robot velocity
 
-The robot's velocity in its own frame $\lbrace R \rbrace$ is:
+The robot velocity in its own frame $\lbrace R \rbrace$ is:
 
 $$
 \mathbf{v}_R = \begin{bmatrix} v \\ \omega \end{bmatrix}
 $$
 
-Where:
+where:
 
-- $v$ — linear velocity along $x$, forward positive, in m/s
-- $\omega$ — angular velocity about $z$, counter-clockwise positive, in rad/s
+- $v$: linear velocity along $x$, positive forward, in m/s
+- $\omega$: angular velocity about $z$, positive counter-clockwise, in rad/s
 
-**The model carries no lateral term.** $v_y$ is not a commandable degree of
-freedom: `/cmd_vel.linear.y` is ignored by the plugin and by the serial driver,
-and Nav2 is configured with `max_vel_y: 0.0`. That is a *nonholonomic
-constraint* on what can be commanded — not a claim that the wheels never slide
-sideways. On a skid-steer they do, every time it turns.
+**The model has no lateral term.** $v_y$ is not a commandable degree of
+freedom: the plugin and the serial driver ignore `/cmd_vel.linear.y`, and Nav2
+is configured with `max_vel_y: 0.0`. This is a *nonholonomic constraint* on the
+commands; it does not imply that the wheels never slide sideways. On a
+skid-steer vehicle they slide in every turn.
 
-### 3.2 Wheel Velocities
+### 3.2 Wheel velocities
 
-The four wheels are commanded as two pairs. The `DiffDrive` plugin declares two
+The four wheels are commanded in two pairs. The `DiffDrive` plugin declares two
 `<left_joint>` and two `<right_joint>` entries, so each side receives a single
 setpoint:
 
@@ -135,43 +136,43 @@ $$
 \omega_R = \omega_3 = \omega_4
 $$
 
-Where $\omega_i$ is the angular velocity of wheel $i$ in rad/s.
+where $\omega_i$ is the angular velocity of wheel $i$ in rad/s.
 
-### 3.3 Skid-Steer vs. Ideal Differential Drive
+### 3.3 Skid-steer and ideal differential drive
 
-Sections 4 and 5 assume every wheel rolls without slipping. On this chassis that
-assumption breaks whenever $\omega \neq 0$.
+Sections 4 and 5 assume that every wheel rolls without slipping. On this
+chassis the assumption is violated whenever $\omega \neq 0$.
 
-An ideal differential drive has one axle, and during a turn its instantaneous
-centre of rotation (ICR) lies on that axle, so both wheels roll cleanly. This
-robot has two axles 0.120 m apart. Any single ICR is off-axle for both of them,
-so the front and rear wheels must **scrub sideways** across the ground for the
-turn to happen at all. The rolling constraint is violated by design.
+An ideal differential drive has one axle; during a turn its instantaneous
+centre of rotation (ICR) lies on that axle and both wheels roll without
+slipping. This robot has two axles 0.120 m apart. Any single ICR lies off both
+axles, so the front and rear wheels **scrub sideways** during every turn. The
+rolling constraint is violated by design.
 
-The practical consequence is a **yaw gain error**: the commanded $\omega$ is not
-the yaw rate you get. Because part of the wheel-speed difference is lost to
-scrub, the real robot under-rotates, and the usual first-order fix is to pretend
-the track is wider than it is:
+The consequence is a **yaw gain error**: the achieved yaw rate differs from the
+commanded $\omega$. Part of the wheel-speed difference is lost to scrub and the
+robot under-rotates. The usual first-order correction models a track wider than
+the physical one:
 
 $$
 \omega = \frac{r(\omega_R - \omega_L)}{\chi \, W}, \qquad \chi \geq 1
 $$
 
-$\chi$ is the **effective-track (ICR) correction factor**. It is not derivable
-from geometry alone — it depends on the tyre, the surface and the load — so it
-has to be measured.
+$\chi$ is the **effective-track (ICR) correction factor**. It cannot be derived
+from geometry alone, since it depends on tyre, surface and load, and must be
+measured.
 
-Where this stands in this repository:
+Values in this repository:
 
 | Source | Track constant | Implied $\chi$ |
 |---|---|---|
-| Measured on the car (tape) | 0.153 m | — |
+| Measured on the robot (tape) | 0.153 m | — |
 | URDF + Gazebo `DiffDrive` | 0.154 m | 1.00 (uncorrected) |
 | Waveshare firmware `TRACK_WIDTH` | 0.159 m | ≈ 1.04 |
 | **Measured yaw transfer** | **0.309 m effective** | **≈ 2.02** |
 
-**$\chi$ has been measured, and it is about 2.** In-place rotation on the
-physical car, 10 s per point, least squares through the origin:
+**Measured value of $\chi$: approximately 2.** In-place rotation on the
+physical robot, 10 s per point, least squares through the origin:
 
 | Commanded | Expected | Measured | Achieved | Gain |
 |---|---|---|---|---|
@@ -180,37 +181,35 @@ physical car, 10 s per point, least squares through the origin:
 | 0.53 rad/s | 303.7° | 150.4° | 0.263 rad/s | 0.495 |
 | 0.80 rad/s | 458.4° | 226.9° | 0.396 rad/s | 0.495 |
 
-The plant yaw gain is $k = 0.4954$ with no offset — **the real robot turns at
-half the commanded rate.** Straight-line motion over the same 10 s tracks at
-~0.99, so the deficit is *purely rotational*: the four fixed wheels scrub,
-exactly as §3.3 predicts. The implied effective track is
-$W/k = 0.309$ m, about **2.02×** the physical 0.153 m.
+The plant yaw gain is $k = 0.4954$ without offset: **the physical robot turns
+at half the commanded rate.** Straight-line motion over the same 10 s achieves
+a gain of about 0.99, so the deficit is purely rotational, consistent with the
+wheel scrub described above. The implied effective track is $W/k = 0.309$ m,
+about **2.02×** the physical 0.153 m.
 
-That reframes the firmware constant. The 0.159 m `TRACK_WIDTH` buys back 3.9 %
-of a deficit that is actually **102 %** — it is a rounding correction against an
-error two orders of magnitude larger. The sim-to-real yaw gap is not the 3.9 %
-constant mismatch; it is the factor of two.
+The firmware constant must be interpreted accordingly. The 0.159 m
+`TRACK_WIDTH` compensates 3.9 % of a deficit of **102 %**: a minor correction
+compared with an error two orders of magnitude larger. The sim-to-real yaw gap
+is the factor of two, not the 3.9 % constant mismatch.
 
-**Nothing has been changed on either side**, deliberately: correcting the plugin
-would perturb the plant that produced every frozen evaluation result. The full
-argument is in [parameters.md §1.4](./parameters.md), and the measurement is
-recorded in the RL repository's handover spec (§2.3a).
+**No correction is applied on either side.** Correcting the plugin would alter
+the plant used for all frozen evaluation results. The full reasoning is given
+in [parameters.md §1.4](./parameters.md); the measurement is recorded in the
+handover specification of the RL repository (§2.3a).
 
-> Source: the measurement lives in the companion RL/thesis repository
-> (`docs/14_isaacsim_handover_spec.md` §2.3a). It is reproduced here because it
-> is a property of *this* robot, and this is the document that was asking for
-> it.
+> Source: the measurement is documented in the companion RL/thesis repository
+> (`docs/14_isaacsim_handover_spec.md` §2.3a) and reproduced here as a property
+> of this robot.
 
-Everything that follows is the $\chi = 1$ model, which is what the code
-currently implements.
+The following sections use the $\chi = 1$ model implemented in the code.
 
 ---
 
-## 4. Forward Kinematics
+## 4. Forward kinematics
 
-### 4.1 From Wheel Velocities to Robot Velocity
+### 4.1 Wheel velocities to robot velocity
 
-Given wheel angular velocities $\omega_L$ and $\omega_R$:
+Given the wheel angular velocities $\omega_L$ and $\omega_R$:
 
 **Linear velocity**:
 
@@ -224,24 +223,23 @@ $$
 \omega = \frac{r(\omega_R - \omega_L)}{W}
 $$
 
-Where $r = 0.03725$ m and $W = 0.154$ m.
+with $r = 0.03725$ m and $W = 0.154$ m.
 
 ### 4.2 Derivation
 
-The robot's linear speed is the average of the two sides' linear speeds:
+The linear speed of the robot is the mean of the linear speeds of both sides:
 
 $$
 v = \frac{v_R + v_L}{2} = \frac{r\omega_R + r\omega_L}{2} = \frac{r(\omega_R + \omega_L)}{2}
 $$
 
-The yaw rate follows from the difference between the sides, divided by the
-distance between them:
+The yaw rate is the difference between the sides divided by their distance:
 
 $$
 \omega = \frac{v_R - v_L}{W} = \frac{r\omega_R - r\omega_L}{W} = \frac{r(\omega_R - \omega_L)}{W}
 $$
 
-### 4.3 Matrix Form
+### 4.3 Matrix form
 
 $$
 \begin{bmatrix} v \\ \omega \end{bmatrix} =
@@ -252,10 +250,10 @@ $$
 \begin{bmatrix} \omega_L \\ \omega_R \end{bmatrix}
 $$
 
-The second row is $-r/W$ then $+r/W$, in that order: a positive $\omega$
-(counter-clockwise) requires the **right** side to turn faster than the left.
+The second row is $-r/W$, $+r/W$: a positive (counter-clockwise) $\omega$
+requires the **right** side to turn faster than the left.
 
-Substituting $r = 0.03725$ m and $W = 0.154$ m:
+With $r = 0.03725$ m and $W = 0.154$ m:
 
 $$
 \begin{bmatrix} v \\ \omega \end{bmatrix} =
@@ -268,9 +266,9 @@ $$
 
 ---
 
-## 5. Inverse Kinematics
+## 5. Inverse kinematics
 
-### 5.1 From Robot Velocity to Wheel Velocities
+### 5.1 Robot velocity to wheel velocities
 
 Given a desired $(v, \omega)$:
 
@@ -288,14 +286,14 @@ $$
 
 ### 5.2 Derivation
 
-For the body to translate at $v$ while rotating at $\omega$, each side's contact
-point must move at the body velocity plus the rotational contribution of its own
+For the body to translate at $v$ while rotating at $\omega$, the contact point
+of each side moves at the body velocity plus the rotational contribution of its
 lever arm $W/2$:
 
 - Left: $v_L = v - \omega \cdot \frac{W}{2}$
 - Right: $v_R = v + \omega \cdot \frac{W}{2}$
 
-Dividing by the wheel radius converts contact-point speed into wheel angular
+Division by the wheel radius converts contact-point speed into wheel angular
 speed:
 
 $$
@@ -304,7 +302,7 @@ $$
 \omega_R = \frac{v_R}{r} = \frac{v + \omega W/2}{r}
 $$
 
-### 5.3 Matrix Form
+### 5.3 Matrix form
 
 $$
 \begin{bmatrix} \omega_L \\ \omega_R \end{bmatrix} =
@@ -315,7 +313,7 @@ $$
 \begin{bmatrix} v \\ \omega \end{bmatrix}
 $$
 
-Substituting $r = 0.03725$ m and $W = 0.154$ m:
+With $r = 0.03725$ m and $W = 0.154$ m:
 
 $$
 \begin{bmatrix} \omega_L \\ \omega_R \end{bmatrix} =
@@ -326,14 +324,14 @@ $$
 \begin{bmatrix} v \\ \omega \end{bmatrix}
 $$
 
-This matrix is the exact inverse of the one in §4.3, as it must be — the
-$2 \times 2$ forward map is invertible for any $r > 0$, $W > 0$.
+This matrix is the inverse of the matrix in §4.3; the $2 \times 2$ forward map
+is invertible for any $r > 0$, $W > 0$.
 
 ---
 
 ## 6. Odometry
 
-### 6.1 Pose Integration
+### 6.1 Pose integration
 
 The pose in the world frame $\lbrace W \rbrace$ evolves as:
 
@@ -346,7 +344,7 @@ v \sin\theta \\
 \end{bmatrix}
 $$
 
-### 6.2 Numerical Integration (Euler)
+### 6.2 Numerical integration (Euler)
 
 The `OdometryPublisher` plugin publishes at 50 Hz
 (`<odom_publish_frequency>50</odom_publish_frequency>`), so $\Delta t = 0.02$ s:
@@ -359,28 +357,27 @@ y_{k+1} &= y_k + v \sin\theta_k \cdot \Delta t \\
 \end{aligned}
 $$
 
-### 6.3 Who Publishes What
+### 6.3 Odometry publishers
 
-Two plugins produce odometry in simulation, and they are **not**
-interchangeable:
+Two plugins produce odometry in simulation; they are not interchangeable:
 
-| Plugin | Topic | Content | Owns `odom -> base_footprint` on `/tf`? |
+| Plugin | Topic | Content | Publishes `odom -> base_footprint` on `/tf` |
 |---|---|---|---|
-| `gz-sim-diff-drive-system` | `/odom` | dead reckoning from the wheel model above | **No** — diverted to `tf_diffdrive` |
-| `gz-sim-odometry-publisher-system` | `/odom_truth` | ground-truth pose from the simulator | **Yes** — sole owner |
+| `gz-sim-diff-drive-system` | `/odom` | Dead reckoning from the wheel model above | No; published on `tf_diffdrive` |
+| `gz-sim-odometry-publisher-system` | `/odom_truth` | Ground-truth pose from the simulator | Yes; only publisher |
 
-Exactly one node may own `odom -> base_footprint`. In simulation that is the
-ground-truth `OdometryPublisher`, which is why `ekf_gazebo.yaml` sets
-`publish_tf: false` and the `DiffDrive` TF is diverted. **On hardware the owner
-is the EKF instead** (`ekf_hw.yaml`, `publish_tf: true`). Three publishers once
-fought over that edge and RViz jumped every cycle.
+Exactly one node publishes `odom -> base_footprint`. In simulation this is the
+ground-truth `OdometryPublisher`; therefore `ekf_gazebo.yaml` sets
+`publish_tf: false` and the `DiffDrive` TF uses a separate topic. **On hardware
+the EKF publishes the edge** (`ekf_hw.yaml`, `publish_tf: true`). More than one
+publisher makes the robot pose jump in RViz.
 
-One consequence is worth stating plainly: because simulation localises against
-ground truth, the SLAM and Nav2 runs never exercise odometric drift at all.
+Since simulation localises against ground truth, the SLAM and Nav2 runs in
+simulation do not exercise odometric drift.
 
-### 6.4 Gazebo Configuration
+### 6.4 Gazebo configuration
 
-Live block from `urdf/robot.gazebo`:
+Block from `urdf/robot.gazebo`:
 
 ```xml
 <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
@@ -399,74 +396,76 @@ Live block from `urdf/robot.gazebo`:
     <topic>cmd_vel</topic>
 
     <odom_topic>odom</odom_topic>
-    <!-- Dead-reckoning TF kept off ROS /tf: the ground-truth
-         OdometryPublisher is the sole owner of odom -> base_footprint. -->
+    <!-- Dead-reckoning TF on a separate topic: the ground-truth
+         OdometryPublisher is the only publisher of odom -> base_footprint
+         in simulation. The DiffDrive plugin, the OdometryPublisher and
+         the EKF can all publish this transform; with more than one on
+         ROS tf, the robot model jumps in RViz. This plugin drives the
+         wheels and publishes the encoder odometry. -->
     <tf_topic>tf_diffdrive</tf_topic>
     <frame_id>odom</frame_id>
     <child_frame_id>base_footprint</child_frame_id>
 </plugin>
 ```
 
-`robot.gazebo` also carries a commented-out Gazebo Fortress (`ignition-*`) block
-with `max_linear_acceleration` 0.53 and `min_linear_acceleration` −10. Those
-numbers are dead: 0.53 is the chassis's maximum *velocity* in m/s pasted into an
-acceleration field, and −10 made braking twenty times more aggressive than
-accelerating. Do not read values out of that block.
+`robot.gazebo` also contains a commented-out Gazebo Fortress (`ignition-*`)
+block with `max_linear_acceleration` 0.53 and `min_linear_acceleration` −10.
+These values are invalid: 0.53 is the maximum chassis *velocity* in m/s entered
+in an acceleration field, and −10 makes braking twenty times stronger than
+acceleration. The block is not a valid reference.
 
 ---
 
-## 7. Constraints and Limits
+## 7. Constraints and limits
 
-### 7.1 Two Different Limit Sets
+### 7.1 Limit sets
 
-The robot is bounded twice, at different values, and the two are easy to
-confuse.
+The robot is limited at two levels with different values.
 
-**Nav2 / DWB planning limits** — `config/nav2_params.yaml`, keys `max_vel_x`,
+**Nav2 / DWB planning limits**: `config/nav2_params.yaml`, keys `max_vel_x`,
 `min_vel_x`, `max_vel_theta`, `acc_lim_x`, `acc_lim_theta`, `decel_lim_x`,
-`decel_lim_theta`; the same figures repeat under `velocity_smoother`:
+`decel_lim_theta`; the same values are repeated under `velocity_smoother`:
 
 $$
 \begin{aligned}
-\lvert v \rvert &\le 0.35 \ \text{m/s} \quad (\text{reverse capped at } 0.15) \\
+\lvert v \rvert &\le 0.35 \ \text{m/s} \quad (\text{reverse limited to } 0.15) \\
 \lvert \omega \rvert &\le 2.0 \ \text{rad/s} \\
 \lvert \dot{v} \rvert &\le 2.5 \ \text{m/s}^2 \\
 \lvert \dot{\omega} \rvert &\le 3.2 \ \text{rad/s}^2
 \end{aligned}
 $$
 
-**Platform saturation limits** — what `cobraflex_ros_driver` clamps every
-`/cmd_vel` to before it reaches the firmware (`max_linear`, `max_angular`
-parameters):
+**Platform saturation limits**: values to which `cobraflex_ros_driver` clamps
+every `/cmd_vel` before the firmware (`max_linear`, `max_angular` parameters):
 
 $$
 \lvert v \rvert \le 0.53 \ \text{m/s}, \qquad
 \lvert \omega \rvert \le 6.0 \ \text{rad/s}
 $$
 
-> **The 6.0 rad/s ceiling is not reachable.** It is the driver's clamp constant,
-> not a measurement. Ideal differential drive would give
-> $2 v_{\max}/W = 2 \times 0.53 / 0.153 = 6.93$ rad/s; with the measured
-> $k = 0.4954$ scrub factor (§3.3) the real ceiling is about **3.4 rad/s**, and
-> the calibration campaign only ever reached 0.396 rad/s.
+> **The 6.0 rad/s limit is not reachable.** It is the clamp constant of the
+> driver, not a measured value. An ideal differential drive would reach
+> $2 v_{\max}/W = 2 \times 0.53 / 0.153 = 6.93$ rad/s; with the measured scrub
+> factor $k = 0.4954$ (§3.3) the real limit is about **3.4 rad/s**. The
+> calibration campaign reached a maximum of 0.396 rad/s.
 
-Nav2 never approaches the platform ceiling; the driver's clamp exists to catch
-any *other* publisher on `/cmd_vel`. In simulation only the ±2.5 m/s²
-acceleration limits are configured on the `DiffDrive` plugin — no velocity
-ceiling is set there, so a rogue publisher is unbounded in Gazebo in a way it
-would not be on the real robot.
+Nav2 does not approach the platform limit; the driver clamp protects against
+any other publisher on `/cmd_vel`. In simulation only the ±2.5 m/s²
+acceleration limits are configured in the `DiffDrive` plugin, without a
+velocity limit. An unrestricted publisher is therefore unbounded in Gazebo,
+unlike on the physical robot.
 
-### 7.2 Wheel Limits
+### 7.2 Wheel limits
 
-Feeding §5.1 with each limit set gives the wheel speeds each one demands:
+Applying §5.1 to each limit set gives the required wheel speeds:
 
 | Case | Formula | Nav2 (0.35, 2.0) | Platform (0.53, 6.0) |
 |---|---|---|---|
 | Straight, $\omega = 0$ | $v_{\max}/r$ | 9.396 rad/s (89.7 RPM) | 14.228 rad/s (135.9 RPM) |
-| Spin in place, $v = 0$ | $\omega_{\max} W / 2r$ | 4.134 rad/s | 12.403 rad/s |
-| Both at once | $(v_{\max} + \omega_{\max} W/2)\,/\,r$ | 13.530 rad/s | 26.631 rad/s |
+| In-place rotation, $v = 0$ | $\omega_{\max} W / 2r$ | 4.134 rad/s | 12.403 rad/s |
+| Combined | $(v_{\max} + \omega_{\max} W/2)\,/\,r$ | 13.530 rad/s | 26.631 rad/s |
 
-Worked out, for the Nav2 column:
+Nav2 column:
 
 $$
 \frac{0.35}{0.03725} = 9.396 \ \text{rad/s}
@@ -476,10 +475,10 @@ $$
 \frac{0.35 + 0.154}{0.03725} = 13.530 \ \text{rad/s}
 $$
 
-### 7.3 Turning Radius
+### 7.3 Turning radius
 
-For in-place rotation ($v = 0$, $\omega \neq 0$) the radius is zero — the robot
-pivots about its own centre, which is the point of a skid-steer:
+For in-place rotation ($v = 0$, $\omega \neq 0$) the radius is zero; the robot
+rotates about its own centre:
 
 $$
 R = \frac{v}{\omega} \quad \Rightarrow \quad R_{\min} = 0 \ \text{m}
@@ -491,20 +490,20 @@ $$
 R = \frac{v_{\max}}{\omega_{\max}} = \frac{0.35}{2.0} = 0.175 \ \text{m}
 $$
 
-That is the *tightest arc while still at full speed*, not a lower bound —
-smaller radii are reachable by slowing down. It is close to the robot's own
-0.145 m circumscribed radius, so a full-speed turn is very nearly a pivot.
+This is the tightest arc at full speed, not a lower bound; smaller radii are
+reachable at lower speed. It is close to the circumscribed radius of the robot
+(0.145 m), so a full-speed turn approximates a pivot.
 
 ---
 
-## 8. Computational Implementation
+## 8. Computational implementation
 
-### 8.1 Pseudocode: Inverse Kinematics
+### 8.1 Pseudocode: inverse kinematics
 
 ```python
 def compute_wheel_velocities(v, omega):
     """
-    Computes wheel angular velocities from a robot velocity command.
+    Compute wheel angular velocities from a robot velocity command.
 
     Args:
         v: Linear velocity [m/s]
@@ -516,8 +515,8 @@ def compute_wheel_velocities(v, omega):
     r = 0.03725  # wheel_radius
     W = 0.154    # wheel_separation
 
-    # Saturate to the Nav2 / DWB limits (section 7.1). The serial driver
-    # applies its own, wider clamp at 0.53 m/s and 6.0 rad/s.
+    # Saturation to the Nav2 / DWB limits (section 7.1). The serial driver
+    # applies a wider clamp at 0.53 m/s and 6.0 rad/s.
     v = clip(v, -0.15, 0.35)
     omega = clip(omega, -2.0, 2.0)
 
@@ -527,17 +526,17 @@ def compute_wheel_velocities(v, omega):
     return omega_left, omega_right
 ```
 
-Saturating $v$ and $\omega$ independently, as above, is what the stack actually
-does — but it does not preserve the commanded path curvature: clipping only one
-of the two changes $R = v/\omega$. A controller that cares about the arc has to
-scale both together instead.
+Independent saturation of $v$ and $\omega$, as above, corresponds to the
+behaviour of the stack. It does not preserve the commanded path curvature:
+clipping only one of the two changes $R = v/\omega$. A controller that must
+preserve the arc scales both values together.
 
-### 8.2 Pseudocode: Forward Kinematics
+### 8.2 Pseudocode: forward kinematics
 
 ```python
 def compute_robot_velocity(omega_left, omega_right):
     """
-    Computes robot velocity from measured wheel angular velocities.
+    Compute robot velocity from measured wheel angular velocities.
 
     Args:
         omega_left: Left wheel angular velocity [rad/s]
@@ -555,10 +554,10 @@ def compute_robot_velocity(omega_left, omega_right):
     return v, omega
 ```
 
-### 8.3 On Hardware
+### 8.3 Hardware implementation
 
-The firmware runs this same inverse map on the ESP32, with its own constants and
-a conversion to motor RPM (`Cobra_Driver/movtion_module.h`):
+The firmware runs the same inverse mapping on the ESP32, with its own
+constants and a conversion to motor RPM (`Cobra_Driver/movtion_module.h`):
 
 ```c
 setpointA = rosX - (rosZ * TRACK_WIDTH / 2.0);   // left wheel, m/s
@@ -567,62 +566,57 @@ setpointA = setpointA * 60 / (M_PI * WHEEL_D);   // -> RPM
 setpointB = setpointB * 60 / (M_PI * WHEEL_D);
 ```
 
-with `TRACK_WIDTH` = 0.159 and `WHEEL_D` = 0.0739 — **not** the 0.154 and 0.0745
-used everywhere else in this repository. See §3.3 and
+with `TRACK_WIDTH` = 0.159 and `WHEEL_D` = 0.0739, instead of the 0.154 and
+0.0745 used in the rest of this repository. See §3.3 and
 [parameters.md §1.4](./parameters.md).
 
 ---
 
-## 9. Cross-References
+## 9. Cross-references
 
-- [README.md](./README.md) — notation and model overview
-- [Control.md](./Control.md) — plugin configuration and the Nav2 chain
-- [parameters.md](./parameters.md) — geometry, mass, inertia, sensors, and the
-  unresolved firmware-constant disagreement (§1.4)
+- [README.md](./README.md): notation and model overview
+- [Control.md](./Control.md): plugin configuration and the Nav2 chain
+- [parameters.md](./parameters.md): geometry, mass, inertia, sensors and the
+  open firmware-constant discrepancy (§1.4)
 
 Source files:
 
-- `src/cobraflex/urdf/my_robot_gazebo.urdf` — geometry
-- `src/cobraflex/urdf/robot.gazebo` — `DiffDrive` and odometry plugins
-- `src/cobraflex/config/nav2_params.yaml` — planning limits
-- `src/cobraflex/cobraflex/cobraflex_ros_driver.py` — platform saturation
+- `src/cobraflex/urdf/my_robot_gazebo.urdf`: geometry
+- `src/cobraflex/urdf/robot.gazebo`: `DiffDrive` and odometry plugins
+- `src/cobraflex/config/nav2_params.yaml`: planning limits
+- `src/cobraflex/cobraflex/cobraflex_ros_driver.py`: platform saturation
 
 ---
 
-## 10. Credits and References
+## 10. Credits and references
 
-### Origin of this model
+### Origin of the model
 
-The structure of this mathematical model — the split into kinematics, control
-and parameters, the notation, and the derivations in sections 4 and 5 — is
-adapted from **[Axioma_robot](https://github.com/MrDavidAlv/Axioma_robot)** by
+The structure of this mathematical model (division into kinematics, control and
+parameters), its notation and the derivations of sections 4 and 5 are adapted
+from **[Axioma_robot](https://github.com/MrDavidAlv/Axioma_robot)** by
 [MrDavidAlv](https://github.com/MrDavidAlv), released under the BSD licence.
 
-Axioma_robot is a ROS 2 Humble autonomous robot on a 4WD skid-steer chassis with
-SLAM Toolbox and Nav2 — the same class of platform and the same software stack —
-and it is where the idea for this project came from. Its documentation is worth
-reading alongside this one.
+Axioma_robot is a ROS 2 Humble autonomous robot on a 4WD skid-steer chassis
+with SLAM Toolbox and Nav2, the same platform class and software stack, and the
+origin of the idea for this project.
 
-It describes a **different** chassis, which is worth keeping in mind when reading
-this file's history:
+It describes a different chassis:
 
-| Quantity | Axioma_robot | Cobra Flex (this repo) |
+| Quantity | Axioma_robot | Cobra Flex (this repository) |
 |---|---|---|
 | Wheel radius $r$ | 0.0381 m | 0.03725 m |
 | Effective track | 0.1679 m | 0.154 m |
 | Maximum linear speed | 0.26 m/s | 0.35 m/s (Nav2), 0.53 m/s (platform) |
 
-Earlier revisions of this document had updated section 2 to the Cobra Flex while
-§4.3, §5.3, §7.1 and §7.2 still evaluated their formulas with Axioma's
-$r = 0.0381$ m and a 0.1725 m track — so the symbolic equations were right and
-every number computed from them was wrong. All of them have been recomputed
-against the values in §2.2.
+All numerical values in §4.3, §5.3, §7.1 and §7.2 are computed with the
+parameters of §2.2.
 
 ### External documentation
 
 - [Gazebo `DiffDrive` system](https://gazebosim.org/api/sim/8/classgz_1_1sim_1_1systems_1_1DiffDrive.html)
 - [Gazebo: moving a robot](https://gazebosim.org/docs/latest/moving_robot/)
-- [Differential drive kinematics — ICC notes, Columbia](https://www.cs.columbia.edu/~allen/F17/NOTES/icckinematics.pdf)
+- [Differential drive kinematics, ICC notes, Columbia](https://www.cs.columbia.edu/~allen/F17/NOTES/icckinematics.pdf)
 - Mandow et al., *Experimental kinematics for wheeled skid-steer mobile robots*,
-  IROS 2007 — the standard reference for the ICR / effective-track correction
-  $\chi$ discussed in §3.3.
+  IROS 2007; standard reference for the ICR / effective-track correction $\chi$
+  of §3.3.

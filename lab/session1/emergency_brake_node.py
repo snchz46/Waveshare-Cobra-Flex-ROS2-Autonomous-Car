@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""Lab session 1 - emergency braking: drive straight, stop in time.
+"""Lab session 1 - emergency braking at constant cruise speed.
 
-/scan (sensor_msgs/LaserScan) in, /cmd_vel (geometry_msgs/Twist) out.
+Input: /scan (sensor_msgs/LaserScan). Output: /cmd_vel (geometry_msgs/Twist).
 
-Fill the eight gaps, marked A to H in the code, as described in the
-workbook (Part 3). Until every gap is filled, Python stops with an
-error that names the first gap still open. Then run, with ROS 2
-sourced:
+The eight gaps, marked A to H, are completed as described in Part 3 of
+the workbook. While a gap remains open, Python stops with an error that
+names it. Execution, with ROS 2 sourced:
 
-    python3 emergency_brake_node.py                 # on the car
+    python3 emergency_brake_node.py                 # physical robot
     python3 emergency_brake_node.py --ros-args -p use_sim_time:=true
 
-Parameters are changed at start-up the same way, for example
-``--ros-args -p cruise_speed:=0.4 -p stop_distance:=0.5``. Write them
-as decimal numbers (0.4, 1.0), because they are declared as floats.
+Parameters are set at start-up in the same way, for example
+``--ros-args -p cruise_speed:=0.4 -p stop_distance:=0.5``. Values are
+written as decimal numbers (0.4, 1.0) because the parameters are
+declared as floats.
 
-Ctrl-C stops the node; it sends a zero command before it exits.
+Ctrl-C stops the node, which publishes a zero command before exiting.
 """
 
 import math
@@ -29,49 +29,49 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32
 
-SCAN_TOPIC = ___A___        # topic the LiDAR publishes on (a string)
-CMD_TOPIC = ___B___         # topic the driver (or Gazebo) listens to
-FRONT_OFFSET_DEG = ___H___  # scan angle that points straight ahead
+SCAN_TOPIC = ___A___        # LiDAR topic (string)
+CMD_TOPIC = ___B___         # velocity command topic of the driver or Gazebo
+FRONT_OFFSET_DEG = ___H___  # scan angle of the forward direction
 
 
 def front_distance(scan, front_offset_rad, half_width_rad):
-    """Closest valid return in the sector straight ahead [m]."""
+    """Return the closest valid range in the forward sector [m]."""
     ranges = np.asarray(scan.ranges, dtype=float)
     n = ranges.size
     if n == 0:
         return float(scan.range_max)
 
-    # Ray i points at the angle  angle_min + i * angle_increment.
-    # First and last ray of the sector:
+    # Ray i points at angle_min + i * angle_increment.
+    # Indices of the first and last ray of the sector.
     start = front_offset_rad - half_width_rad - scan.angle_min
     end = front_offset_rad + half_width_rad - scan.angle_min
     i0 = int(math.floor(start / scan.angle_increment))
     i1 = int(math.ceil(end / scan.angle_increment))
 
-    # Straight ahead may sit where the scan wraps around from its last
-    # ray back to its first, so the ray numbers are taken modulo n.
+    # The forward direction may lie at the wrap-around between the last
+    # and the first ray; indices are therefore taken modulo n.
     sector = ranges[np.arange(i0, i1 + 1) % n]
 
-    # Keep real measurements only: finite and inside the sensor's range.
+    # Valid measurements only: finite and within the sensor range.
     valid = sector[
         np.isfinite(sector)
         & (sector >= scan.range_min)
         & (sector <= scan.range_max)
     ]
     if valid.size == 0:
-        return float(scan.range_max)  # nothing seen: sector is clear
+        return float(scan.range_max)  # no return: sector is free
 
-    return float(valid.___D___())  # gap D: one number for the sector
+    return float(valid.___D___())  # gap D: reduction to a single distance
 
 
 class EmergencyBrake(Node):
-    """Cruise at constant speed; brake when an obstacle is too close."""
+    """Drive at constant speed and brake below the stop distance."""
 
     def __init__(self):
         super().__init__('emergency_brake')
 
-        # cruise speed [m/s], stop distance measured from the LiDAR [m],
-        # half the opening of the front sector [deg], deadman [s]
+        # Cruise speed [m/s], stop distance from the LiDAR [m],
+        # half opening angle of the forward sector [deg], deadman [s].
         self.declare_parameter('cruise_speed', 0.20)
         self.declare_parameter('stop_distance', 0.40)
         self.declare_parameter('front_half_width_deg', 15.0)
@@ -84,7 +84,7 @@ class EmergencyBrake(Node):
         self.scan_timeout = self.get_parameter('scan_timeout').value
         self.front_offset = math.radians(FRONT_OFFSET_DEG)
 
-        self.speed = 0.0  # what the timer sends; 0 until a scan
+        self.speed = 0.0  # commanded speed; zero until the first scan
         self.braking = False
         self.last_scan_time = None
 
@@ -101,12 +101,12 @@ class EmergencyBrake(Node):
             f'brake below {self.stop_distance:.2f} m')
 
     def on_scan(self, msg):
-        """Decide the speed from the newest scan."""
+        """Set the commanded speed from the latest scan."""
         self.last_scan_time = self.get_clock().now()
         front = front_distance(msg, self.front_offset, self.half_width)
         self.front_pub.publish(Float32(data=front))
 
-        too_close = ___E___  # gap E: True if the obstacle is too close
+        too_close = ___E___  # gap E: True below the stop distance
         if too_close:
             if not self.braking:
                 self.get_logger().warning(
@@ -118,17 +118,17 @@ class EmergencyBrake(Node):
             self.speed = self.cruise_speed
 
     def on_timer(self):
-        """Send the decision at 20 Hz; stop if /scan went quiet."""
+        """Publish the command at 20 Hz; stop when /scan times out."""
         if self.last_scan_time is not None:
             age = self.get_clock().now() - self.last_scan_time
             if age.nanoseconds / 1e9 > self.scan_timeout:
-                self.speed = ___F___  # gap F: no fresh scan, so ...
+                self.speed = ___F___  # gap F: speed without a recent scan
         cmd = Twist()
-        cmd.___G___ = self.speed  # gap G: the field that drives forward
+        cmd.___G___ = self.speed  # gap G: forward velocity field
         self.cmd_pub.publish(cmd)
 
     def destroy_node(self):
-        """Stop the car before the node goes away."""
+        """Publish a zero command before the node is destroyed."""
         try:
             self.cmd_pub.publish(Twist())  # all fields zero
         except Exception:

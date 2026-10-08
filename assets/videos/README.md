@@ -1,9 +1,12 @@
-# Video Library
+# Videos
 
-Use this directory to track demo footage, drive tests, and experiment walk-throughs.
+Demonstration GIFs referenced by the repository documentation.
 
-- Store raw clips in subfolders per recording session (e.g., `2024-05-setup/`, `obstacle-avoidance-test/`).
-- Add a `clips.csv` or `session-notes.md` with timestamps, highlights, and links to any hosted versions (YouTube, Vimeo, etc.).
-- When possible, export lightweight preview GIFs or MP4 clips (under 20 MB) so they can be shared directly from the repository.
-
-Document key results in `docs/media-log.md` or the experiment logs so viewers know which clip corresponds to each milestone.
+| File | Content | Used in |
+| --- | --- | --- |
+| `physical_lane_following.gif` | Lane following on the physical robot, one lap of the laboratory circuit | Root README |
+| `physical_emergency_stop.gif` | Emergency stop on the physical robot | Root README |
+| `sim_camera_policy_cage.gif` | PPO camera policy under the safety cage in Gazebo | Root README |
+| `navigation.gif` | Nav2 goal navigation in a mapped world | Root README |
+| `mapping.gif` | Online mapping with SLAM Toolbox | Root README |
+| `navigation2_with_slam.gif` | Simultaneous navigation and mapping | Root README |

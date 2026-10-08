@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """Camera lane keeper for Gazebo.
 
-Logical (non-learned) lane-keeping controller, the fair baseline for the RL
-camera agent. It uses the shared :class:`cobraflex_rl.cv_lane_controller.CVLaneController`
-— the deterministic CV lane estimator (D-43, the same the safety cage reads)
-plus a PD + curvature-feedforward law — so this deployment node and the scored
-evaluation (``cobraflex_rl.eval_cv_controller``) drive identically.
+Rule-based (non-learned) lane-keeping controller and baseline for the RL
+camera agent. It uses the shared
+:class:`cobraflex_rl.cv_lane_controller.CVLaneController`: the deterministic CV
+lane estimator (D-43, also read by the safety cage) with a pure-pursuit law.
+This deployment node and the scored evaluation
+(``cobraflex_rl.eval_cv_controller``) therefore drive identically.
 
-It supersedes the previous histogram pure-P controller, whose uncalibrated
-"lane centre = image centre" set-point could not hold the lane above ~0.1 m/s.
-The CV+PD law tracks the nominal oval to RMSE ~10 mm at 0.2 m/s (req < 50 mm).
+It replaces the former histogram proportional controller, whose uncalibrated
+set-point ("lane centre = image centre") could not hold the lane above about
+0.1 m/s. The current controller tracks the nominal oval with an RMSE of about
+10 mm at 0.2 m/s (requirement: below 50 mm).
 """
 
 import array
@@ -82,24 +84,23 @@ def _ros_image_to_bgr(msg: Image) -> np.ndarray:
 
 
 class LaneKeeperGazeboNode(Node):
-    """Camera lane keeper: calibrated CV lane estimate + PD/feedforward steering."""
+    """Camera lane keeper: calibrated CV lane estimate and pure-pursuit steering."""
 
     def __init__(self):
         super().__init__("lane_keeper_gazebo_node")
 
         self.declare_parameter("image_topic", "camera/image_raw_lane")
         self.declare_parameter("linear_speed", 0.20)
-        # Pure-pursuit law (CVLaneController): aim at the lane centre look_ahead_m
-        # ahead. The legacy PD/feedforward gains are kept declared for backward
-        # compatibility but no longer affect the control (the controller ignores
-        # them); see docs/12 §3.
+        # Pure-pursuit law (CVLaneController): target point on the lane centre
+        # at look_ahead_m. The former PD/feed-forward gains remain declared for
+        # backward compatibility and have no effect on the control (docs/12 §3).
         self.declare_parameter("look_ahead_m", 0.40)
         self.declare_parameter("pursuit_gain", 1.0)
         self.declare_parameter("kp_ey", 6.0)
         self.declare_parameter("kd_epsi", 1.6)
         self.declare_parameter("kff_curv", 1.0)
         self.declare_parameter("max_angular_z", 0.9)
-        # Stop (vs coast straight) when the estimator finds no usable lane.
+        # Stop (instead of driving straight) when no valid lane is detected.
         self.declare_parameter("stop_on_no_lane", True)
         self.declare_parameter("publish_debug_image", True)
         self.declare_parameter("show_debug_windows", False)
@@ -172,7 +173,7 @@ class LaneKeeperGazeboNode(Node):
                 self.last_warn_time = now
 
     def _image_callback(self, msg: Image):
-        """Per-frame control tick: CV estimate → PD/feedforward steering → /cmd_vel."""
+        """Per-frame control tick: CV estimate → pure-pursuit steering → /cmd_vel."""
         try:
             frame_bgr = _ros_image_to_bgr(msg)
         except ValueError as exc:
@@ -214,15 +215,15 @@ class LaneKeeperGazeboNode(Node):
         mask_bgr = np.zeros_like(overlay)
         mask_bgr[mask > 0] = (0, 255, 0)                       # detections in green
         overlay = cv2.addWeighted(overlay, 1.0, mask_bgr, 0.45, 0.0)
-        # The per-row white-run centres the estimator actually used (red dots).
+        # Per-row white-run centres used by the estimator (red dots).
         for u, v in getattr(self.controller.estimator, "debug_candidates_px", []):
             cv2.circle(overlay, (int(u), int(v)), 3, (0, 0, 255), -1)
         d = self.controller.dbg
         if d.get("ok"):
-            # CVLaneController.dbg (pure-pursuit, docs/12 §3) exposes
-            # ok/ey/epsi/y_l/kappa_cmd/nL — there is no 'kappa' key (that was the
-            # old PD law). Read via .get so a future dbg change can't crash the
-            # node mid-callback.
+            # CVLaneController.dbg (pure pursuit, docs/12 §3) provides
+            # ok/ey/epsi/y_l/kappa_cmd/nL; the key 'kappa' belonged to the former
+            # PD law. Access through .get prevents a crash in the callback if
+            # the dbg keys change.
             txt = (f"ey={d.get('ey', 0.0):+.3f}m  epsi={d.get('epsi', 0.0):+.3f}rad  "
                    f"k_cmd={d.get('kappa_cmd', 0.0):+.2f}  "
                    f"cmd=(v{cmd.linear.x:.2f}, w{cmd.angular.z:+.2f})")
@@ -282,8 +283,8 @@ def main(args=None):
         node = LaneKeeperGazeboNode()
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
-        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException,
-        # not KeyboardInterrupt; letting it escape made the node exit 1.
+        # Under `ros2 launch`, Ctrl-C arrives as ExternalShutdownException
+        # instead of KeyboardInterrupt; catching it gives exit status 0.
         pass
     finally:
         if node is not None:

@@ -15,26 +15,25 @@ slam_toolbox:
     base_frame: base_footprint
     scan_topic: /scan
     use_map_saver: true
-    mode: mapping #mapping or localization
+    mode: mapping # mapping or localization
 
-    # if you'd like to immediately start continuing a map at a given pose
-    # or at the dock, but they are mutually exclusive, if pose is given
-    # will use pose
+    # Continuation of a serialised map at a given pose or at the dock;
+    # the two options are mutually exclusive, and the pose takes precedence.
     # map_file_name: /home/samuel/my_map_serial
     # map_start_pose: [0.0, 0.0, 0.0]
     # map_start_at_dock: true
 
     debug_logging: true
     throttle_scans: 1
-    transform_publish_period: 0.02 #if 0 never publishes odometry
+    transform_publish_period: 0.02 # 0 disables the publication
     map_update_interval: 0.5
     resolution: 0.01
-    min_laser_range: 0.015 #for rastering images
-    max_laser_range: 20.0 #for rastering images
-    minimum_time_interval: 0.5 #minimum time interval between two keyframes
+    min_laser_range: 0.015 # for map rasterisation
+    max_laser_range: 20.0 # for map rasterisation
+    minimum_time_interval: 0.5 # minimum time between two keyframes
     transform_timeout: 0.3  
     tf_buffer_duration: 30.0  
-    stack_size_to_use: 40000000 #// program needs a larger stack size to serialize large maps
+    stack_size_to_use: 40000000 # stack size required to serialise large maps
     enable_interactive_mode: true
 
 

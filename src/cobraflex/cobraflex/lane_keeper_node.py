@@ -417,13 +417,13 @@ class LaneKeeperNode(Node):
         msg.encoding = encoding
         msg.is_bigendian = False
         msg.step = int(image.strides[0])
-        # array.array('B', ...) is the ONLY fast path through rclpy's generated
-        # uint8[] setter. A plain bytes/numpy value falls through to a __debug__
-        # assertion that walks every element in Python, twice: measured at
-        # 127 ms for one 640x360 BGR frame on the Jetson, i.e. a ~8 Hz ceiling
-        # per published image against this node's 20 Hz timer — and it publishes
-        # four debug topics per cycle. With array.array the same assignment is
-        # 0.12 ms.
+        # array.array('B', ...) is the only fast path through the generated
+        # rclpy uint8[] setter. A bytes or numpy value passes through a
+        # __debug__ assertion that iterates over every element in Python twice:
+        # 127 ms for one 640x360 BGR frame on the Jetson, i.e. a limit of
+        # about 8 Hz per published image against the 20 Hz timer of this node,
+        # which publishes four debug topics per cycle. With array.array the
+        # same assignment takes 0.12 ms.
         msg.data = array.array("B", image.tobytes())
         return msg
 
@@ -961,14 +961,14 @@ def main(args=None):
         node = LaneKeeperNode()
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
-        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException,
-        # not KeyboardInterrupt; letting it escape made the node exit 1.
+        # Under `ros2 launch`, Ctrl-C arrives as ExternalShutdownException
+        # instead of KeyboardInterrupt; catching it gives exit status 0.
         pass
     finally:
         if node is not None:
             node.destroy_node()
-        # The 'q'/ESC path in _timer_callback already shuts the context down,
-        # and a second call raises -- which used to mask every clean exit.
+        # The 'q'/ESC path in _timer_callback already shuts the context down;
+        # a second shutdown() call raises an exception.
         if rclpy.ok():
             rclpy.shutdown()
 

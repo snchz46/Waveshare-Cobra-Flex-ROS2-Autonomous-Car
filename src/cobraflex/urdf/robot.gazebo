@@ -11,27 +11,26 @@
             <wheel_separation>0.154</wheel_separation>
             <wheel_radius>0.03725</wheel_radius>
 
-            <!-- 2.5 / -2.5 m/s^2, the platform limits recorded in
-                 assets/Mathematical Model/parameters.md and now also in
+            <!-- 2.5 / -2.5 m/s^2: platform limits recorded in
+                 assets/Mathematical Model/parameters.md and in
                  config/nav2_params.yaml (acc_lim_x / decel_lim_x).
-                 These read 0.53 and -10: 0.53 is this chassis's maximum
-                 VELOCITY in m/s, copied into an acceleration field, and the
-                 -10 made braking twenty times more aggressive than
-                 accelerating. The asymmetry let the simulated robot stop dead
-                 in ways the real one cannot, which flatters any controller
-                 tuned against it. -->
+                 The values 0.53 and -10 of the Fortress block below are
+                 invalid: 0.53 is the maximum chassis velocity in m/s, and -10
+                 makes braking twenty times stronger than acceleration. Such an
+                 asymmetry lets the simulated robot stop faster than the
+                 physical one and favours controllers tuned in simulation. -->
             <max_linear_acceleration>2.5</max_linear_acceleration>
             <min_linear_acceleration>-2.5</min_linear_acceleration>
 
             <topic>cmd_vel</topic>
 
             <odom_topic>odom</odom_topic>
-            <!-- Dead-reckoning TF kept off ROS tf. The DiffDrive, the ground
-                 truth OdometryPublisher below and the ekf_node all emit the
-                 odom to base_footprint transform, so all three reached ROS tf
-                 and RViz alternated between them so the robot model jumped every
-                 cycle. The ground truth OdometryPublisher is the sole tf owner
-                 now. This plugin still drives the wheels and publishes encoder odom. -->
+            <!-- Dead-reckoning TF on a separate topic: the ground-truth
+                 OdometryPublisher is the only publisher of odom -> base_footprint
+                 in simulation. The DiffDrive plugin, the OdometryPublisher and
+                 the EKF can all publish this transform; with more than one on
+                 ROS tf, the robot model jumps in RViz. This plugin drives the
+                 wheels and publishes the encoder odometry. -->
             <tf_topic>tf_diffdrive</tf_topic>
             <frame_id>odom</frame_id>
             <child_frame_id>base_footprint</child_frame_id>
@@ -44,18 +43,17 @@
             <odom_frame>odom</odom_frame>
             <robot_base_frame>base_footprint</robot_base_frame>
             <odom_publish_frequency>50</odom_publish_frequency>
-            <!-- Ground-truth pose on a dedicated topic so it does NOT collide
-                 with the DiffDrive plugin's dead-reckoning /odom. Both plugins
-                 previously published /odom, so subscribers saw interleaved
-                 truth + drift samples; after a set_pose teleport the dead-
-                 reckoning half does not jump, which corrupted RL pose on every
-                 episode reset. RL training reads /odom_truth; the F2 stack
-                 keeps the encoder /odom. -->
+            <!-- Ground truth on a separate topic, distinct from the
+                 dead-reckoning /odom of the DiffDrive plugin. With a shared
+                 /odom, subscribers receive interleaved ground-truth and
+                 dead-reckoning samples; after a set_pose teleport the
+                 dead-reckoning samples do not jump, which corrupts the RL pose
+                 at every episode reset. RL training reads /odom_truth; the F2
+                 stack uses the encoder /odom. -->
             <odom_topic>/odom_truth</odom_topic>
-            <!-- Sole owner of the odom to base_footprint transform on ROS tf
-                 (the bridge maps the gz tf topic to ROS tf). Ground truth so RViz
-                 shows the true pose and follows set_pose teleports. The DiffDrive
-                 encoder and the ekf no longer publish this transform. -->
+            <!-- Only publisher of odom -> base_footprint on ROS tf (the bridge
+                 maps the gz tf topic to ROS tf). With ground truth, RViz shows
+                 the true pose and follows set_pose teleports. -->
             <tf_topic>tf</tf_topic>
             <dimensions>2</dimensions>
         </plugin>
@@ -147,40 +145,36 @@
         </sensor>
     </gazebo>
 
-    <!-- ZED Mini front stereo pair, and the depth the real camera returns.
-         Both eyes sit on the macro's left/right frames (63 mm baseline) and
-         follow the zed-ros2 topic convention.
+    <!-- ZED Mini front stereo pair and the depth output of the physical camera.
+         Both cameras are placed on the left/right frames of the macro (63 mm
+         baseline) and follow the zed-ros2 topic convention.
 
-         The LEFT eye is an rgbd_camera, not a camera. That is not a shortcut
-         around simulating stereo. The real ZED Mini never hands ROS two raw
-         images to match: it hands over depth already computed on the GPU and
-         registered to the left eye, which is also the frame the SDK expresses
-         its point cloud and its tracking in. One RGBD sensor posed on that
-         frame reproduces the SDK's OUTPUT; two mono cameras plus a stereo
-         matcher in ROS would reproduce its ALGORITHM, at a cost the
-         simulation cannot afford and with nothing gained sim-to-real. The
-         render is not what changes - gz-sensors extracts the RGB image out of
-         the very buffer it fills the depth from, so this is one pass either
-         way, the same as the mono sensor it replaces.
+         The left camera is an rgbd_camera. The physical ZED Mini does not
+         provide two raw images for stereo matching in ROS: it provides depth
+         computed on the GPU and registered to the left camera, which is also
+         the frame of its point cloud and tracking. One RGBD sensor on that
+         frame reproduces the output of the SDK; two mono cameras with a ROS
+         stereo matcher would reproduce its algorithm, at a computational cost
+         the simulation cannot afford and without sim-to-real benefit. The
+         rendering cost is unchanged: gz-sensors extracts the RGB image from
+         the buffer that holds the depth, in a single pass.
 
-         The RIGHT eye stays a plain camera. Nothing subscribes to it; it is
-         kept so the render matches the two lenses that physically exist.
-         Delete it if the scene ever needs that render pass back.
+         The right camera is a plain camera without subscribers, kept to
+         represent the two physical lenses. It can be removed when its render
+         pass is needed elsewhere.
 
-         FOV corrected to the real ZED Mini's 102 deg horizontal, which the
-         comment that used to live here flagged as pending "if the scene
-         camera is ever consumed". It now is. At 16:9 a pinhole with 102 deg
-         horizontal comes out near 70 deg vertical against the real camera's
-         57 - the 2.1 mm lens is not a pinhole and faking the difference buys
-         nothing. The aspect ratio matters more than either figure, and 4:3
-         was simply wrong here: every ZED Mini mode (HD1080, HD720, WVGA) is
+         Horizontal FOV of 102 deg, as on the physical ZED Mini. At 16:9 a
+         pinhole with 102 deg horizontal has about 70 deg vertical, against
+         57 deg on the physical camera; the 2.1 mm lens is not a pinhole, and
+         approximating the difference has no benefit. The aspect ratio is the
+         more relevant parameter: all ZED Mini modes (HD1080, HD720, WVGA) are
          16:9.
 
-         480x270 rather than the 640x360 that would mirror WVGA. The cost that
-         drove this is not the render, it is the reprojection into a cloud
-         downstream: depth_image_proc has no decimation parameter, so this
-         resolution is the only knob for it. 640x360 costs about a third of a
-         core and drags the real time factor to roughly 0.76. -->
+         480x270 instead of the 640x360 of WVGA. The limiting cost is the
+         downstream reprojection into a point cloud, not the rendering:
+         depth_image_proc has no decimation parameter, so the resolution is
+         the only setting. 640x360 uses about a third of a CPU core and
+         reduces the real-time factor to about 0.76. -->
     <gazebo reference="zedm_left_camera_frame">
         <sensor name="ZEDm Left Cam" type="rgbd_camera">
             <camera>
@@ -199,24 +193,23 @@
                     <mean>0.0</mean>
                     <stddev>0.007</stddev>
                 </noise>
-                <!-- Labels image, depth_image AND camera_info, and all three
-                     really are optical, so it is right for them. gz-sensors
-                     stamps the sensor's own /points with it too, where it is
-                     WRONG - which is why that topic is not bridged. The full
-                     argument is in config/gz_bridge.yaml. -->
+                <!-- Applies to image, depth_image and camera_info, which are
+                     all optical. gz-sensors also stamps the /points output of
+                     the sensor with this frame, which is incorrect for that
+                     output; the topic is therefore not bridged (see
+                     config/gz_bridge.yaml). -->
                 <optical_frame_id>zedm_left_camera_frame_optical</optical_frame_id>
-                <!-- No <camera_info_topic> on purpose: RgbdCameraSensor
-                     hardcodes Topic() + "/camera_info" and ignores the tag
+                <!-- No <camera_info_topic>: RgbdCameraSensor sets
+                     Topic() + "/camera_info" and ignores the tag
                      (gz-sensors8, RgbdCameraSensor.cc:252), unlike the plain
-                     camera below. The prefix underneath yields exactly the
-                     name the old mono sensor advertised. -->
+                     camera below. The prefix below yields the topic name of
+                     the former mono sensor. -->
             </camera>
             <always_on>1</always_on>
             <update_rate>20</update_rate>
             <visualize>true</visualize>
-            <!-- A PREFIX, not a full topic: gz appends /image, /depth_image,
-                 /points and /camera_info to it. The RGB stream is therefore
-                 camera/left/image, no longer camera/left/image_raw. -->
+            <!-- Topic prefix, not a full topic: gz appends /image, /depth_image,
+                 /points and /camera_info. The RGB stream is camera/left/image. -->
             <topic>camera/left</topic>
         </sensor>
     </gazebo>
@@ -250,9 +243,9 @@
     </gazebo>
 
     <gazebo reference="camera_link_lane">
-        <!-- Mirrors the real IMX219-160 as consumed by lane_keeper_node.py
-             on HW (proc frames 640x360, effective hfov 90 deg, timer 20 Hz);
-             capture is 1280x720@60 but only the processed stream matters. -->
+        <!-- Models the IMX219-160 as consumed by lane_keeper_node.py on hardware
+             (processed frames 640x360, effective hfov 90 deg, timer 20 Hz); the
+             1280x720@60 capture is not relevant for parity. -->
         <sensor name="Lane Cam" type="camera">
             <camera>
                 <horizontal_fov>1.5707963</horizontal_fov>

@@ -1,16 +1,18 @@
-# 3D Models for Sensor Mounts
+# 3D models
 
-This directory is reserved for STL, STEP, and other 3D model files that support
-mounting sensors and accessories to the Cobra Flex chassis.
+CAD files of the robot and its components. The STL meshes are duplicated in
+[`src/cobraflex/meshes/`](../../src/cobraflex/meshes/README.md), where the URDFs
+reference them; a CAD change is applied to both locations.
 
-Suggested organization:
-
-- `sensors/` – individual sensor mounting adapters (e.g., camera mounts,
-  LiDAR brackets).
-- `chassis/` – platform-wide mounting plates or body panels that integrate with
-  the Cobra Flex frame.
-- `prototypes/` – work-in-progress designs or experimental components.
-
-Feel free to add additional subdirectories as needed to keep custom designs
-organized. Include a short README with each new design that explains the sensor
-or component it supports, print settings, and mounting hardware requirements.
+| File | Content |
+| --- | --- |
+| `cobraflex_chassis.stl` | Chassis |
+| `cobraflex_body.stl` | Body shell |
+| `cobraflex_wheel.stl` | Wheel |
+| `Cobra Flex Full Plate_top.stl`, `Cobra Flex Full Plate_bot.stl`, `Cobra Flex Full Plate_wheels.stl` | Complete assembly, split into top, bottom and wheels |
+| `Intel Realsense RPLIDAR A2.stl` | RPLIDAR A2 |
+| `zedmini_camera.stl` | ZED Mini |
+| `Arducam IMX219 Autofocus v3.step` | IMX219 lane camera |
+| `Orin_Nano_Dev_Kit.STEP` | Jetson Orin Nano Developer Kit |
+| `Battery 12V 1200mAh Li-ion Rechargeable v2.step` | Motor battery pack |
+| `Antenna SMA Male 100 mm 868 MHz.STEP` | Antenna |

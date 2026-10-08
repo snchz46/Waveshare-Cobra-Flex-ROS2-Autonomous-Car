@@ -1,44 +1,43 @@
 """Reproject the simulated ZED Mini depth image into a point cloud.
 
-Shared by gazebo.launch.py and gazebo_mesh.launch.py, and deliberately not
-inlined in either. The reason this node exists at all is a frame-convention
-trap, and a rationale duplicated across two launch files is a rationale that
-drifts.
+Shared by gazebo.launch.py and gazebo_mesh.launch.py and kept in a separate
+file, so that the rationale below exists in one place only.
 
-gz-sensors gives the rgbd_camera's four outputs one single frame_id - whatever
-<optical_frame_id> in urdf/robot.gazebo says - but they do not share one axis
-convention. image, depth_image and camera_info are optical (z forward, x
-right, y down), and have to be, because camera_info carries a pinhole K and
-the depth measures along the optical axis. The sensor's own /points is not:
-the depth shader ends on
+gz-sensors assigns a single frame_id to the four outputs of the rgbd_camera
+(the <optical_frame_id> in urdf/robot.gazebo), but the outputs do not share
+one axis convention. image, depth_image and camera_info use the optical
+convention (z forward, x right, y down), as required by the pinhole K in
+camera_info and by depth measured along the optical axis. The /points output
+of the sensor does not: the depth shader ends with
 
     point = vec3(-vsPos.z, -vsPos.x, vsPos.y)
 
 under the comment "convert to z up" (gz-rendering8, depth_camera_fs.glsl),
-which is x forward, y left, z up. Nothing swaps it back - PointCloudUtil::
-FillMsg copies x, y, z verbatim - and then RgbdCameraSensor.cc:397 stamps the
-cloud with OpticalFrameId() anyway. Bridging it lays the cloud on its side in
-RViz, rotated 90 degrees, because the optical frame makes RViz apply the
-URDF's -90/0/-90 a second time.
+i.e. x forward, y left, z up. No later step converts it back
+(PointCloudUtil::FillMsg copies x, y, z unchanged), and
+RgbdCameraSensor.cc:397 stamps the cloud with OpticalFrameId(). A bridged
+cloud therefore appears rotated by 90 degrees in RViz, because the optical
+frame makes RViz apply the URDF rotation -90/0/-90 a second time.
 
-So config/gz_bridge.yaml does not bridge that cloud, and this file rebuilds
-one from the depth image and camera_info's intrinsics instead. That lands it
-in the optical frame every ROS consumer assumes, and it is the same projection
-the ZED SDK performs on the real robot.
+config/gz_bridge.yaml therefore does not bridge this cloud; this file
+reconstructs it from the depth image and the intrinsics in camera_info. The
+result is in the optical frame expected by all ROS consumers and corresponds
+to the projection performed by the ZED SDK on the physical robot.
 
-Checked against the Gazebo sources rather than assumed: the behaviour is the
-same in Fortress (gz-sensors6, RgbdCameraSensor.cc:469) and in Harmonic, and
-the shader math is untouched between ign-rendering6 and gz-rendering8 - the
-only changes there are the Vulkan/Ogre GLSL syntax migration.
+Verified against the Gazebo sources: the behaviour is identical in Fortress
+(gz-sensors6, RgbdCameraSensor.cc:469) and in Harmonic, and the shader
+mathematics is unchanged between ign-rendering6 and gz-rendering8; the only
+changes concern the Vulkan/Ogre GLSL syntax migration.
 
-PointCloudXyzrgbNode ships as a component only, with no standalone executable
-registered by image_pipeline, hence the container. Its own defaults are what
-this needs: approximate sync, because RGB and depth arrive as two messages.
+PointCloudXyzrgbNode is available only as a component (image_pipeline
+registers no standalone executable), hence the container. Its defaults match
+the requirements: approximate synchronisation, since RGB and depth arrive as
+two messages.
 
-It publishes /points with rclcpp::SensorDataQoS(), i.e. BEST_EFFORT. Any
-subscriber asking for RELIABLE never matches it and sits there showing
-nothing, which is why the PointCloud2 display in rviz/bot.rviz carries
-Reliability Policy: Best Effort. Keep it that way.
+The node publishes /points with rclcpp::SensorDataQoS() (BEST_EFFORT). A
+subscriber requesting RELIABLE does not match and receives nothing; the
+PointCloud2 display in rviz/bot.rviz therefore uses Reliability Policy: Best
+Effort.
 """
 
 from launch import LaunchDescription

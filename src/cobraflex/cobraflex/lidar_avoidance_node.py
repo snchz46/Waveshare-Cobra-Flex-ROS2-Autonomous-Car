@@ -28,13 +28,13 @@ class AvoidanceWithLights(Node):
         self.declare_parameter("front_angle_deg", 20.0)
         self.declare_parameter("side_sample_deg", 40.0)
         self.declare_parameter("lateral_safe_distance", 0.30)
-        # Yaw of the robot's forward axis expressed in the scan's own angle
-        # frame. 180 deg means the lidar is mounted rotated half a turn, which
-        # is how it sits on this platform (lidar_joint carries rpy yaw = pi).
+        # Yaw of the robot forward axis in the angle frame of the scan. 180 deg
+        # corresponds to a LiDAR mounted rotated by half a turn, as on this
+        # platform (lidar_joint with rpy yaw = pi).
         self.declare_parameter("front_offset_deg", 180.0)
-        # Deadman: stop if /scan goes quiet. Without it the command timer keeps
-        # republishing the last decision -- possibly full forward speed -- for
-        # ever after the lidar unplugs or its driver dies.
+        # Deadman timer: stop when /scan stops. Without it, the command timer
+        # keeps publishing the last decision, possibly full forward speed,
+        # after a LiDAR disconnection or driver failure.
         self.declare_parameter("scan_timeout", 0.5)
 
         self.forward_speed = float(self.get_parameter("forward_speed").value)
@@ -76,22 +76,20 @@ class AvoidanceWithLights(Node):
 
     @staticmethod
     def _sector_min(msg, ranges, start_ang, end_ang):
-        """Closest valid return inside an angular sector, measured from the front.
+        """Return the closest valid range in an angular sector.
 
-        Angles are relative to the robot's forward axis; the caller has already
-        folded in `front_offset_rad`. Two things this has to get right:
+        Angles are relative to the robot forward axis; the caller has already
+        added `front_offset_rad`.
 
-        * **Wrapping.** Indices are taken modulo the ray count, so a sector that
-          straddles the seam of the scan (which is where "forward" lands on this
-          robot, the lidar being mounted rotated 180 deg) still reads the rays
-          on both sides of it. Clamping instead -- the previous behaviour --
-          silently collapsed any out-of-range sector onto the single last ray,
-          so the left distance was a constant and the turn-direction choice ran
-          on it. Only safe because this is a full-circle scanner; the caller
-          checks that before relying on it.
-        * **Minimum, not mean.** Averaging a sector hides exactly what this node
-          exists to detect: a table leg two rays wide averages away against the
-          open space around it.
+        * **Wrap-around.** Indices are taken modulo the ray count, so a sector
+          across the seam of the scan (the forward direction on this robot,
+          with the LiDAR mounted rotated by 180 deg) includes the rays on both
+          sides. Clamping would reduce any out-of-range sector to the last ray
+          and yield a constant distance. The wrap-around is valid only for a
+          full-circle scanner; the caller verifies this.
+        * **Minimum instead of mean.** A mean over the sector suppresses narrow
+          obstacles: a table leg two rays wide disappears against the
+          surrounding free space.
         """
         n = ranges.size
         if n == 0:
@@ -110,7 +108,7 @@ class AvoidanceWithLights(Node):
         ]
 
         if valid.size == 0:
-            # Nothing valid in the sector: treat as clear, not as an obstacle.
+            # No valid return in the sector: treated as free.
             return float(msg.range_max)
 
         return float(valid.min())
@@ -126,9 +124,9 @@ class AvoidanceWithLights(Node):
 
         ranges = np.asarray(msg.ranges, dtype=float)
 
-        # The modulo wrap in _sector_min is only meaningful on a full-circle
-        # scanner. Anything narrower (a bumper lidar, a cropped scan) would
-        # wrap the front sector onto the far edge of the field of view.
+        # The modulo wrap-around in _sector_min requires a full-circle scanner.
+        # With a narrower field of view (bumper LiDAR, cropped scan) the front
+        # sector would wrap onto the opposite edge of the field of view.
         span = msg.angle_increment * ranges.size
         if span < 1.9 * math.pi:
             self.get_logger().warning(
@@ -250,15 +248,15 @@ def main(args=None):
         node = AvoidanceWithLights()
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
-        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException,
-        # not KeyboardInterrupt; letting it escape made the node exit 1.
+        # Under `ros2 launch`, Ctrl-C arrives as ExternalShutdownException
+        # instead of KeyboardInterrupt; catching it gives exit status 0.
         pass
     finally:
         if node is not None:
             # Publishes a zero Twist before tearing the publisher down.
             node.destroy_node()
-        # Already down when the shutdown came from outside, and calling it
-        # twice raises.
+        # After an external shutdown the context is already down; a second
+        # shutdown() call raises an exception.
         if rclpy.ok():
             rclpy.shutdown()
 

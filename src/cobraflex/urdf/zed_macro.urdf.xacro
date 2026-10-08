@@ -26,12 +26,12 @@
       - enable_gnss: if true enable the URDF link
   -->
   <!-- mat_override: optional rgba replacing the per-model shell colour. The
-       default sentinel 'none' keeps every existing caller byte-identical -
-       my_robot_gazebo.urdf and my_robot_gazebo_mesh.urdf must NOT change,
-       because their cameras render this mesh and they are the models behind
+       default value 'none' leaves the output of all existing callers
+       unchanged. my_robot_gazebo.urdf and my_robot_gazebo_mesh.urdf must not
+       change, since their cameras render this mesh and they are the models of
        the recorded campaign evidence. Only zed_descr.urdf.xacro (RViz /
-       hardware description) passes it, to lift the zedm shell off rgba 0,0,0,
-       which RViz shades to an unlit void. -->
+       hardware description) sets it, to replace the rgba 0,0,0 of the zedm
+       shell, which RViz renders as an unlit black area. -->
   <xacro:macro name="zed_camera" params="name=zed model=zed enable_gnss=false custom_baseline=0 mat_override=none *gnss_origin">
     <xacro:if value="${model == 'zed'}">
       <xacro:property name="baseline" value="0.12" />

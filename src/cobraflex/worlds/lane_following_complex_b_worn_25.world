@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <!-- Worn-marking variant of lane_following_oval_complex.world: identical
-     geometry / world_name / centreline, only the road texture differs. The lane
-     markings + asphalt are degraded to a worn appearance (faded paint, patched
-     surface). Texture-only (D-37 Option A) so any behaviour change is attributable
-     to appearance alone. Track-E degraded-markings scenario (H-10 / SR-012; SR-014
-     for the CV estimator). Three intensity levels (_worn_25 hardest .. _worn_75
-     mildest) for the SC-PERT-09 worn family. -->
+     geometry, world_name and centreline; only the road texture differs. Lane
+     markings and asphalt have a worn appearance (faded paint, patched
+     surface). Texture-only change (D-37 option A), so that any change in
+     behaviour is attributable to appearance alone. Track E degraded-markings
+     scenario (H-10 / SR-012; SR-014 for the CV estimator). Three levels for
+     the SC-PERT-09 family: _worn_25 strongest degradation, _worn_75 mildest. -->
 <sdf version='1.8'>
   <world name='lane_following_complex_b'>
     <physics name='1ms' type='ignored'>

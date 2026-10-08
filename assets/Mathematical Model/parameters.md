@@ -1,18 +1,18 @@
-# Robot Physical Parameters
+# Robot physical parameters
 
-Geometry, mass, inertia and sensor configuration of the Waveshare Cobra Flex, as
-declared in this repository. Where a figure is measured, assumed or unresolved,
-it is labelled — see §1.4, §2.1 and §3.2 in particular.
+Geometry, mass, inertia and sensor configuration of the Waveshare Cobra Flex as
+declared in this repository. Values are marked as measured, assumed or open
+where applicable; see in particular §1.4, §2.1 and §3.2.
 
-> **Credit.** This documentation set is adapted from
+> **Credit.** This documentation is adapted from
 > [MrDavidAlv/Axioma_robot](https://github.com/MrDavidAlv/Axioma_robot); see
 > section 8.
 
 ---
 
-## 1. Robot Geometry
+## 1. Robot geometry
 
-### 1.1 Wheel Dimensions
+### 1.1 Wheel dimensions
 
 | Parameter | Symbol | Value | Source |
 |-----------|--------|-------|--------|
@@ -20,39 +20,35 @@ it is labelled — see §1.4, §2.1 and §3.2 in particular.
 | Wheel diameter | $d$ | 0.0745 m | 2 × $r$ |
 | Wheel width | $w$ | 0.02 m | URDF `wheel_width` |
 
-### 1.2 Chassis Dimensions
+### 1.2 Chassis dimensions
 
 | Parameter | Symbol | Value | Source |
 |-----------|--------|-------|--------|
 | Wheel separation (track) | $W$ | 0.154 m | 2 × `wheel_off_y` |
-| Wheelbase (front-to-rear) | $L$ | 0.120 m | 2 × `wheel_off_x` = 2 × 0.060 |
+| Wheelbase (front to rear) | $L$ | 0.120 m | 2 × `wheel_off_x` = 2 × 0.060 |
 | Chassis length | - | 0.228 m | `chassis_length` |
 | Chassis width | - | 0.130 m | `chassis_width` |
 | Chassis height | - | 0.060 m | `chassis_height` |
 
-$L$ does not appear in the kinematic equations — an ideal differential drive has
-no wheelbase. It appears in [Kinematics.md §3.3](./Kinematics.md), because a gap
-between the two axles is exactly what forces this robot to scrub sideways when
-it turns.
+$L$ does not appear in the kinematic equations, since an ideal differential
+drive has no wheelbase. It is relevant in [Kinematics.md §3.3](./Kinematics.md):
+the distance between the two axles causes the sideways wheel scrub in turns.
 
-> **The URDF wheelbase is 22 % short of the real one.** Three values have been
-> in circulation: the URDF's `wheel_off_x = ±0.060` → **0.120 m**; an earlier
-> revision of this document → **0.1356 m** "(calculated)", which had no source
-> and has been removed; and the physical measurement (13.08.2026) →
-> **0.154 m**. The table above reports the URDF value, because that is what the
-> simulated robot has. Gazebo's `DiffDrive` is unaffected — it is kinematic and
-> consumes only `wheel_separation` — so this changes no simulation result, but
-> it does mean the modelled chassis is shorter than the real one, and any
-> future dynamic model has to use 0.154 m.
+> **URDF wheelbase and physical wheelbase.** The URDF value `wheel_off_x =
+> ±0.060` gives **0.120 m**; the physical measurement (13.08.2026) gives
+> **0.154 m**, 22 % more. The table reports the URDF value, which is the
+> wheelbase of the simulated robot. The Gazebo `DiffDrive` plugin is kinematic
+> and uses only `wheel_separation`, so no simulation result is affected. The
+> modelled chassis is nevertheless shorter than the physical one, and any
+> future dynamic model must use 0.154 m.
 
-**NOTE**: `my_robot_mesh.urdf` and `my_robot_gazebo_mesh.urdf` render the
-chassis with custom meshes (`cobraflex_chasis.stl`), but the box dimensions
-above are declared in all four URDFs and are what the collision and inertia
-macros use.
+`my_robot_mesh.urdf` and `my_robot_gazebo_mesh.urdf` render the chassis with
+custom meshes (`cobraflex_chasis.stl`). The box dimensions above are declared
+in all four URDFs and are used by the collision and inertia macros.
 
-### 1.3 Wheel Positions
+### 1.3 Wheel positions
 
-**Coordinates in `base_link` frame**:
+**Coordinates in the `base_link` frame**:
 
 | Wheel | Position $(x, y, z)$ [m] | Joint |
 |-------|---------------------------|-------|
@@ -61,25 +57,22 @@ macros use.
 | Wheel 3 (RR) | (−0.060, −0.077, −0.020) | `rear_right_wheel_joint` |
 | Wheel 4 (FR) | (+0.060, −0.077, −0.020) | `front_right_wheel_joint` |
 
-The lateral offset is `wheel_off_y` in the URDFs, computed as
-`chassis_width/2 + wheel_width/2 + 0.002` = 0.077 m, so the pair is 0.154 m
-apart and agrees with §1.2. This table used to read 0.0745, which is the wheel
-*diameter* (2 x 0.03725) pasted into the position column, and which implied a
-0.149 m separation contradicting §1.2 five lines above.
+The lateral offset `wheel_off_y` is computed in the URDFs as
+`chassis_width/2 + wheel_width/2 + 0.002` = 0.077 m; the separation of 0.154 m
+is consistent with §1.2.
 
-The $z$ column used to read 0. It is **−0.020** in all four URDFs, and that is
-worth a second look rather than a silent correction. `base_joint` already lifts
-`base_link` by exactly one wheel radius (0.03725 m) above `base_footprint`,
-which by itself would put the axles at axle height; the extra −0.020 m puts them
-at 0.01725 m above the `base_footprint` plane, so the wheels reach 0.020 m
-*below* it. Planar kinematics uses only $x$ and $y$, so no equation in these
-documents depends on it — but `base_footprint` is then not the ground plane its
-name promises. Left unchanged pending a check against the CAD.
+The vertical offset is **−0.020 m** in all four URDFs. `base_joint` raises
+`base_link` by one wheel radius (0.03725 m) above `base_footprint`, which alone
+would place the axles at axle height; the additional −0.020 m places them
+0.01725 m above the `base_footprint` plane, so the wheels extend 0.020 m below
+it. Planar kinematics uses only $x$ and $y$, and no equation in these documents
+depends on this offset; `base_footprint` is however not at ground level. The
+value is left unchanged pending a check against the CAD.
 
-### 1.4 Firmware kinematic constants — UNRESOLVED disagreement
+### 1.4 Firmware kinematic constants (open discrepancy)
 
-Waveshare published the Cobra Flex ESP32-S3 firmware source after this model was
-built. It declares its own geometry, and it does **not** match §1.1–§1.3:
+The ESP32-S3 firmware source of the Cobra Flex, published by Waveshare,
+declares its own geometry, which differs from §1.1–§1.3:
 
 ```c
 // Cobra_Driver/ugv_config.h, block labelled "mainType:02 Cobra_Flex"
@@ -88,13 +81,13 @@ double TRACK_WIDTH      = 0.159;
 int    ONE_CIRCLE_PLUSES = 32767;   // encoder counts per revolution
 ```
 
-| Quantity | This model | Measured on the car | Firmware | Firmware vs measured |
+| Quantity | This model | Measured on the robot | Firmware | Firmware vs measured |
 |---|---|---|---|---|
 | Wheel diameter | 0.0745 (r = 0.03725) | 0.0745 | **0.0739** | −0.8 % |
 | Track | 0.154 | **0.153** | **0.159** | **+3.9 %** |
 
-This is not a documentation detail: the firmware uses both constants to
-interpret *every* twist we send it, in `rosCtrl` (`Cobra_Driver/movtion_module.h`):
+The firmware uses both constants to convert every received twist in `rosCtrl`
+(`Cobra_Driver/movtion_module.h`):
 
 ```c
 setpointA = rosX - (rosZ * TRACK_WIDTH / 2.0);   // left wheel, m/s
@@ -103,47 +96,46 @@ setpointA = setpointA * 60 / (M_PI * WHEEL_D);   // -> RPM
 setpointB = setpointB * 60 / (M_PI * WHEEL_D);
 ```
 
-So a commanded yaw rate is realised on hardware through 0.159 while Gazebo's
-DiffDrive realises it through 0.154. If our figure is the true one the robot
-turns ~3.2 % faster than commanded, i.e. a systematic sim-to-real gain error in
-exactly the channel a lane-following policy controls. The linear channel is
-~0.8 % the other way.
+A commanded yaw rate is therefore realised on hardware with 0.159 m, whereas
+the Gazebo `DiffDrive` plugin uses 0.154 m. If 0.154 m is the correct value,
+the robot turns about 3.2 % faster than commanded: a systematic sim-to-real
+gain error in the channel controlled by a lane-following policy. The linear
+channel deviates by about 0.8 % in the opposite direction.
 
-**Nothing has been changed, and the reason is that these are two different
-quantities that happen to share a name.** Our 0.154 is geometric, derived from
-the URDF (`chassis_width/2 + wheel_width/2 + 0.002`), and the tape says the real
-track is 0.153 — so the geometry is right to 0.65 %.
+**Interpretation.** The two values are different quantities with the same
+name. The value 0.154 m is geometric, derived from the URDF
+(`chassis_width/2 + wheel_width/2 + 0.002`); the tape measurement of the track
+is 0.153 m, a deviation of 0.65 %.
 
-> **Unsettled: where the 0.154 actually came from.** The companion RL/thesis
-> repository records a different provenance in `src/cobraflex/urdf/robot.gazebo`
-> — that 0.154 is the measured **wheelbase** (0.154 m) rather than the measured
-> **track** (0.153 m), and the two agreeing to 0.65 % is a coincidence that
-> hid the swap. Both accounts land on the same number and neither changes any
-> result, so this is a provenance question, not a numerical one. Worth noting
-> that the URDF derivation above yields 0.154 m *exactly* by construction from
-> `chassis_width`, which is evidence for the geometric reading — but the two
-> repositories should agree on one story. **Not resolved here.** The firmware's 0.159 is not
-a geometric claim at all: it is the constant that converts a twist into wheel
-RPM, and it sits **3.9 % above the measured track**, which is the direction and
-rough magnitude of a scrub compensation. A skid-steer needs a larger wheel-speed
-difference than ideal differential kinematics predict, because the wheels drag
-sideways; inflating the track constant is the cheapest way to buy some of that
-back.
+> **Open item: provenance of 0.154 m.** The companion RL/thesis repository
+> records a different provenance in `src/cobraflex/urdf/robot.gazebo`: 0.154 m
+> as the measured **wheelbase**, not the measured **track** (0.153 m). Both
+> accounts lead to the same value and neither changes any result; the question
+> concerns provenance only. The URDF derivation yields exactly 0.154 m from
+> `chassis_width`, which supports the geometric interpretation. The two
+> repositories have not yet been aligned on this point.
 
-That suggests the correct resolution is *not* to copy 0.159 into everything:
+The firmware value of 0.159 m is not a geometric value. It is the constant that
+converts a twist into wheel RPM, and it lies **3.9 % above the measured
+track**, which corresponds in direction and approximate magnitude to a scrub
+compensation. A skid-steer vehicle requires a larger wheel-speed difference
+than ideal differential kinematics predicts, because the wheels slide sideways;
+an increased track constant compensates part of this difference.
 
-- The **URDF** describes the physical robot. It should carry the measured track
-  (0.153, or the present 0.154), never a control constant with scrub baked in.
-- The **DiffDrive plugin** in `robot.gazebo` plays the same role in simulation
-  that `rosCtrl` plays on hardware — twist in, wheel speeds out. For sim-to-real
-  parity *this* is the one that should match the firmware's 0.159.
+Consequently, 0.159 m is not to be copied into every file:
 
-Today both are 0.154, so Gazebo turns the ideal amount and the car turns through
-a constant that is 3.9 % wider — a systematic yaw gain error, in exactly the
-channel a lane-following policy controls.
+- The **URDF** describes the physical robot and carries the measured track
+  (0.153 m, or the current 0.154 m), not a control constant with scrub
+  compensation.
+- The **DiffDrive plugin** in `robot.gazebo` has the same role in simulation as
+  `rosCtrl` on hardware (twist in, wheel speeds out). For sim-to-real parity,
+  this is the component that would match the firmware value of 0.159 m.
 
-**That measurement has since been made, and it settles the question — against
-the firmware.** In-place rotation on the physical car, 10 s per point:
+Both currently use 0.154 m: Gazebo turns by the ideal amount, and the physical
+robot turns with a constant 3.9 % wider.
+
+**Measurement result.** In-place rotation on the physical robot, 10 s per
+point:
 
 | Commanded | Expected | Measured | Achieved | Gain |
 |---|---|---|---|---|
@@ -152,81 +144,85 @@ the firmware.** In-place rotation on the physical car, 10 s per point:
 | 0.53 rad/s | 303.7° | 150.4° | 0.263 rad/s | 0.495 |
 | 0.80 rad/s | 458.4° | 226.9° | 0.396 rad/s | 0.495 |
 
-Least squares through the origin gives **k = 0.4954**, no offset: the car
-delivers **half** the commanded yaw rate. Straight-line motion over the same
-10 s tracks at ~0.99 (1.998/2.000, 3.964/4.000, 5.207/5.300), so the deficit is
-**purely rotational** — the four fixed wheels scrub. The implied effective track
-is `0.153 / 0.4954 = 0.309 m`, about **2.02×** the physical track.
+Least squares through the origin gives **k = 0.4954** without offset: the
+robot achieves **half** the commanded yaw rate. Straight-line motion over the
+same 10 s achieves a gain of about 0.99 (1.998/2.000, 3.964/4.000,
+5.207/5.300), so the deficit is **purely rotational** and caused by wheel
+scrub. The implied effective track is `0.153 / 0.4954 = 0.309 m`, about
+**2.02×** the physical track.
 
-So the 0.159 m firmware constant absorbs 3.9 % of a 102 % deficit. It is not the
-scrub compensation it looked like — it is a rounding correction against an error
-two orders of magnitude larger. Copying 0.159 into the URDF or the plugin would
-have bought nothing.
+The firmware constant of 0.159 m therefore compensates 3.9 % of a deficit of
+102 %; it is a minor correction compared with an error two orders of magnitude
+larger. Copying 0.159 m into the URDF or the plugin would have no relevant
+effect.
 
-**Still nothing has been changed**, and now for a stronger reason: the honest
-correction is not a new track constant but a yaw gain of ~2 somewhere in the
-chain, and applying it would perturb the plant that produced every frozen
-evaluation result. The measurement is recorded in the companion RL/thesis
-repository (`docs/14_isaacsim_handover_spec.md` §2.3a); it is reproduced here
-because it is a property of this robot.
+**No change is applied.** The appropriate correction is a yaw gain of about 2
+in the chain rather than a new track constant, and applying it would alter the
+plant used for all frozen evaluation results. The measurement is recorded in
+the companion RL/thesis repository (`docs/14_isaacsim_handover_spec.md`
+§2.3a) and reproduced here as a property of this robot.
 
-One consequence worth carrying forward: **the 6.0 rad/s driver ceiling is not
-reachable.** Ideal differential drive gives `2 × 0.53 / 0.153 = 6.93 rad/s`;
-with k = 0.4954 the real ceiling is ≈ **3.4 rad/s**, and the calibration
-campaign only reached 0.396 rad/s. 6.0 is a clamp constant, not a capability.
+**Consequence: the 6.0 rad/s driver limit is not reachable.** An ideal
+differential drive gives `2 × 0.53 / 0.153 = 6.93 rad/s`; with k = 0.4954 the
+real limit is about **3.4 rad/s**, and the calibration campaign reached
+0.396 rad/s. 6.0 rad/s is a clamp constant, not a capability.
 
 ### 1.5 Firmware odometry and feedback
 
-From the same source, for whoever wires up wheel odometry later:
+From the same firmware source:
 
 | Field | Meaning | Units |
 |---|---|---|
-| `odl`, `odr` | Cumulative distance per side, `(long int)(en_odom_l * 100)` | **integer centimetres**, monotonic |
-| `v` | Battery, `(int)(loadVoltage_V * 100)` | **centivolts** |
-| `M1`..`M4` | Per-motor feedback — but `ddsm_fb_*` is never assigned in the shipped build | always 0 |
+| `odl`, `odr` | Cumulative distance per side, `(long int)(en_odom_l * 100)` | **Integer centimetres**, monotonic |
+| `v` | Battery voltage, `(int)(loadVoltage_V * 100)` | **Centivolts** |
+| `M1`..`M4` | Per-motor feedback; `ddsm_fb_*` is never assigned in the published build | Always 0 |
 
-Two consequences. The odometers are integrated on the ESP32 from encoder counts
-(`delta / 32767 * pi * WHEEL_D`, with a 10-count deadband ≈ 0.07 mm), so they
-already embed the firmware's `WHEEL_D` — reading them back with a different
-wheel diameter double-counts the error in §1.4. And they are truncated to whole
-centimetres before transmission: at the deployed 0.22 m/s with the frame rate
-limited to 20 Hz (`feedbackFlowExtraDelay = 50`), the robot advances ~11 mm per
-frame, so the quantisation is the same size as the signal. Usable for position,
-not for speed without filtering.
+Implications:
 
-The IMU fields that `json_cmd.h` documents in this frame, and the whole `T=1002`
-frame, are commented out in the shipped build. The chassis carries an ICM-20948,
-so it is a recompile away — but nothing arrives today.
+- The odometers are integrated on the ESP32 from encoder counts
+  (`delta / 32767 * pi * WHEEL_D`, with a 10-count deadband ≈ 0.07 mm) and
+  therefore already contain the firmware `WHEEL_D`. Reading them with a
+  different wheel diameter compounds the error described in §1.4.
+- The values are truncated to whole centimetres before transmission. At the
+  deployed 0.22 m/s and a frame rate limited to 20 Hz
+  (`feedbackFlowExtraDelay = 50`), the robot advances about 11 mm per frame,
+  so the quantisation is of the same order as the signal. The odometers are
+  usable for position, but not for speed without filtering.
+
+The IMU fields documented in `json_cmd.h` for this frame, and the complete
+`T=1002` frame, are commented out in the published build. The chassis carries
+an ICM-20948; IMU data is available after recompilation of the firmware, but
+not in the current build.
 
 ---
 
-## 2. Inertial Properties
+## 2. Inertial properties
 
-### 2.1 Total Robot Mass
+### 2.1 Total robot mass
 
-Measured total of the built robot: **3.5 kg** (bench measurement, 13.08.2026).
+Measured total mass of the robot: **3.5 kg** (bench measurement, 13.08.2026).
 
 #### Bill of materials
 
-Every row is tagged with how the figure was obtained. Only the first block is a
-direct measurement of *this* robot.
+Each row states the origin of its value. Only the first block is a direct
+measurement of this robot.
 
-| Component | Qty | Unit | Total | Provenance |
+| Component | Qty | Unit | Total | Origin |
 |---|---|---|---|---|
-| PLA shell — bottom (carries the mono lane camera) | 1 | 91.3 g | 91.3 g | **weighed** |
-| PLA shell — centre (carries the ZED + powerbank + cables) | 1 | 118.5 g | 118.5 g | **weighed** |
-| PLA shell — top cover (carries the LiDAR) | 1 | 68.0 g | 68.0 g | **weighed** |
-| *PLA subtotal* | 3 | — | *277.8 g* | **weighed** |
-| Powerbank XTPower XT-27000DC | 1 | 550 g | 550 g | datasheet |
-| LiDAR RPLIDAR A2 | 1 | 190 g | 190 g | datasheet |
-| ZED Mini | 1 | 60 g | 60 g | datasheet |
-| Jetson Orin Nano Developer Kit | 1 | 175 g | 175 g | datasheet |
-| Mono lane camera (IMX219 CSI) | 1 | ~5 g | ~5 g | estimate |
-| Wheels | 4 | 100 g | 400 g | assumption |
-| Rolling chassis: frame, 4 motors, driver board, motor battery, wiring, fasteners | 1 | — | **1842.2 g** | **derived remainder** |
-| **TOTAL** | | | **3500.0 g** | **measured** |
+| PLA shell, bottom (carries the mono lane camera) | 1 | 91.3 g | 91.3 g | **Weighed** |
+| PLA shell, centre (carries the ZED, powerbank and cables) | 1 | 118.5 g | 118.5 g | **Weighed** |
+| PLA shell, top cover (carries the LiDAR) | 1 | 68.0 g | 68.0 g | **Weighed** |
+| *PLA subtotal* | 3 | — | *277.8 g* | **Weighed** |
+| Powerbank XTPower XT-27000DC | 1 | 550 g | 550 g | Datasheet |
+| LiDAR RPLIDAR A2 | 1 | 190 g | 190 g | Datasheet |
+| ZED Mini | 1 | 60 g | 60 g | Datasheet |
+| Jetson Orin Nano Developer Kit | 1 | 175 g | 175 g | Datasheet |
+| Mono lane camera (IMX219 CSI) | 1 | ~5 g | ~5 g | Estimate |
+| Wheels | 4 | 100 g | 400 g | Assumption |
+| Rolling chassis: frame, 4 motors, driver board, motor battery, wiring, fasteners | 1 | — | **1842.2 g** | **Derived remainder** |
+| **TOTAL** | | | **3500.0 g** | **Measured** |
 
-Accounting of confidence:
+Confidence breakdown:
 
 | | Mass | Share |
 |---|---|---|
@@ -235,81 +231,80 @@ Accounting of confidence:
 | Assumed (wheels) | 400.0 g | 11.4 % |
 | Derived remainder (rolling chassis) | 1842.2 g | 52.6 % |
 
-
-
 #### URDF mass distribution
 
-What the URDFs declare, derived from the bill of materials above:
+Values declared in the URDFs, derived from the bill of materials:
 
 | Link | Mass | Contents |
 |---|---|---|
-| `base_link` (chassis) | **2.0172 kg** | frame, 4 motors, driver board, motor battery, Jetson Orin Nano DevKit, wiring |
+| `base_link` (chassis) | **2.0172 kg** | Frame, 4 motors, driver board, motor battery, Jetson Orin Nano Developer Kit, wiring |
 | `body_link` (upper deck) | **0.8928 kg** | PLA shells 0.2778 + powerbank 0.550 + ZED Mini 0.060 + lane camera ~0.005 |
-| `wheel_1…4` | **0.1 kg** ×4 = 0.4 kg | unchanged; not measured |
-| `lidar_link` (RPLidar A2) | **0.190 kg** | manufacturer |
+| `wheel_1…4` | **0.1 kg** ×4 = 0.4 kg | Not measured |
+| `lidar_link` (RPLIDAR A2) | **0.190 kg** | Manufacturer |
 | **TOTAL** | **3.5000 kg** | |
 
-The **Jetson rides on the chassis, not in the body** (confirmed by the platform
-team, 17.08.2026). The ZED Mini carries no separate inertial — `zed_macro.urdf.xacro`
-declares no `<inertial>` element at all — so its 60 g is folded into the body link
-it is bolted to. `camera_link` is a frame only.
+The **Jetson is mounted on the chassis, not in the body** (confirmed by the
+platform team, 17.08.2026). The ZED Mini has no separate inertial element
+(`zed_macro.urdf.xacro` declares no `<inertial>`); its 60 g are included in the
+body link to which it is mounted. `camera_link` is a frame only.
 
-Three of the four links take their inertia from the `inertial_box` /
+Three of the four link types take their inertia from the `inertial_box` /
 `inertial_cylinder` macros at these masses (chassis box 0.228 × 0.130 × 0.060;
-wheel cylinder r = 0.03725, l = 0.02; lidar cylinder r = 0.0375, l = 0.04).
-**`body_link` does not** — the values below are what the URDFs actually declare:
+wheel cylinder r = 0.03725, l = 0.02; LiDAR cylinder r = 0.0375, l = 0.04).
+**`body_link` is the exception**; the following values are those declared in
+the URDFs:
 
-| Link | ixx | iyy | izz | Origin of the numbers |
+| Link | ixx | iyy | izz | Origin |
 |---|---|---|---|---|
 | `base_link` | 0.00344605 | 0.00934367 | 0.01157940 | `inertial_box` macro |
-| `body_link` | **0.00206253** | **0.00210198** | **0.00359719** | **hand-written, from CAD** |
-| wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 | `inertial_cylinder` macro |
+| `body_link` | **0.00206253** | **0.00210198** | **0.00359719** | **Hand-written, from CAD** |
+| Wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 | `inertial_cylinder` macro |
 | `lidar_link` | 9.213021e-05 | 9.213021e-05 | 1.335938e-04 | `inertial_cylinder` macro |
 
-The `body_link` row previously carried 0.00315456 / 0.00461161 / 0.00627817 —
-what `inertial_box` *would* produce for a 0.8928 kg 0.228 × 0.180 × 0.100 box.
-That is not what the URDFs contain, and the difference is not small:
+Comparison of the `body_link` tensor with the `inertial_box` values for a
+0.8928 kg box of 0.228 × 0.180 × 0.100 m:
 
-| | macro | declared | delta |
+| | Macro | Declared | Difference |
 |---|---|---|---|
 | ixx | 0.00315456 | 0.00206253 | −34.6 % |
 | iyy | 0.00461161 | 0.00210198 | −54.4 % |
 | izz | 0.00627817 | 0.00359719 | −42.7 % |
 
-`body_link` is the one link whose box model was measurably wrong. An Inventor
-assembly with every component at its weighed density (composite 0.908 g/cm³,
-PLA shells at the 0.539 g/cm³ that reproduces their measured 277.8 g) puts the
-tensor 35–54 % below the macro, because the 550 g powerbank sits compact and low
-in the centre shell rather than smeared through the whole 0.228 × 0.180 × 0.100
-box. Its inertial origin is `0 0 0.037415`, not `body_height/2`, for the same
-reason — the CAD CoG is 12.6 mm below the box centre.
+`body_link` is the only link whose box model deviates significantly. An
+Inventor assembly with every component at its weighed density (composite
+0.908 g/cm³; PLA shells at 0.539 g/cm³, which reproduces their measured
+277.8 g) places the tensor 35–54 % below the macro, because the 550 g powerbank
+is compact and located low in the centre shell instead of being distributed
+over the 0.228 × 0.180 × 0.100 m box. For the same reason the inertial origin
+is `0 0 0.037415` instead of `body_height/2`: the CAD centre of gravity is
+12.6 mm below the box centre.
 
-`base_link`, the wheels and the lidar were checked the same way and all land
-within 5–6 % of their macro values, so they keep the macros. Do not "finish the
-job" by hand-writing those too, and do not restore `inertial_box` on
-`body_link`.
+`base_link`, the wheels and the LiDAR were checked with the same method and are
+within 5–6 % of their macro values; they therefore keep the macros. The
+hand-written tensor applies to `body_link` only, and `inertial_box` is not to
+be restored on `body_link`.
 
-Still open: the CAD reports `ixz` = 1.26e−04 for `body_link` (6 % of `ixx`),
-left at zero until the CAD's +X direction is confirmed. The macro cannot express
-it anyway, and a sign error there couples pitch the wrong way, which is worse
-than omitting the term.
+Open item: the CAD reports `ixz` = 1.26e−04 for `body_link` (6 % of `ixx`). It
+is set to zero until the +X direction of the CAD is confirmed. The macro cannot
+represent the term, and a sign error would couple pitch in the wrong direction,
+which is worse than omitting it.
 
-#### Centre of gravity — reference frame unresolved
+#### Centre of gravity (reference frame open)
 
-The supplied CoG is `(x, y, z) = (0.006, −0.004, 0.030) m`. Read in `base_link` it
-is not reachable by this link layout: the powerbank (550 g) sits in the centre
-shell and the LiDAR (190 g) on the top cover, so **740 g — 21 % of the vehicle —
-is in the upper two layers**, and the itemised composite lands at **0.0566 m**
-above `base_link` (0.0938 m above ground).
+The supplied centre of gravity is `(x, y, z) = (0.006, −0.004, 0.030) m`.
+Interpreted in `base_link`, this value is not consistent with the link layout:
+the powerbank (550 g) is in the centre shell and the LiDAR (190 g) on the top
+cover, so **740 g, 21 % of the vehicle, are in the two upper layers**, and the
+itemised composite lies **0.0566 m** above `base_link` (0.0938 m above ground).
 
-Read from the **chassis box centre** — which is itself 0.030 m above `base_link` —
-the supplied figure becomes 0.060 m, **3.4 mm from the model**. That is the working
-hypothesis for the reference frame, pending confirmation. Until it is confirmed, no
-inertial origin has been moved.
+Interpreted relative to the **chassis box centre**, which is 0.030 m above
+`base_link`, the supplied value becomes 0.060 m, **3.4 mm from the model**.
+This is the working hypothesis for the reference frame, pending confirmation.
+No inertial origin is moved until it is confirmed.
 
-### 2.2 Chassis and Body Inertia Tensors
+### 2.2 Chassis and body inertia tensors
 
-**Box Inertia** :
+**Box inertia**:
 
 $$
 \mathbf{I}_{base} = \begin{bmatrix}
@@ -331,9 +326,9 @@ $$
   </xacro:macro>
 ```
 
-### 2.3 Wheels and LiDAR Inertia Tensors
+### 2.3 Wheel and LiDAR inertia tensors
 
-**Cylinder Inertia**:
+**Cylinder inertia**:
 
 $$
 \mathbf{I}_{wheel} = \begin{bmatrix}
@@ -357,13 +352,11 @@ $$
 
 ---
 
-## 3. Operational Limits
+## 3. Operational limits
 
-### 3.1 Kinematic Limits
+### 3.1 Kinematic limits
 
-The robot is bounded at two levels, and the two used to be merged into one
-table here, which is how 0.53 m/s ended up being quoted as if Nav2 could ever
-command it.
+The robot is limited at two levels:
 
 | Parameter | Symbol | Nav2 / DWB | Platform (driver clamp) |
 |-----------|--------|-----------|-------------------------|
@@ -375,21 +368,21 @@ command it.
 | Maximum angular acceleration | $\alpha_{max}$ | 3.2 rad/s² | — |
 | Angular deceleration | $\alpha_{min}$ | −3.2 rad/s² | — |
 
-**Nav2 / DWB** comes from `config/nav2_params.yaml` — keys `max_vel_x`,
-`min_vel_x`, `max_vel_theta`, `acc_lim_x`, `acc_lim_theta`, `decel_lim_x`,
-`decel_lim_theta`, repeated under `velocity_smoother`. It is what the planner
-plans inside.
+**Nav2 / DWB** values are taken from `config/nav2_params.yaml` (keys
+`max_vel_x`, `min_vel_x`, `max_vel_theta`, `acc_lim_x`, `acc_lim_theta`,
+`decel_lim_x`, `decel_lim_theta`, repeated under `velocity_smoother`). They
+define the planning envelope.
 
-**Platform** is what `cobraflex_ros_driver` clamps every `/cmd_vel` to before it
-reaches the firmware (parameters `max_linear`, `max_angular`, symmetric). It is
-a backstop against publishers that ignore the platform envelope, not an
-operating point — Nav2 never approaches it.
+**Platform** values are those to which `cobraflex_ros_driver` clamps every
+`/cmd_vel` before the firmware (parameters `max_linear`, `max_angular`,
+symmetric). They protect against publishers that ignore the platform envelope
+and are not an operating point; Nav2 does not approach them.
 
 Neither the driver nor the Gazebo plugin limits *angular* acceleration; only
-Nav2 does. The resulting wheel speeds for each column are worked out in
+Nav2 does. The resulting wheel speeds per column are derived in
 [Kinematics.md §7.2](./Kinematics.md).
 
-### 3.2 Acceleration Limits in the Plugin
+### 3.2 Acceleration limits in the plugin
 
 ```xml
 <max_linear_acceleration>2.5</max_linear_acceleration>
@@ -400,43 +393,35 @@ Nav2 does. The resulting wheel speeds for each column are worked out in
 |-----------|-------|
 | Plugin linear acceleration limit | ±2.5 m/s² |
 
-These two used to read `0.53` and `-10` in `urdf/robot.gazebo`: `0.53` is this
-chassis's maximum *velocity* in m/s, copied into an acceleration field, and the
-`-10` braking limit was twenty times the acceleration limit. Both now match the
-Nav2 column in §3.1.
+Both values match the Nav2 column in §3.1.
 
-> **Caveat on the replacement.** The 2.5 m/s² that replaced 0.53 has **no
-> stated measurement provenance either.** The 13.08.2026 bench sheet
-> independently reports "≈ 0.5–0.53 m/s²" for linear acceleration — which is the
-> same copied number arriving from a second direction, not a confirmation.
-> Treat **0.53 as refuted** and **2.5 as the platform spec**, not as a
-> measurement. Deceleration is informed, not closed. This has no practical
-> effect on any result recorded so far: at the 0.22 m/s speed cap used for
-> lane-following work, commanded acceleration is bounded to 0.22 m/s², an order
-> of magnitude under either limit.
+> **Provenance of 2.5 m/s².** The value has no documented measurement. The
+> bench sheet of 13.08.2026 reports "≈ 0.5–0.53 m/s²" for linear
+> acceleration, which corresponds to the maximum velocity of 0.53 m/s entered
+> as an acceleration and is not an independent confirmation. 0.53 m/s² is
+> therefore considered refuted, and 2.5 m/s² is treated as the platform
+> specification, not as a measurement. Deceleration is not yet verified. This
+> has no practical effect on any recorded result: at the 0.22 m/s speed limit
+> of the lane-following work, the commanded acceleration is bounded to
+> 0.22 m/s², an order of magnitude below both values.
 
-**Torque is not configured anywhere.** This section previously also listed a
-`<max_wheel_torque>20</max_wheel_torque>` tag and "maximum torque per wheel
-20 N·m". That tag appears nowhere in this repository: it belongs to the Gazebo
-Classic `libgazebo_ros_diff_drive.so` plugin, whereas this project runs
-`gz-sim-diff-drive-system`, which commands wheel *velocity*. The 20 N·m figure
-has no source anywhere in the repo, so it has been removed rather than
-corrected — there is no measured value to put in its place, and any real limit
-would come from the DDSM motor spec, which is not recorded here.
+**Wheel torque is not configured.** The `gz-sim-diff-drive-system` plugin used
+in this project commands wheel *velocity*; a `<max_wheel_torque>` tag exists
+only in the Gazebo Classic plugin `libgazebo_ros_diff_drive.so`. No torque
+value is documented in this repository; a real limit would come from the DDSM
+motor specification, which is not recorded here.
 
-> **The 20 N·m still circulates downstream.** The companion RL/thesis
-> repository quotes it — in `src/cobraflex/urdf/robot.gazebo` and in
-> `docs/14` — citing *this section* as its source. That citation is now
-> circular: it was never sourced here in the first place. It should be dropped
-> there too, or replaced with a figure from the DDSM datasheet.
-
+> **Open item in the companion repository.** The RL/thesis repository quotes a
+> wheel torque of 20 N·m in `src/cobraflex/urdf/robot.gazebo` and in
+> `docs/14`, citing this section as its source. This section contains no such
+> value; the reference is to be removed there or replaced with a value from
+> the DDSM datasheet.
 
 ---
 
 ## 4. Sensors
 
-### 4.1 LiDAR Specifications
-
+### 4.1 LiDAR
 
 | Parameter | Value |
 |-----------|-------|
@@ -453,16 +438,14 @@ would come from the DDSM motor spec, which is not recorded here.
 | Noise (mean) | 0.0 |
 | Noise (stddev) | 0.01 |
 
-Every row now matches the SDF below it. The table previously read 360 samples
-at 1.0° over 0…360°, with a 0.15 m minimum range and a $(0, 0, 0.054)$ mount —
-none of which is what the block declares. The mount offset is
-`body_height/2 + 0.04` = 0.05 + 0.04 = 0.090 m above `body_link`, and the
-$\pi$ yaw means the sensor's zero bearing points **backwards** along $-x$.
+The mount offset is `body_height/2 + 0.04` = 0.05 + 0.04 = 0.090 m above
+`body_link`. The yaw of $\pi$ means that the zero bearing of the sensor points
+**backwards** along $-x$.
 
-The simulated 4000 samples are a Gazebo figure, not a hardware one: a real
-RPLIDAR A2 delivers on the order of 400 points per revolution at 10 Hz. A
-consumer tuned against the simulated scan density will see roughly a tenth of it
-on the real robot.
+The 4000 simulated samples are a Gazebo setting, not a hardware value: a
+physical RPLIDAR A2 delivers about 400 points per revolution at 10 Hz. A
+consumer tuned to the simulated scan density receives about one tenth of it on
+the physical robot.
 
 ```xml
 <gazebo reference="lidar_link">
@@ -500,9 +483,7 @@ on the real robot.
 
 ### 4.2 Cameras
 
-There are **three** simulated cameras, not one. This section used to describe a
-single `ZEDm Cam` on a link called `camera_link`, publishing `camera/image_raw`
-— no such link and no such topic exist in `robot.gazebo`.
+Three cameras are simulated:
 
 | | ZED Mini left | ZED Mini right | Lane camera |
 |---|---|---|---|
@@ -516,53 +497,54 @@ single `ZEDm Cam` on a link called `camera_link`, publishing `camera/image_raw`
 | Rate | 20 Hz | 20 Hz | 20 Hz |
 | Noise stddev | 0.007 | 0.007 | 0.007 |
 
-The left eye is an `rgbd_camera`, so its `<topic>` is a **prefix**: gz appends
-`/image`, `/depth_image`, `/points` and `/camera_info` to it. It is the only one
-of the three that yields depth, and it yields it the way the real ZED Mini does
-— computed on the GPU and registered to the left eye — rather than by matching
-two rendered images, which is what the SDK's output actually looks like to ROS.
-Its FOV and 16:9 aspect are the real camera's; the vertical then falls out near
-70° against the real 57°, because a pinhole cannot reproduce a 2.1 mm lens.
-480 × 270 rather than a full WVGA 640 × 360 because the reprojection downstream,
-not the render, is what costs real time factor.
+The left camera is an `rgbd_camera`; its `<topic>` is therefore a **prefix**,
+to which gz appends `/image`, `/depth_image`, `/points` and `/camera_info`. It
+is the only one of the three that provides depth, computed on the GPU and
+registered to the left image, as on the physical ZED Mini, rather than by
+stereo matching of two rendered images. Its FOV and 16:9 aspect ratio are those
+of the physical camera; the resulting vertical FOV is about 70° instead of the
+real 57°, because a pinhole model cannot reproduce a 2.1 mm lens. The
+resolution is 480 × 270 instead of WVGA 640 × 360 because the downstream
+reprojection, not the rendering, determines the real-time factor.
 
-`camera/left/points` is deliberately **not** bridged to ROS. gz-sensors emits
-that cloud in body axes (x forward, y left, z up) while stamping it with the
-optical frame, so bridging it lands it in RViz rotated 90°. The cloud is rebuilt
-from the depth image and `camera_info` by `zed_depth_cloud.launch.py` instead,
-which is also the projection the real ZED SDK performs. The full argument, with
-the Gazebo source references, is in `src/cobraflex/config/gz_bridge.yaml`.
+`camera/left/points` is **not** bridged to ROS. gz-sensors emits this cloud in
+body axes (x forward, y left, z up) but stamps it with the optical frame; a
+bridged cloud appears rotated by 90° in RViz. The cloud is reconstructed from
+the depth image and `camera_info` by `zed_depth_cloud.launch.py`, the same
+projection performed by the ZED SDK on the physical robot. The detailed
+analysis, with references to the Gazebo sources, is in
+`src/cobraflex/config/gz_bridge.yaml`.
 
-**Mounts** (both parented to `body_link`):
+**Mounts** (both with parent `body_link`):
 
 | Joint | Child | Origin from `body_link` [m] | Orientation |
 |---|---|---|---|
-| `zedm_mount_joint` | `zedm_camera_link` | (0.0665, 0, 0.00675) | none |
-| `camera_joint_lane` | `camera_link_lane` | (0.124, 0, −0.030) | pitch +0.30 rad, nose down |
+| `zedm_mount_joint` | `zedm_camera_link` | (0.0665, 0, 0.00675) | None |
+| `camera_joint_lane` | `camera_link_lane` | (0.124, 0, −0.030) | Pitch +0.30 rad, nose down |
 
-`zedm_mount_joint`'s offset is `body_length/2 - 0.0475` in $x$ and
-`0.02 - 0.0265/2` in $z$. The stereo baseline is 0.063 m, from the `zedm` branch
-of `zed_macro.urdf.xacro`, but the two frames are placed *asymmetrically* about
-`zedm_camera_center` — left at $y = +0.0245$, right at $y = -0.0385$. The
-separation is the correct 0.063 m; the pair's midpoint just sits 7 mm to the
-right of the centre frame. That asymmetry comes from upstream Stereolabs
-description and has not been touched.
+The offset of `zedm_mount_joint` is `body_length/2 - 0.0475` in $x$ and
+`0.02 - 0.0265/2` in $z$. The stereo baseline is 0.063 m, from the `zedm`
+branch of `zed_macro.urdf.xacro`. The two frames are placed asymmetrically
+about `zedm_camera_center` (left at $y = +0.0245$, right at $y = -0.0385$):
+the separation is the correct 0.063 m, but the midpoint lies 7 mm to the right
+of the centre frame. This asymmetry originates in the Stereolabs description
+and is left unchanged.
 
-The lane camera models the real IMX219-160 **as the controller consumes it**,
-not as the sensor captures it: `lane_keeper_node` processes 640×360 frames at
-20 Hz with an effective 90° horizontal FOV, while the physical capture is
-1280×720 at 60 fps. Only the processed stream matters for parity, which is why
-the simulated sensor is declared at the processed resolution.
+The lane camera models the IMX219-160 **as consumed by the controller**, not as
+captured by the sensor: `lane_keeper_node` processes 640×360 frames at 20 Hz
+with an effective horizontal FOV of 90°, while the physical capture is
+1280×720 at 60 fps. Only the processed stream is relevant for parity; the
+simulated sensor is therefore declared at the processed resolution.
 
-Manufacturer figures for the real ZED Mini — up to 2K resolution, up to 100 fps,
-0.1–15 m depth range — describe the hardware, not this simulation, which runs a
-plain RGB `camera` sensor with no depth at all.
+The manufacturer data of the ZED Mini (up to 2K resolution, up to 100 fps,
+0.1–15 m depth range) describe the hardware; the simulated sensors are
+configured as listed in the table above.
 
 ```xml
 <gazebo reference="camera_link_lane">
-    <!-- Mirrors the real IMX219-160 as consumed by lane_keeper_node.py
-         on HW (proc frames 640x360, effective hfov 90 deg, timer 20 Hz);
-         capture is 1280x720@60 but only the processed stream matters. -->
+    <!-- Models the IMX219-160 as consumed by lane_keeper_node.py on hardware
+         (processed frames 640x360, effective hfov 90 deg, timer 20 Hz); the
+         1280x720@60 capture is not relevant for parity. -->
     <sensor name="Lane Cam" type="camera">
         <camera>
             <horizontal_fov>1.5707963</horizontal_fov>
@@ -603,21 +585,20 @@ plain RGB `camera` sensor with no depth at all.
 
 The mount offset is `body_length/2 - 0.04` = 0.114 − 0.04 = 0.074 m in $x$.
 
-On hardware there is no equivalent stream. The chassis carries an ICM-20948 and
-`json_cmd.h` documents IMU fields in the feedback frame, but they — and the
-whole `T=1002` frame — are commented out in the shipped firmware build. See
-§1.5.
+The hardware provides no equivalent stream. The chassis carries an ICM-20948
+and `json_cmd.h` documents IMU fields in the feedback frame, but these fields
+and the complete `T=1002` frame are commented out in the published firmware
+build. See §1.5.
 
 ---
 
-## 5. SLAM Parameters
+## 5. SLAM parameters
 
 ### 5.1 SLAM Toolbox
 
-There are **two** configurations, and they are not the same. This section used
-to cite a single `slam_params.yaml`, which does not exist.
+Two configurations exist:
 
-| Parameter | `slam_toolbox_mapping.yaml` (sim) | `slam_toolbox_mapping_hw.yaml` (hardware) |
+| Parameter | `slam_toolbox_mapping.yaml` (simulation) | `slam_toolbox_mapping_hw.yaml` (hardware) |
 |---|---|---|
 | `mode` | mapping | mapping |
 | `base_frame` | `base_footprint` | `base_footprint` |
@@ -632,24 +613,23 @@ to cite a single `slam_params.yaml`, which does not exist.
 | `loop_search_maximum_distance` | 3.0 m | 3.0 m |
 | `loop_match_minimum_chain_size` | 10 | 10 |
 
-The hardware profile takes keyframes five times more often in both distance and
-heading, and runs with loop closure **off**. That combination is deliberate for
-the small indoor runs this robot does, but it means a hardware map has no
-mechanism to correct accumulated drift — the sim profile does.
+The hardware profile adds keyframes five times more often in distance and
+heading and disables loop closure. This combination targets the small indoor
+runs of this robot; a hardware map therefore has no mechanism to correct
+accumulated drift, unlike the simulation profile.
 
-`max_laser_range: 20.0` on hardware exceeds the RPLIDAR A2's 8 m rated range
-(§4.1), so it is not a claim about the sensor; it only affects rastering.
+`max_laser_range: 20.0` on hardware exceeds the 8 m rated range of the RPLIDAR
+A2 (§4.1); it affects only the rasterisation.
 
-`base_frame` is `base_footprint` in both, matching `ekf_*.yaml`
-`base_link_frame` and `nav2_params.yaml` `robot_base_frame`. Naming a different
-frame in any one of them gives some link two parents.
+`base_frame` is `base_footprint` in both profiles, consistent with
+`ekf_*.yaml` `base_link_frame` and `nav2_params.yaml` `robot_base_frame`. A
+different frame in any of these files gives one link two parents.
 
 ---
 
+## 6. Parameter summary
 
-## 6. Parameter Summary Table
-
-### 6.1 Geometric Parameters
+### 6.1 Geometric parameters
 
 ```python
 PARAMS_GEOMETRY = {
@@ -661,9 +641,9 @@ PARAMS_GEOMETRY = {
 }
 ```
 
-### 6.2 Kinematic Parameters
+### 6.2 Kinematic parameters
 
-Two sets, per §3.1 — the Nav2 planning envelope and the driver's clamp:
+Two sets according to §3.1, the Nav2 planning envelope and the driver clamp:
 
 ```python
 PARAMS_KINEMATICS_NAV2 = {
@@ -680,9 +660,9 @@ PARAMS_KINEMATICS_PLATFORM = {
 }
 ```
 
-Wheel torque is deliberately absent — see §3.2.
+Wheel torque is not listed; see §3.2.
 
-### 6.3 Control Parameters
+### 6.3 Control parameters
 
 ```python
 PARAMS_CONTROL = {
@@ -696,24 +676,21 @@ PARAMS_CONTROL = {
 }
 ```
 
-These blocks previously cited `model.sdf:72`, `model.sdf:441` and
-`model.sdf:439`. There is no `model.sdf` in this repository — the plugins live
-in `urdf/robot.gazebo`. Line-number citations into `nav2_params.yaml` have been
-replaced with key names for the same reason: the line numbers had already
-drifted.
+Values reference configuration keys rather than line numbers. The Gazebo
+plugins are defined in `urdf/robot.gazebo`.
 
 ---
 
-## 7. Cross-References
+## 7. Cross-references
 
 - **Kinematics**: [Kinematics.md](./Kinematics.md) uses these geometric
-  parameters; §3.3 there picks up the skid-steer scrub question raised in §1.4
+  parameters; its §3.3 treats the skid-steer scrub raised in §1.4
 - **Control**: [Control.md](./Control.md) uses the limits and frequencies
 - **Overview**: [README.md](./README.md)
 
 Source files:
 
-| What | Where |
+| Content | Location |
 |---|---|
 | Robot descriptions | `src/cobraflex/urdf/my_robot_{basic,mesh,gazebo,gazebo_mesh}.urdf` |
 | Inertia macros | `src/cobraflex/urdf/inertial_macros.xacro` |
@@ -728,17 +705,14 @@ Source files:
 
 ## 8. Credits
 
-This documentation set is adapted from
+This documentation is adapted from
 **[Axioma_robot](https://github.com/MrDavidAlv/Axioma_robot)** by
-[MrDavidAlv](https://github.com/MrDavidAlv), released under the BSD licence — a
+[MrDavidAlv](https://github.com/MrDavidAlv), released under the BSD licence: a
 ROS 2 Humble autonomous robot on a 4WD skid-steer chassis with SLAM Toolbox and
-Nav2. It is the origin of the idea for this project, and of the way this model
-is organised into kinematics, control and parameters.
+Nav2. It is the origin of the idea for this project and of the organisation of
+this model into kinematics, control and parameters.
 
-The two robots are different chassis, so none of the numbers transfer. Every
-value in this file has been re-derived from this repository's own URDFs,
-configuration files, firmware source and bench measurements; where a figure is
-still unverified, it says so rather than being inherited. See
-[README.md § Credits](./README.md) and
-[Kinematics.md §10](./Kinematics.md).
-
+The chassis differ and no values are shared. All values in this file are
+derived from the URDFs, configuration files, firmware source and bench
+measurements of this repository; unverified values are marked as such. See
+[README.md § Credits](./README.md) and [Kinematics.md §10](./Kinematics.md).

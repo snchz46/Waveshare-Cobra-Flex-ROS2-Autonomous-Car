@@ -18,19 +18,19 @@ from launch_ros.actions import Node
 
 
 def _resolve_world(context):
-    """Let `world:=` take a short map name as well as a full path.
+    """Resolve `world:=` from a short map name or a full path.
 
-    A bare token like ``oval_zebra`` resolves to
-    ``<cobraflex_share>/worlds/lane_following_oval_zebra.world`` (and a token
-    that already starts with ``lane_following_`` is used verbatim under
-    worlds/). Anything that looks like a path (contains a separator) or ends
-    in .world/.sdf is passed through unchanged, so existing callers and the
-    campaign orchestrator keep working. Lets you switch maps with
-    ``world:=oval_no_lines`` instead of editing the launch file.
+    A bare token such as ``oval_zebra`` resolves to
+    ``<cobraflex_share>/worlds/lane_following_oval_zebra.world``; a token that
+    already starts with ``lane_following_`` is used unchanged under worlds/.
+    A value that contains a path separator or ends in .world/.sdf is passed
+    through unchanged, which keeps existing callers and the campaign
+    orchestrator compatible. Maps are selected with, for example,
+    ``world:=oval_no_lines`` without editing the launch file.
     """
     raw = LaunchConfiguration("world").perform(context)
     if os.sep in raw or raw.endswith((".world", ".sdf")):
-        return []  # already a path; leave it
+        return []  # already a path; used unchanged
     share = get_package_share_directory("cobraflex")
     stem = raw if raw.startswith("lane_following_") else f"lane_following_{raw}"
     return [SetLaunchConfiguration("world", os.path.join(share, "worlds", f"{stem}.world"))]
@@ -67,8 +67,8 @@ def generate_launch_description():
         }.items(),
     )
 
-    # start_paused=false → -r flag (run immediately)
-    # start_paused=true  → no -r flag (paused; caller unpauses when ready)
+    # start_paused=false → -r flag (simulation runs immediately)
+    # start_paused=true  → no -r flag (paused; the caller resumes it)
     gazebo_server_running = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -146,13 +146,13 @@ def generate_launch_description():
         output="screen",
     )
 
-    # /camera/left/points, reprojected from the ZED depth image. OFF here,
-    # unlike in gazebo.launch.py: this is the stack the lane keeper and the RL
-    # runs sit on, and the projection costs about a fifth of a core, which
-    # comes straight out of the real time factor those runs are scored on. The
-    # depth IMAGE is bridged either way, so RViz can still show it; only the
-    # cloud is opt-in. See zed_depth_cloud.launch.py for why the cloud has to
-    # be rebuilt rather than bridged.
+    # /camera/left/points, reprojected from the ZED depth image. Disabled by
+    # default here, unlike in gazebo.launch.py: this launch file serves the lane
+    # keeper and the RL runs, and the projection uses about a fifth of a CPU
+    # core, which reduces the real-time factor of these runs. The depth image is
+    # bridged in both cases and remains available in RViz; only the cloud is
+    # optional. zed_depth_cloud.launch.py documents why the cloud is rebuilt
+    # instead of bridged.
     depth_cloud_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(package_share, "launch", "zed_depth_cloud.launch.py")
@@ -225,9 +225,9 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "spawn_z",
-                # wheel_radius=0.03725 m; a small clearance keeps the robot
-                # just above the ground at spawn so the physics settle without
-                # a large bounce that displaces the robot.
+                # wheel_radius=0.03725 m; a small clearance places the robot
+                # just above the ground at spawn, so that the physics settle
+                # without a bounce that displaces the robot.
                 default_value="0.05",
                 description="Robot spawn Z position in Gazebo.",
             ),

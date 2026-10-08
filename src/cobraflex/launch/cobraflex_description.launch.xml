@@ -11,11 +11,11 @@
     <!-- robot_state_publisher                        -->
     <!-- =========================================== -->
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
-        <!-- type="str" is required, not cosmetic: without it launch_ros runs
+        <!-- type="str" is required: without it launch_ros runs
              yaml.safe_load() on the xacro output to infer the parameter type,
-             and any "key: value"-looking text in the URDF - an XML comment is
-             enough - makes that parse fail with "mapping values are not
-             allowed here". Forcing str skips the inference entirely. -->
+             and any text resembling "key: value" in the URDF (an XML comment
+             is sufficient) makes the parse fail with "mapping values are not
+             allowed here". A str type skips the inference. -->
         <param name="robot_description" type="str" value="$(command 'xacro $(var urdf_file)')"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>

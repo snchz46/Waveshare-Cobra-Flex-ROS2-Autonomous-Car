@@ -32,9 +32,10 @@ def generate_launch_description() -> LaunchDescription:
     default_world = os.path.join(
         cobraflex_share, "worlds", "lane_following_oval.world"
     )
-    # Right-lane centerline: matches the spawn at y = -0.1225 (centred in
-    # the right lane of the two-lane oval). Pass centerline_yaml:= to
-    # override, e.g. to track the road centerline (oval_centerline.yaml).
+    # Right-lane centreline, consistent with the spawn at y = -0.1225
+    # (centre of the right lane of the two-lane oval). centerline_yaml:=
+    # selects another centreline, e.g. the road centreline
+    # (oval_centerline.yaml).
     default_centerline = os.path.join(
         cobraflex_rl_share, "config", "oval_right_lane_centerline.yaml"
     )
@@ -84,13 +85,12 @@ def generate_launch_description() -> LaunchDescription:
         ),
     )
 
-    # Start Gazebo paused so the sim clock is frozen at t≈0 while all
-    # ROS2 nodes (EKF, lane_perception, cage) initialise. The unpause
-    # is gated on the gz service actually becoming responsive (poll loop
-    # below) instead of a fixed grace period, so a slow Gazebo load does
-    # not leave the sim paused forever — the previous 4 s hardcoded
-    # TimerAction failed silently if Gazebo took longer, producing runs
-    # with no /state_obs and a header-only cage_status.csv.
+    # Gazebo starts paused, so the simulation clock remains at t≈0 while
+    # all ROS 2 nodes (EKF, lane_perception, cage) initialise. The unpause
+    # waits until the gz service responds (poll loop below) instead of a
+    # fixed delay; with a fixed delay, a slow Gazebo start leaves the
+    # simulation paused, producing runs without /state_obs and a
+    # cage_status.csv with a header only.
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(cobraflex_share, "launch", "gazebo_mesh.launch.py")
@@ -103,11 +103,11 @@ def generate_launch_description() -> LaunchDescription:
         }.items(),
     )
 
-    # Polling unpause: wait 2 s for nodes to wire, then retry the gz
-    # service every 0.5 s for up to 30 s. The service appears once
-    # Gazebo finishes loading the SDF; querying it sooner returns
-    # "Service call failed" without retrying. Loop emits a clear
-    # FAILED message on timeout so the operator can diagnose.
+    # Polling unpause: 2 s for node start-up, then a retry of the gz
+    # service every 0.5 s for up to 30 s. The service is available once
+    # Gazebo has loaded the SDF; an earlier call returns "Service call
+    # failed" without retry. On timeout the loop prints a FAILED message
+    # for diagnosis.
     unpause_cmd = (
         "for i in $(seq 1 60); do "
         "  if gz service -s /world/$WORLD_NAME/control "
@@ -143,11 +143,11 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
         parameters=[{
             "centerline_yaml": LaunchConfiguration("centerline_yaml"),
-            # Use the EKF-fused estimate instead of raw Gazebo encoder odom.
-            # Raw skid-steer odom oscillates ~20 cm between consecutive 50 ms
-            # ticks at the curve (~0.07 m/s), producing alternating ey ≈ -0.14
-            # and +0.06, which drives C-05 Trigger 7. The EKF fuses IMU +
-            # velocities and is substantially smoother.
+            # EKF-fused estimate instead of the raw Gazebo encoder odometry. The
+            # raw skid-steer odometry oscillates by ~20 cm between consecutive
+            # 50 ms ticks in the curve (~0.07 m/s), producing alternating
+            # ey ≈ -0.14 and +0.06, which triggers C-05 Trigger 7. The EKF fuses
+            # IMU and velocities and is considerably smoother.
             "odom_topic": "/odometry/filtered",
             "use_sim_time": True,
         }],

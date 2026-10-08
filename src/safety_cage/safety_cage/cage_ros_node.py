@@ -231,16 +231,16 @@ class CageRosNode(Node):
 
     def _on_perception_invalid(self, msg: Bool) -> None:
         # cv_lane_estimator_node publishes every tick, so the latest value is
-        # the current supervisor verdict (no sticky latch needed here — C-05
-        # itself latches the emergency once Trigger 8 fires).
+        # the current supervisor verdict. No latch is required here; C-05
+        # latches the emergency once Trigger 8 fires.
         if bool(msg.data) and not self._perception_invalid:
             self.get_logger().warning("Perception invalid signal received (C-05 Trigger 8).")
         self._perception_invalid = bool(msg.data)
 
     def _on_reset(self, _msg: Empty) -> None:
-        # Direct call already flips C-05's _reset_requested for the next
-        # step(); no need to also pass ctx["reset"]=True (would just set the
-        # same flag a second time inside the rule).
+        # The direct call sets _reset_requested of C-05 for the next step();
+        # ctx["reset"]=True is not required, as it would set the same flag
+        # again inside the rule.
         self.cage.reset_emergency()
         self.get_logger().info("/cage_reset received -> cage.reset_emergency() called.")
 

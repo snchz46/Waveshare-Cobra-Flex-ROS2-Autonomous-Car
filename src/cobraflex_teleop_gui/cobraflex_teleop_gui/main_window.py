@@ -17,9 +17,9 @@ from cobraflex_teleop_gui.widgets.joystick_mode import JoystickMode
 from cobraflex_teleop_gui.widgets.keyboard_mode import KeyboardMode
 from cobraflex_teleop_gui.widgets.slider_mode import SliderMode
 
-#: How often the window tells the node it is still alive, in milliseconds.
-#: Well inside the node's ui_watchdog (0.5 s by default) so that ordinary
-#: scheduling jitter never looks like a freeze.
+#: Heartbeat period from the window to the node, in milliseconds. Well
+#: below the ui_watchdog of the node (0.5 s by default), so that scheduling
+#: jitter is not detected as a frozen interface.
 _HEARTBEAT_MS = 100
 
 
@@ -62,15 +62,14 @@ class MainWindow(QMainWindow):
             self._stack.addWidget(widget)
         layout.addWidget(self._stack)
 
-        # The readout shows what the NODE is publishing, not what the widget
-        # asked for. Those differ whenever a limit clamps, and a slider that
-        # silently disagrees with the wire is how you end up debugging the
-        # wrong end of the stack.
+        # The readout shows the command published by the node, not the value
+        # requested by the widget. The two differ whenever a limit clamps the
+        # command; displaying the published value makes the clamp visible.
         self.statusBar().showMessage("linear 0.00 m/s   angular 0.00 rad/s")
 
-        # Doubles as the watchdog heartbeat: it runs in Qt's event loop, so it
-        # stops the moment the loop does, which is exactly the condition the
-        # node's ui_watchdog is there to catch.
+        # Also serves as the watchdog heartbeat: it runs in the Qt event loop
+        # and stops when the loop stops, which is the condition detected by the
+        # ui_watchdog of the node.
         self._heartbeat = QTimer(self)
         self._heartbeat.timeout.connect(self._on_heartbeat)
         self._heartbeat.start(_HEARTBEAT_MS)
@@ -86,8 +85,8 @@ class MainWindow(QMainWindow):
         self._node.set_topic(self._topic_edit.text())
 
     def _on_mode_changed(self, index):
-        # Stop first: the pad being left behind may well be holding a non-zero
-        # command, and nothing in the pad taking over would ever clear it.
+        # Stop first: the previous pad may hold a non-zero command, which the
+        # new pad would not clear.
         self._node.stop()
         self._slider_mode.reset()
         self._stack.setCurrentIndex(index)

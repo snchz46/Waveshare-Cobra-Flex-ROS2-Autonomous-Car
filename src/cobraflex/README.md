@@ -1,11 +1,11 @@
-# Cobraflex ROS2
+# cobraflex
 
-Integracion ROS 2 para el chasis CobraFlex 4WD con:
+Integracion ROS 2 del chasis CobraFlex 4WD:
 
 - Driver JSON por puerto serie
-- Evasion de obstaculos basada en LiDAR
+- Evasion de obstaculos con LiDAR
 - Seguimiento de carril con camara CSI
-- Bringup de sensores, modelo robotico y simulacion
+- Bringup de sensores, descripcion del robot y simulacion
 
 ## Instalacion
 
@@ -15,13 +15,13 @@ colcon build --packages-select cobraflex
 source install/setup.bash
 ```
 
-Dependencias de Python recomendadas:
+Dependencias de Python:
 
 ```bash
 sudo apt install python3-serial python3-numpy python3-opencv
 ```
 
-## Ejecutables
+## Nodos
 
 ### Driver del chasis
 
@@ -31,43 +31,47 @@ Convierte `/cmd_vel` en comandos JSON para el chasis CobraFlex.
 ros2 run cobraflex cobraflex_ros_driver
 ```
 
-Parametros principales:
+Parametros:
 
-- `port`: puerto serie, por ejemplo `/dev/ttyACM1`
-- `baud`: baudrate, por defecto `115200`
-- `max_linear`: velocidad lineal maxima esperada en m/s
-- `max_angular`: velocidad angular maxima esperada en rad/s
-- `turn_threshold`: umbral de giro para luces
-- `cmd_timeout`: **deadman**, segundos sin `/cmd_vel` antes de parar el robot
-  (por defecto `0.5`). El nodo reenvia el ultimo comando cada 50 ms para
-  esquivar el timeout del firmware, asi que sin esto el robot sigue rodando
-  indefinidamente si muere quien publica. `0.0` lo desactiva: solo banco.
+| Parametro | Descripcion |
+| --- | --- |
+| `port` | Puerto serie, por ejemplo `/dev/ttyACM1` |
+| `baud` | Velocidad en baudios; por defecto `115200` |
+| `max_linear` | Velocidad lineal maxima en m/s |
+| `max_angular` | Velocidad angular maxima en rad/s |
+| `turn_threshold` | Umbral de giro para las luces |
+| `cmd_timeout` | Temporizador de seguridad (deadman): segundos sin `/cmd_vel` antes de detener el robot; por defecto `0.5` |
+
+El nodo reenvia el ultimo comando cada 50 ms, lo que anula el timeout del
+firmware. `cmd_timeout` es por tanto el unico mecanismo que detiene el robot si
+falla el nodo que publica. El valor `0.0` lo desactiva y solo se admite en
+banco de pruebas.
 
 ### Evasion con LiDAR
 
-Escucha `/scan` y publica `/cmd_vel` con evitacion de obstaculos.
+Se suscribe a `/scan` y publica `/cmd_vel` con evasion de obstaculos.
 
 ```bash
 ros2 run cobraflex lidar_avoidance_node
 ```
 
-Parametros principales:
+Parametros:
 
-- `front_angle_deg`: semiangulo del sector frontal en grados
-- `side_sample_deg`: semiangulo de los sectores laterales
-- `front_offset_deg`: orientacion del eje de avance dentro del frame del scan.
-  Por defecto `180.0`, porque el lidar va montado girado media vuelta
-  (`lidar_joint` lleva yaw = pi)
-- `safe_distance`: distancia minima segura en metros
-- `hard_stop_distance`: distancia de parada
-- `forward_speed`: velocidad lineal de avance
-- `scan_timeout`: deadman, segundos sin `/scan` antes de parar (por defecto `0.5`)
+| Parametro | Descripcion |
+| --- | --- |
+| `front_angle_deg` | Semiangulo del sector frontal en grados |
+| `side_sample_deg` | Semiangulo de los sectores laterales |
+| `front_offset_deg` | Orientacion del eje de avance en el frame del scan; por defecto `180.0`, ya que el LiDAR esta montado girado media vuelta (`lidar_joint` con yaw = pi) |
+| `safe_distance` | Distancia minima de seguridad en metros |
+| `hard_stop_distance` | Distancia de parada |
+| `forward_speed` | Velocidad lineal de avance |
+| `scan_timeout` | Temporizador de seguridad: segundos sin `/scan` antes de detener el robot; por defecto `0.5` |
 
-Requiere un lidar de 360 grados: los sectores se indexan con envoltura modular
-sobre el anillo de rayos. Si el scan cubre menos de ~360 grados el nodo avisa y
-se queda parado en vez de conducir con lecturas mal proyectadas.
+El nodo requiere un LiDAR de 360 grados: los sectores se indexan con envoltura
+modular sobre el anillo de rayos. Si el scan cubre menos de ~360 grados, el
+nodo emite un aviso y mantiene el robot detenido.
 
-### Lane keeper
+### Seguimiento de carril
 
 Camara CSI del Jetson, controlador clasico por histograma:
 
@@ -75,13 +79,13 @@ Camara CSI del Jetson, controlador clasico por histograma:
 ros2 run cobraflex lane_keeper_node
 ```
 
-O con launch y RViz:
+Con launch y RViz:
 
 ```bash
 ros2 launch cobraflex cobraflex_lane_keeper.launch.py
 ```
 
-Version para Gazebo (estimador CV calibrado + pure-pursuit de `cobraflex_rl`):
+Version para Gazebo (estimador CV calibrado y pure pursuit de `cobraflex_rl`):
 
 ```bash
 ros2 launch cobraflex lane_keeper_gazebo.launch.py
@@ -89,60 +93,28 @@ ros2 launch cobraflex lane_keeper_gazebo.launch.py
 
 ## Launch files
 
-Solo sensores:
+| Funcion | Comando |
+| --- | --- |
+| Sensores | `ros2 launch cobraflex cobraflex_sensors.launch.xml` |
+| Descripcion del robot y driver | `ros2 launch cobraflex cobraflex_bringup.launch.xml` |
+| Modo automatico con evasion | `ros2 launch cobraflex cobraflex_automatic.launch.xml` |
+| Simulacion en Gazebo | `ros2 launch cobraflex gazebo.launch.py` |
+| Mapeado en simulacion | `ros2 launch cobraflex mapping.launch.py` |
+| Mapeado en hardware | `ros2 launch cobraflex cobraflex_mapping.launch.py` |
+| Navegacion autonoma en simulacion | `ros2 launch cobraflex navigation.launch.py` |
 
-```bash
-ros2 launch cobraflex cobraflex_sensors.launch.xml
-```
-
-Modelo del robot + sensores + driver:
-
-```bash
-ros2 launch cobraflex cobraflex_bringup.launch.xml
-```
-
-Modo automatico con avoidance:
-
-```bash
-ros2 launch cobraflex cobraflex_automatic.launch.xml
-```
-
-Simulacion en Gazebo:
-
-```bash
-ros2 launch cobraflex gazebo.launch.py
-```
-
-Mapeado en simulacion:
-
-```bash
-ros2 launch cobraflex mapping.launch.py
-```
-
-Mapeado en hardware real:
-
-```bash
-ros2 launch cobraflex cobraflex_mapping.launch.py
-```
-
-Navegacion autonoma en simulacion (necesita un mapa guardado, ver
-[maps/README.md](maps/README.md)):
-
-```bash
-ros2 launch cobraflex navigation.launch.py
-```
-
-Usa `config/nav2_params.yaml`, con la geometria real del robot (footprint
-0.228 x 0.180 m, radio circunscrito 0.145 m, `base_footprint`). Para otro mapa
-o parametros:
+La navegacion requiere un mapa guardado ([maps/README.md](maps/README.md)) y
+usa `config/nav2_params.yaml`, configurado con la geometria del robot
+(footprint 0.228 x 0.180 m, radio circunscrito 0.145 m, `base_footprint`).
+Mapa o parametros alternativos:
 
 ```bash
 ros2 launch cobraflex navigation.launch.py map:=/ruta/mapa.yaml params_file:=/ruta/params.yaml
 ```
 
-## Ejecutables disponibles
+## Ejecutables
 
-Los cuatro nombres registrados en `setup.py`, que son los unicos validos para
+Ejecutables registrados en `setup.py`; son los unicos validos para
 `ros2 run cobraflex ...`:
 
 | Ejecutable | Modulo |

@@ -107,8 +107,7 @@ class SliderMode(QWidget):
         self._node.stop()
 
     def _publish(self):
-        # No sign flip on the angular channel. The widget this was adapted from
-        # negated it here and nowhere else, so its slider drove the opposite way
-        # round from its own joystick and button pad, and against the ROS
-        # convention its label claimed to follow.
+        # No sign inversion on the angular channel, consistent with the
+        # joystick, the button pad and the ROS convention (the original widget
+        # inverted it in this mode only).
         self._node.set_velocity(self._linear.value(), self._angular.value())

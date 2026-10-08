@@ -32,19 +32,18 @@ def generate_launch_description():
     )
     map_arg = DeclareLaunchArgument(
         "map",
-        # Was hardcoded to another machine's home directory, so this launch
-        # file could not work on any fresh clone. Maps saved into the package's
-        # own maps/ directory are installed to the share and resolve here; see
-        # maps/README.md for the map_saver_cli invocation.
+        # Default map in the package share. Maps saved in the maps/ directory of
+        # the package are installed into the share and resolved here; the
+        # map_saver_cli command is given in maps/README.md.
         default_value=os.path.join(pkg_share, "maps", "cobraflex_map.yaml"),
         description="Map YAML for Nav2. Save one with map_saver_cli first.",
     )
     params_arg = DeclareLaunchArgument(
         "params_file",
-        # Without this, nav2_bringup falls back on its own defaults, which are
-        # tuned for a TurtleBot3: robot_radius 0.22 m against this robot's real
-        # 0.145 m, base_link instead of base_footprint, and unrelated velocity
-        # limits. See config/nav2_params.yaml.
+        # Without this file, nav2_bringup uses its own defaults, which are
+        # configured for a TurtleBot3: robot_radius 0.22 m instead of 0.145 m,
+        # base_link instead of base_footprint, and different velocity limits.
+        # See config/nav2_params.yaml.
         default_value=os.path.join(pkg_share, "config", "nav2_params.yaml"),
         description="Nav2 parameter file.",
     )

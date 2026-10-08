@@ -1,10 +1,10 @@
-"""The throttle slider the button pad and the joystick both carry.
+"""Throttle slider shared by the button pad and the joystick.
 
-One percentage, applied to the node's linear and angular limits separately.
-Driving both channels off a single figure in m/s - the way the widget this was
-adapted from does it - reads 0.5 as 0.5 m/s AND 0.5 rad/s, which are not the
-same fraction of anything: this chassis plans inside 0.35 m/s and 2.0 rad/s,
-so one number in SI would either crawl in a straight line or barely turn.
+One percentage, applied separately to the linear and angular limits of the
+node. A single value in m/s for both channels, as in the original widget,
+interprets 0.5 as 0.5 m/s and 0.5 rad/s, which are different fractions of the
+limits: this chassis plans within 0.35 m/s and 2.0 rad/s, so a single SI value
+would give either very slow straight motion or very little rotation.
 """
 
 from PyQt5.QtCore import Qt

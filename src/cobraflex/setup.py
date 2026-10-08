@@ -32,9 +32,9 @@ setup(
             os.path.join("share", package_name, "urdf"),
             [f for f in glob("urdf/*") if os.path.isfile(f)],
         ),
-        # The Isaac USD payloads live in a subdirectory, which the file-level
-        # glob above skips; without these entries they ship in git but never
-        # reach the install share.
+        # The Isaac USD payloads are in a subdirectory, which the file-level
+        # glob above does not include; these entries install them into the
+        # share.
         (
             os.path.join("share", package_name, "urdf", "cobraflex_isaac"),
             [f for f in glob("urdf/cobraflex_isaac/*") if os.path.isfile(f)],
@@ -55,10 +55,10 @@ setup(
         ),
         (os.path.join("share", package_name, "rviz"), glob("rviz/*")),
         (os.path.join("share", package_name, "config"), glob("config/*")),
-        # Maps are gitignored (site-specific, regenerated per environment), so
-        # this glob is usually empty on a fresh clone -- navigation.launch.py
-        # points at maps/cobraflex_map.yaml and maps/README.md says how to
-        # produce it.
+        # Maps are excluded from git (site-specific, regenerated per
+        # environment), so this glob is usually empty on a fresh clone.
+        # navigation.launch.py expects maps/cobraflex_map.yaml; maps/README.md
+        # describes how to create it.
         (
             os.path.join("share", package_name, "maps"),
             [f for f in glob("maps/*") if os.path.isfile(f)],

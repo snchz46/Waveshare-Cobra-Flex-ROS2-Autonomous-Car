@@ -84,8 +84,8 @@ class JoystickPad(QWidget):
         self._handle = QPointF(dx, dy)
         self.update()
         if self.on_move:
-            # Screen y grows downwards, so up on the pad has to become forward,
-            # and right has to become a negative (clockwise) yaw rate.
+            # Screen y grows downwards: up on the pad maps to forward, and right
+            # maps to a negative (clockwise) yaw rate.
             self.on_move(-dy, -dx)
 
 

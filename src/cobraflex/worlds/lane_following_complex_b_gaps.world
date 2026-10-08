@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <!-- Missing-marking variant of lane_following_oval_complex.world: identical
-     geometry / world_name / centreline, only the road texture differs. The
-     lane markings are PARTIALLY worn — present everywhere except a few
-     arc-length patches (so the agent meets gaps mid-track, not a wholesale
-     removal). Texture complex_b_gaps.png; regenerate / re-place the patches with
+     geometry, world_name and centreline; only the road texture differs. The
+     lane markings are absent over a few arc-length segments and present
+     elsewhere, so the gaps occur along the track. Texture
+     complex_b_gaps.png; the segments are generated with
      scripts/generate_complex_track.py (flags name-suffix _gaps, texture-only,
-     erase-center / erase-left / erase-right 's0:s1,...'). Track-'E'
+     erase-center / erase-left / erase-right 's0:s1,...'). Track E
      degraded-markings scenario (H-10 / SR-012; SR-014 for the CV estimator). -->
 <sdf version='1.8'>
   <world name='lane_following_complex_b'>

@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
-<!-- Mirrored-geometry variant of lane_following_oval_complex.world: the track
-     texture is flipped (generalization test — novel curve handedness the policy
-     never trained on). NOTE: this is a QUALITATIVE generalization demo only. The
-     scoring centerline (complex_b_*_centerline.yaml) is NOT mirrored, so M-S1 /
-     lane_exit / road_edge are INVALID here — watch the car drive the painted lane,
-     do not read the metrics. A scored flip needs regenerated mirrored road + right-
-     lane centerlines (generator, y->-y about the track centre) + a Gazebo spot-
-     check, then a dedicated SC-FRONT scenario. See scenarios_complex_b/README.md. -->
+<!-- Mirrored variant of lane_following_oval_complex.world: the track texture
+     is flipped (generalisation test with a curve handedness outside the
+     training data). Qualitative demonstration only: the scoring centreline
+     (complex_b_*_centerline.yaml) is not mirrored, so M-S1, lane_exit and
+     road_edge are not valid in this world. A scored variant requires
+     regenerated mirrored road and right-lane centrelines (generator, y->-y
+     about the track centre), a Gazebo check and a dedicated SC-FRONT
+     scenario. See scenarios_complex_b/README.md. -->
 <sdf version='1.8'>
   <world name='lane_following_complex_b'>
     <physics name='1ms' type='ignored'>

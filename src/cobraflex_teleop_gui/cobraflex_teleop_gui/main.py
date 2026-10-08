@@ -20,10 +20,9 @@ def main(args=None):
         node = TeleopNode()
         node.start_spinning()
 
-        # Qt installs a SIGINT handler and then does nothing with it, so a
-        # ctrl-c in the terminal that launched the window would be swallowed.
-        # Handing the signal back to Python's default makes it kill the
-        # process, which is what a ctrl-c should do here.
+        # Qt installs a SIGINT handler that does not act on the signal, so
+        # Ctrl-C in the launching terminal would have no effect. Restoring the
+        # default handler makes Ctrl-C terminate the process.
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         app = QApplication(sys.argv)
@@ -31,17 +30,18 @@ def main(args=None):
         window.show()
         exit_code = app.exec_()
     except (KeyboardInterrupt, ExternalShutdownException):
-        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException,
-        # not KeyboardInterrupt; letting it escape made the node exit 1.
+        # Under `ros2 launch`, Ctrl-C arrives as ExternalShutdownException
+        # instead of KeyboardInterrupt; catching it gives exit status 0.
         pass
     finally:
         if node is not None:
-            # A zero Twist has to go out before the publisher dies, or the
-            # last velocity commanded is the last one the driver saw.
+            # A zero Twist is published before the publisher is destroyed;
+            # otherwise the last commanded velocity remains the last command
+            # received by the driver.
             node.publish_stop()
             node.destroy_node()
-        # Already down when the shutdown came from outside, and calling it
-        # twice raises.
+        # After an external shutdown the context is already down; a second
+        # shutdown() call raises an exception.
         if rclpy.ok():
             rclpy.shutdown()
     sys.exit(exit_code)

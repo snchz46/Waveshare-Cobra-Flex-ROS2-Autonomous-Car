@@ -73,9 +73,10 @@
             <pbr>
               <metal>
                 <albedo_map>../materials/road_assets/road_textures/road_two_lane_same_direction_0p52m_x_1p5m.png</albedo_map>
-                <!-- Matte asphalt (track E): ogre2 defaults render the tiles
-                     glossy, putting bright specular lobes on the road that a
-                     white-line detector / CNN would read as lane features. -->
+                <!-- Matte asphalt (track E): with the ogre2 defaults the tiles
+                     are glossy, and the specular highlights on the road would
+                     be detected as lane features by a white-line detector or
+                     CNN. -->
                 <roughness>0.9</roughness>
                 <metalness>0.0</metalness>
               </metal>
@@ -100,9 +101,10 @@
             <pbr>
               <metal>
                 <albedo_map>../materials/road_assets/road_curves/curve_R080cm_A180deg.png</albedo_map>
-                <!-- Matte asphalt (track E): ogre2 defaults render the tiles
-                     glossy, putting bright specular lobes on the road that a
-                     white-line detector / CNN would read as lane features. -->
+                <!-- Matte asphalt (track E): with the ogre2 defaults the tiles
+                     are glossy, and the specular highlights on the road would
+                     be detected as lane features by a white-line detector or
+                     CNN. -->
                 <roughness>0.9</roughness>
                 <metalness>0.0</metalness>
               </metal>
@@ -127,9 +129,10 @@
             <pbr>
               <metal>
                 <albedo_map>../materials/road_assets/road_textures/road_two_lane_same_direction_0p52m_x_1p5m.png</albedo_map>
-                <!-- Matte asphalt (track E): ogre2 defaults render the tiles
-                     glossy, putting bright specular lobes on the road that a
-                     white-line detector / CNN would read as lane features. -->
+                <!-- Matte asphalt (track E): with the ogre2 defaults the tiles
+                     are glossy, and the specular highlights on the road would
+                     be detected as lane features by a white-line detector or
+                     CNN. -->
                 <roughness>0.9</roughness>
                 <metalness>0.0</metalness>
               </metal>
@@ -154,9 +157,10 @@
             <pbr>
               <metal>
                 <albedo_map>../materials/road_assets/road_curves/curve_R080cm_A180deg.png</albedo_map>
-                <!-- Matte asphalt (track E): ogre2 defaults render the tiles
-                     glossy, putting bright specular lobes on the road that a
-                     white-line detector / CNN would read as lane features. -->
+                <!-- Matte asphalt (track E): with the ogre2 defaults the tiles
+                     are glossy, and the specular highlights on the road would
+                     be detected as lane features by a white-line detector or
+                     CNN. -->
                 <roughness>0.9</roughness>
                 <metalness>0.0</metalness>
               </metal>

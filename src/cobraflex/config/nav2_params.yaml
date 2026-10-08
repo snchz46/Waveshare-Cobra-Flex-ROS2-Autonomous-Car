@@ -1,19 +1,19 @@
 # Nav2 parameters for the CobraFlex 4WD skid-steer platform.
 #
-# navigation.launch.py used to include nav2_bringup WITHOUT a params_file, so
-# the whole stack ran on nav2_bringup's defaults -- which are tuned for a
-# TurtleBot3. Three of those defaults were actively wrong here:
+# The nav2_bringup defaults are configured for a TurtleBot3 and differ from
+# this robot in three respects:
 #
-#   * robot_radius 0.22 m on a robot whose circumscribed radius is 0.145 m:
-#     the footprint was inflated to roughly twice its real size, so the planner
-#     refused gaps the robot fits through comfortably.
-#   * robot_base_frame base_link, while slam_toolbox and both EKF configs use
-#     base_footprint. Functional (base_link exists) but it put the costmaps on
-#     a frame 0.03725 m off the ground plane the rest of the stack works in.
-#   * velocity and acceleration limits unrelated to this chassis.
+#   * robot_radius 0.22 m against a circumscribed radius of 0.145 m: the
+#     footprint would be about twice its real size, and the planner would
+#     reject gaps that the robot passes.
+#   * robot_base_frame base_link, whereas slam_toolbox and both EKF
+#     configurations use base_footprint. base_link lies 0.03725 m above the
+#     ground plane used by the rest of the stack.
+#   * velocity and acceleration limits of a different chassis.
 #
-# Geometry comes from urdf/my_robot_basic.urdf; the kinematic limits from
-# assets/Mathematical Model/parameters.md. Keep the three in sync.
+# Geometry from urdf/my_robot_basic.urdf; kinematic limits from
+# assets/Mathematical Model/parameters.md. The three files are kept
+# consistent.
 #
 #   chassis 0.228 x 0.130 m, +0.02 m wheel on each side -> 0.228 x 0.180 m
 #   footprint half-extents  x = 0.114 m, y = 0.090 m
@@ -35,7 +35,7 @@ amcl:
     global_frame_id: "map"
     lambda_short: 0.1
     laser_likelihood_max_dist: 2.0
-    # Matches the RPLidar A2 and the gpu_lidar in urdf/robot.gazebo.
+    # Consistent with the RPLIDAR A2 and the gpu_lidar in urdf/robot.gazebo.
     laser_max_range: 8.0
     laser_min_range: 0.15
     laser_model_type: "likelihood_field"
@@ -129,7 +129,7 @@ controller_server:
   ros__parameters:
     use_sim_time: true
     controller_frequency: 20.0
-    # Below the smallest velocity the chassis can actually hold.
+    # Below the smallest velocity the chassis can sustain.
     min_x_velocity_threshold: 0.005
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.005
@@ -146,17 +146,17 @@ controller_server:
     general_goal_checker:
       stateful: true
       plugin: "nav2_controller::SimpleGoalChecker"
-      # Tightened from the 0.25 m default: on a 0.228 m robot a quarter of a
-      # metre is more than a body length.
+      # Reduced from the 0.25 m default, which exceeds the body length of this
+      # 0.228 m robot.
       xy_goal_tolerance: 0.05
       yaw_goal_tolerance: 0.10
 
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: true
-      # Platform maximum is 0.53 m/s (see the serial driver's max_linear); the
-      # navigation ceiling is deliberately below it so the controller keeps
-      # authority margin for corrections.
+      # The platform maximum is 0.53 m/s (max_linear of the serial driver); the
+      # navigation limit is set below it to leave a control margin for
+      # corrections.
       min_vel_x: -0.15
       max_vel_x: 0.35
       min_vel_y: 0.0
@@ -211,8 +211,8 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_footprint
       rolling_window: true
-      # 2 m window instead of the 3 m default: the robot is small and slow, and
-      # a smaller rolling costmap at this resolution costs less per update.
+      # 2 m window instead of the 3 m default: sufficient for a small, slow
+      # robot, and cheaper per update at this resolution.
       width: 2
       height: 2
       resolution: 0.025
@@ -235,8 +235,8 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        # Must exceed the 0.145 m circumscribed radius. The 0.55 m default was
-        # nearly four times the robot's own size and closed every doorway.
+        # Must exceed the circumscribed radius of 0.145 m. The 0.55 m default is
+        # almost four times the robot size and blocks doorways.
         inflation_radius: 0.30
       always_send_full_costmap: true
 

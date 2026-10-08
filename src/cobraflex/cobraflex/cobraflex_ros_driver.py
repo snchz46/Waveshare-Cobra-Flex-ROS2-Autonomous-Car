@@ -23,40 +23,38 @@ class CobraFlexROSDriver(Node):
         self.declare_parameter("max_linear", 0.53)
         self.declare_parameter("max_angular", 6.0)
         self.declare_parameter("turn_threshold", 0.3)
-        # Deadman. `_resend_last_cmd` exists to defeat the firmware's own
-        # command timeout, so without this the last velocity is re-sent for
-        # ever: if the publisher of /cmd_vel dies, its process is killed or the
-        # DDS link drops, the physical robot keeps driving at that velocity
-        # until someone cuts the power. Zero the command after this many
-        # seconds without a fresh /cmd_vel. Set to 0.0 to disable (bench only).
+        # Deadman timer. `_resend_last_cmd` overrides the firmware command
+        # timeout by re-sending the last velocity. Without this timer, a failed
+        # /cmd_vel publisher (terminated process, lost DDS link) leaves the
+        # physical robot driving at the last velocity. The command is set to
+        # zero after this many seconds without a new /cmd_vel. 0.0 disables
+        # the timer (bench use only).
         self.declare_parameter("cmd_timeout", 0.5)
-        # Cap on feedback lines drained per read tick, so a chatty firmware
-        # cannot starve the keep-alive timer that shares this executor thread.
+        # Maximum number of feedback lines read per tick, so that a high
+        # feedback rate cannot delay the keep-alive timer on the same executor
+        # thread.
         self.declare_parameter("max_lines_per_read", 20)
-        # Stiction floor for turning on the spot -- OFF BY DEFAULT, and the
-        # reason it is off matters more than the feature.
+        # Minimum yaw rate for in-place rotation (static friction). Disabled
+        # by default.
         #
-        # The firmware maps a twist to wheel RPM linearly (`rosCtrl` in
-        # movtion_module.h) with no deadband compensation of its own, so a small
-        # yaw command with zero forward speed asks for an RPM the motors cannot
-        # break static friction with: the robot buzzes, does not move, and
-        # nothing reports an error. Waveshare's own ugv_bringup lifts such
-        # commands to 0.2 rad/s, and that is the right value -- but only on a
-        # stack where a stall is never a deliberate command.
+        # The firmware maps a twist linearly to wheel RPM (`rosCtrl` in
+        # movtion_module.h) without deadband compensation. A small yaw command
+        # with zero forward speed therefore requests an RPM below the static
+        # friction of the motors: the robot does not move and no error is
+        # reported. Waveshare ugv_bringup raises such commands to 0.2 rad/s.
         #
-        # On this one it is. `safe_action_to_cmd_2d` (cobraflex_rl/cage_bridge)
-        # derives linear_x and angular_z independently: a throttle below
-        # `throttle_deadband` yields linear_x == 0.0 while the steer still maps
-        # through `steering_to_yaw_rate_gain` (0.8). So the cage attenuating
-        # C-04 down to a true stall -- which SR-009 explicitly requires to be
-        # commandable -- reaches this node as vx == 0 with |wz| < 0.2 for any
-        # steer inside a quarter of its range. Lifting that would spin a robot
-        # the cage had just brought to a stop, which is the opposite of what
-        # every layer above intended.
+        # In this stack a stall can be an intended command.
+        # `safe_action_to_cmd_2d` (cobraflex_rl/cage_bridge) derives linear_x
+        # and angular_z independently: a throttle below `throttle_deadband`
+        # gives linear_x == 0.0 while the steering is still mapped through
+        # `steering_to_yaw_rate_gain` (0.8). A C-04 attenuation to standstill,
+        # which SR-009 requires to be commandable, therefore arrives here as
+        # vx == 0 with |wz| < 0.2 for any steering within a quarter of its
+        # range. Raising it would rotate a robot that the cage has stopped.
         #
-        # Set it to 0.2 for Nav2 bring-up or teleop, where `rotate_to_goal`
-        # otherwise stalls silently with no error. Leave it at 0.0 whenever the
-        # cage or the RL policy is driving.
+        # Recommended values: 0.2 for Nav2 bring-up or teleoperation, where
+        # `rotate_to_goal` otherwise stalls without an error; 0.0 whenever the
+        # cage or the RL policy drives.
         self.declare_parameter("min_angular_in_place", 0.0)
 
         port = str(self.get_parameter("port").value)
@@ -116,9 +114,9 @@ class CobraFlexROSDriver(Node):
     def _lift_in_place_yaw(self, vx, wz):
         """Raise a small pure-rotation yaw command to the stiction floor.
 
-        See the `min_angular_in_place` declaration for why this exists. Guarded
-        so it can only ever affect a turn on the spot: a zero yaw stays zero,
-        and any command with forward speed passes through untouched.
+        Rationale: see the `min_angular_in_place` declaration. Only in-place
+        rotations are affected: a zero yaw remains zero, and any command with
+        forward speed is passed through unchanged.
         """
         if self.min_angular_in_place <= 0.0 or vx != 0.0 or wz == 0.0:
             return wz
@@ -193,26 +191,25 @@ class CobraFlexROSDriver(Node):
         """Parse one feedback line and republish it on the ROS topics.
 
         The T=1001 frame is built by `base_info_feedback()` in the stock
-        Cobra_Flex firmware (Cobra_Driver/ugv_advance.h). What that build
-        actually puts on the wire, which is less than the protocol comment in
-        json_cmd.h advertises:
+        Cobra_Flex firmware (Cobra_Driver/ugv_advance.h). The published build
+        transmits fewer fields than the protocol comment in json_cmd.h lists:
 
-          odl, odr  cumulative distance travelled by each side, as
-                    `(long int)(en_odom_l * 100)` -- INTEGER CENTIMETRES, and
-                    monotonic. They are odometers, not speeds (see below).
-          v         battery, as `(int)(loadVoltage_V * 100)` -- CENTIVOLTS.
-          M1..M4    per-motor feedback, but `ddsm_fb_*` is initialised to 0 and
-                    the line that would refresh it is commented out upstream,
-                    so these are always 0. Do not build anything on them.
+          odl, odr  Cumulative distance per side,
+                    `(long int)(en_odom_l * 100)`: integer centimetres,
+                    monotonic. These are odometers, not speeds.
+          v         Battery voltage, `(int)(loadVoltage_V * 100)`: centivolts.
+          M1..M4    Per-motor feedback. `ddsm_fb_*` is initialised to 0 and
+                    its update is commented out in the firmware; the values
+                    are always 0 and are not used.
 
-        The IMU fields (gx/gy/gz, ax/ay/az, mx/my/mz) that json_cmd.h documents
-        in this frame are commented out in the shipped build, as is the whole
-        T=1002 frame. The chassis does carry an ICM-20948, so it is a recompile
-        away, not a wiring problem -- but nothing arrives today.
+        The IMU fields (gx/gy/gz, ax/ay/az, mx/my/mz) documented in json_cmd.h
+        for this frame, and the complete T=1002 frame, are commented out in the
+        published build. The chassis carries an ICM-20948; IMU data requires a
+        firmware recompilation.
 
-        The firmware rate-limits this frame to `feedbackFlowExtraDelay` = 50 ms,
-        i.e. 20 Hz. `_read_serial` polls at 50 Hz only so the OS buffer never
-        backs up; it does not make the data any fresher.
+        The firmware limits this frame to `feedbackFlowExtraDelay` = 50 ms
+        (20 Hz). `_read_serial` polls at 50 Hz to keep the OS buffer empty; the
+        polling rate does not increase the data rate.
         """
         data = json.loads(raw)
         self.feedback_pub.publish(String(data=json.dumps(data)))
@@ -220,17 +217,16 @@ class CobraFlexROSDriver(Node):
         if data.get("T", -1) != 1001:
             return
 
-        # Centivolts -> volts. Publishing the raw field put ~1180 on a topic
-        # named `battery`, where 11.80 V was meant.
+        # Conversion from centivolts to volts (raw value ~1180 for 11.80 V).
         battery = float(data.get("v", 0.0)) / 100.0
         self.battery_pub.publish(Float32(data=battery))
 
-        # NOT speeds, despite the topic name: these are the two odometers
-        # described above, republished raw (integer centimetres, cumulative).
-        # Nothing subscribes to this topic today. Converting them into a real
-        # nav_msgs/Odometry is deliberately still open -- it needs the wheel
-        # geometry question settled first (see parameters.md 1.4), and the 1 cm
-        # quantisation makes them a poor speed source without filtering.
+        # Despite the topic name, these values are the two odometers described
+        # above, republished unchanged (integer centimetres, cumulative). The
+        # topic currently has no subscriber. Conversion into nav_msgs/Odometry
+        # is open: it requires the wheel geometry to be settled first
+        # (parameters.md 1.4), and the 1 cm quantisation makes the values
+        # unsuitable as a speed source without filtering.
         twist = Twist()
         twist.linear.x = float(data.get("odl", 0.0))
         twist.linear.y = float(data.get("odr", 0.0))
@@ -241,11 +237,11 @@ class CobraFlexROSDriver(Node):
         if self.ser is None:
             return
 
-        # Gated on in_waiting instead of calling readline() unconditionally.
-        # readline() blocks for the port's full timeout (20 ms) whenever the
-        # firmware is quiet, and this node runs on a single-threaded executor
-        # shared with the 20 Hz keep-alive timer -- a silent link used to eat a
-        # whole timer period on every one of these 50 Hz ticks.
+        # Reads only when in_waiting reports data. An unconditional readline()
+        # blocks for the full port timeout (20 ms) when the firmware sends
+        # nothing; on the single-threaded executor shared with the 20 Hz
+        # keep-alive timer, this would consume a full timer period on every
+        # 50 Hz tick.
         lines = 0
         try:
             while self.ser.in_waiting and lines < self.max_lines_per_read:
@@ -286,17 +282,17 @@ def main(args=None):
         node = CobraFlexROSDriver()
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
-        # Under `ros2 launch` a ctrl-c arrives as ExternalShutdownException, not
-        # KeyboardInterrupt. Letting it escape aborted main() before the motors
-        # were stopped and made the node exit 1 on every shutdown.
+        # Under `ros2 launch`, Ctrl-C arrives as ExternalShutdownException
+        # instead of KeyboardInterrupt. Catching it ensures that the motors are
+        # stopped and the node exits with status 0.
         pass
     finally:
         if node is not None:
-            # Stops the motors and closes the port. Safe after an external
-            # shutdown: it only touches the serial device, not the ROS context.
+            # Stops the motors and closes the port. Valid after an external
+            # shutdown, as it accesses only the serial device.
             node.destroy_node()
-        # Already down when the shutdown came from outside; calling it twice
-        # raises and would again mask the clean exit.
+        # After an external shutdown the context is already down; a second
+        # shutdown() call raises an exception.
         if rclpy.ok():
             rclpy.shutdown()
 

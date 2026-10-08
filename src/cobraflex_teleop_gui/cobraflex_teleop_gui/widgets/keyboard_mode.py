@@ -32,8 +32,8 @@ class KeyboardMode(QWidget):
             btn.setMinimumSize(80, 60)
             btn.setStyleSheet("font-size: 16px; font-weight: bold;")
             btn.pressed.connect(self._make_handler(lin, ang))
-            # Releasing always stops, including on the middle button, so a
-            # pointer dragged off a held button cannot leave the robot driving.
+            # Every release stops the robot, including on the middle button, so a
+            # pointer dragged off a pressed button cannot leave the robot driving.
             btn.released.connect(self._node.stop)
             grid.addWidget(btn, *divmod(idx, 3))
         layout.addLayout(grid)

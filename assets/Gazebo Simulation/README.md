@@ -1,49 +1,27 @@
-# 🤖 Gazebo Simulation Basics
+# Gazebo simulation fundamentals
 
-## General Description
+Overview of the elements of the Cobra Flex simulation in Gazebo Harmonic and of
+the files that implement them.
 
-This folder provides a starter documentation structure for simulating the Cobra Flex robot in **Gazebo Sim**. It follows the same package-style organization used in the mathematical model docs, but focused on simulation setup fundamentals:
+| Element | Description | Implementation |
+| --- | --- | --- |
+| Robot description | Links, joints, inertial, collision and visual properties | [`urdf/`](../../src/cobraflex/urdf/) |
+| Gazebo plugins | DiffDrive, OdometryPublisher, LiDAR, cameras, IMU | [`urdf/robot.gazebo`](../../src/cobraflex/urdf/robot.gazebo) |
+| Worlds | SDF worlds with lane textures and obstacles | [`worlds/`](../../src/cobraflex/worlds/README.md) |
+| ROS bridge | Gazebo ↔ ROS 2 topic mapping | [`config/gz_bridge.yaml`](../../src/cobraflex/config/gz_bridge.yaml) |
+| Spawning | Robot spawn and bridge start-up | [`launch/gazebo.launch.py`](../../src/cobraflex/launch/gazebo.launch.py), [`launch/gazebo_mesh.launch.py`](../../src/cobraflex/launch/gazebo_mesh.launch.py) |
 
-- Building robot descriptions (URDF/SDF)
-- Defining simulation worlds
-- Adding core sensors
-- Spawning robot models in Gazebo
+## Procedure for model changes
 
-The structure and checklists are aligned with these Gazebo Sim guides:
+1. Build or modify the URDF with correct frames and inertial properties.
+2. Test the model in a minimal world (`empty.world`).
+3. Add one sensor plugin at a time.
+4. Verify topics, frame IDs and update rates.
+5. Integrate the spawn into the launch files.
+
+## References
 
 - [Building a robot](https://gazebosim.org/docs/latest/building_robot/)
 - [SDF worlds](https://gazebosim.org/docs/latest/sdf_worlds/)
 - [Sensors](https://gazebosim.org/docs/latest/sensors/)
 - [Spawn URDF](https://gazebosim.org/docs/latest/spawn_urdf/)
-
----
-
-## 📑 Contents
-
-1. **[URDF File Creation](./URDF%20File%20Creation/README.md)**
-   - Base links and joints
-   - Inertial / collision / visual tags
-   - Export and validation workflow
-
-2. **[Gazebo Plugins](./Gazebo%20Plugins/README.md)**
-   - **[LiDAR](./Gazebo%20Plugins/LiDAR/README.md)** plugin basics
-   - **[Camera](./Gazebo%20Plugins/Camera/README.md)** plugin basics
-   - **[IMU](./Gazebo%20Plugins/IMU/README.md)** plugin basics
-
----
-
-## Suggested Workflow
-
-1. Build a minimal URDF model with correct frames and inertial properties.
-2. Test the model in Gazebo using a simple SDF world.
-3. Add one sensor plugin at a time (LiDAR → Camera → IMU).
-4. Verify topic output, frame IDs, and update rates.
-5. Integrate robot spawn into launch files.
-
----
-
-## Notes for Contributors
-
-- Keep this section **implementation-agnostic** (basic simulation principles).
-- Add project-specific launch/config details inside `ros2_ws/src/cobraflex` docs or package files.
-- If you add new simulated sensors, create a peer subfolder under `Gazebo Plugins/`.

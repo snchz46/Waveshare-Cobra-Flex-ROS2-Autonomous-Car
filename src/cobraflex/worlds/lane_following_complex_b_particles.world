@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!-- Lane-clutter variant of lane_following_oval_complex.world: identical
-     geometry / world_name / centreline, only the road texture differs. The road
-     carries scattered particles / debris / stains the policy was not trained on —
-     visual distractors the agent must ignore (or controlled-stop). Texture-only
-     (D-37 Option A). Track-E clutter scenario SC-PERT-10 (H-10 / SR-012; SR-014
-     for the CV estimator). -->
+     geometry, world_name and centreline; only the road texture differs. The
+     road carries particles, debris and stains outside the training data:
+     visual distractors that the agent must ignore or answer with a controlled
+     stop. Texture-only change (D-37 option A). Track E clutter scenario
+     SC-PERT-10 (H-10 / SR-012; SR-014 for the CV estimator). -->
 <sdf version='1.8'>
   <world name='lane_following_complex_b'>
     <physics name='1ms' type='ignored'>

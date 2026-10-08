@@ -27,8 +27,8 @@ def generate_launch_description():
             {
                 "use_sim_time": use_sim_time,
                 # value_type=str: robot_description is the xacro-expanded URDF
-                # XML; without this, launch tries to YAML-parse it and fails
-                # (e.g. on ':' inside comments).
+                # XML. Without it, launch parses the value as YAML, which fails
+                # (for example on ':' inside comments).
                 "robot_description": ParameterValue(
                     Command(["xacro", " ", urdf]), value_type=str
                 ),

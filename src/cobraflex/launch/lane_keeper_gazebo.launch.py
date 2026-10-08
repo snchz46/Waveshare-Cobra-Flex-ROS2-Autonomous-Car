@@ -62,7 +62,7 @@ def generate_launch_description():
                 ),
             },
             {"image_topic": image_topic},
-            # CV-estimator + PD/feedforward controller (see cv_lane_controller).
+            # CV estimator + pure-pursuit controller (see cv_lane_controller).
             {"linear_speed": 0.20},
             {"kp_ey": 6.0},
             {"kd_epsi": 1.6},
