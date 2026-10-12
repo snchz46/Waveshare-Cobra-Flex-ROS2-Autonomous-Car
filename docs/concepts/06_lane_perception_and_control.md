@@ -19,11 +19,11 @@ $h$, facing forward and pitched down by $\theta$ (no roll, no yaw), every image
 row below the horizon corresponds to one ground distance. With
 $a = (v - c_y)/f_y$ and $b = (u - c_x)/f_x$, a pixel projects onto the ground at
 
-$$
+```math
 X(v) = h\,\frac{\cos\theta - a\sin\theta}{\sin\theta + a\cos\theta},
 \qquad
 Y(u, v) = -\,\frac{h\, b}{\sin\theta + a\cos\theta}
-$$
+```
 
 ($X$ forward, $Y$ left, origin below the camera). $X$ depends only on the row,
 and within a row $Y$ is linear in the column. This property allows a metric
@@ -62,11 +62,11 @@ A target point is selected on the lane centre at a look-ahead distance $L$,
 with lateral offset $y_L$. The circular arc tangent to the vehicle heading that
 passes through this point has curvature
 
-$$
+```math
 \kappa = \frac{2\,y_L}{L^2 + y_L^2},
 \qquad
 \omega = k \cdot v \cdot \kappa
-$$
+```
 
 A short $L$ responds quickly but oscillates; a long $L$ is smooth but cuts
 corners.

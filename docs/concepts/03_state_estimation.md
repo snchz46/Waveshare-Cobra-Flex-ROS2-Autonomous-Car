@@ -29,11 +29,11 @@ turns by dragging its wheels sideways
 State estimation maintains a belief over the state $x_t$ and updates it in two
 steps, with control $u_t$ and measurement $z_t$:
 
-$$
+```math
 \overline{bel}(x_t) = \int p(x_t \mid u_t, x_{t-1})\, bel(x_{t-1})\, dx_{t-1}
 \qquad
 bel(x_t) = \eta\, p(z_t \mid x_t)\, \overline{bel}(x_t)
-$$
+```
 
 The first equation is the **prediction** with the motion model; the second is
 the **correction** with the measurement model.
@@ -44,12 +44,12 @@ With Gaussian beliefs and linear models, the Bayes filter becomes the Kalman
 filter. The **extended** Kalman filter linearises the nonlinear models $f$ and
 $h$ around the current estimate (Jacobians $F$, $H$):
 
-$$
+```math
 \begin{aligned}
-\text{predict:}\quad & \hat x^- = f(\hat x, u), && P^- = F P F^\top + Q \\
-\text{update:}\quad & K = P^- H^\top (H P^- H^\top + R)^{-1}, && \hat x = \hat x^- + K\,(z - h(\hat x^-)),\quad P = (I - K H)\,P^-
+\text{predict:}\quad & \hat x^- = f(\hat x, u), && P^- = F P F^\top + Q
+\\ \text{update:}\quad & K = P^- H^\top (H P^- H^\top + R)^{-1}, && \hat x = \hat x^- + K\,(z - h(\hat x^-)),\quad P = (I - K H)\,P^-
 \end{aligned}
-$$
+```
 
 $Q$ is the process noise (confidence in the model) and $R$ the measurement
 noise (confidence in the sensor). The gain $K$ weighs one against the other.

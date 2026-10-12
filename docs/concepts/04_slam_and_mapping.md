@@ -14,9 +14,9 @@
 
 SLAM estimates the robot trajectory and the map simultaneously:
 
-$$
+```math
 p(x_{1:t},\, m \mid z_{1:t},\, u_{1:t})
-$$
+```
 
 Neither quantity is known in advance: localisation requires the map, and
 mapping requires the pose.
@@ -31,9 +31,9 @@ The map is a grid of cells, each holding the probability of being occupied.
 For numerical stability each cell stores **log-odds** and accumulates the
 evidence of every scan:
 
-$$
+```math
 l_{t,i} = l_{t-1,i} + \log\frac{p(m_i \mid z_t, x_t)}{1 - p(m_i \mid z_t, x_t)} - l_0
-$$
+```
 
 The inverse sensor model marks the cells along a laser beam as free and the
 cell at its end as occupied.
@@ -67,9 +67,9 @@ overlaps the existing map. When a scan also matches a region visited earlier, a
 **loop closure** edge is added. The optimiser then adjusts all poses to
 minimise the weighted squared error of every edge,
 
-$$
+```math
 x^* = \arg\min_x \sum_{(i,j)} e_{ij}(x_i, x_j)^\top\, \Omega_{ij}\, e_{ij}(x_i, x_j)
-$$
+```
 
 which distributes the accumulated drift over the whole loop. The grid is then
 redrawn from the corrected poses.

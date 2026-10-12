@@ -68,9 +68,9 @@ tracing) and the **inflation** layer, which spreads cost around obstacles to
 keep a safety margin. Within the inscribed radius of the robot the cost is 253
 (certain collision); beyond it, up to `inflation_radius`, it decays as
 
-$$
+```math
 \text{cost}(d) = 252 \cdot e^{-k\,(d - r_{\text{inscribed}})}
-$$
+```
 
 with $k$ = `cost_scaling_factor`. A larger $k$ allows paths close to obstacles;
 a smaller $k$ moves them towards the centre of free space.

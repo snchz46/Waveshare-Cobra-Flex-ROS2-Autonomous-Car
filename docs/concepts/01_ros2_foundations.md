@@ -19,14 +19,17 @@
 | **Parameter** | Node configuration, usually loaded from YAML | `max_vel_x: 0.35` in `nav2_params.yaml` |
 | **Launch file** | Starts and connects a set of nodes | `cobraflex_sensors.launch.xml` |
 
-<img src="images/Topic-SinglePublisherandSingleSubscriber.gif"/>
+<p>
+<img src="images/Topic-SinglePublisherandSingleSubscriber.gif" width="49%"/>
+<img src="images/Topic-MultiplePublisherandMultipleSubscriber.gif" width="49%"/>
+</p>
 
 <p>
 <img src="images/Service-SingleServiceClient.gif" width="49%"/>
 <img src="images/Action-SingleActionClient.gif" width="49%"/>
 </p>
 
-<sub>Topic (above), service (left) and action (right). Source: [ROS 2 documentation](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html), CC BY 4.0.</sub>
+<sub>Topic with one publisher and one subscriber (top left) and with several of each (top right), service (bottom left) and action (bottom right). Source: [ROS 2 documentation](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html), CC BY 4.0.</sub>
 
 ROS 2 is built on **DDS**. Nodes discover each other by multicast within a
 **domain** (`ROS_DOMAIN_ID`); nodes in different domains are not visible to

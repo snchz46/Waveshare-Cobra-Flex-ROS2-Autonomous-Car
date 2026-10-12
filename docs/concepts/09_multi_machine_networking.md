@@ -14,8 +14,8 @@
 
 DDS discovers participants without a central master. Each participant
 announces itself by **multicast** (SPDP); the participants then exchange their
-publishers and subscribers (SEDP) and connect by unicast. The **domain ID**
-selects the UDP ports: discovery uses port $7400 + 250 \cdot \text{ROS\_DOMAIN\_ID}$,
+publishers and subscribers (SEDP) and connect by unicast. The **domain ID** $d$
+(`ROS_DOMAIN_ID`) selects the UDP ports: discovery uses port $7400 + 250 \cdot d$,
 so different domains remain isolated on the same network. On Linux the safe
 range is 0–101. Domain 0 is the default for any machine without an explicit
 setting.

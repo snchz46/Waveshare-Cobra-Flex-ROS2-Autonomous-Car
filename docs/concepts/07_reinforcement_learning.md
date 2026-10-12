@@ -36,18 +36,18 @@ Policy-gradient methods adjust $\theta$ so that actions with a positive
 clipping the probability ratio
 $r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\theta_\text{old}}(a_t \mid s_t)$:
 
-$$
+```math
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t\left[\min\left(r_t(\theta)\,\hat A_t,\;
 \operatorname{clip}\left(r_t(\theta),\, 1 - \varepsilon,\, 1 + \varepsilon\right)\hat A_t\right)\right]
-$$
+```
 
 The advantage is obtained by **generalised advantage estimation** (GAE),
 
-$$
+```math
 \hat A_t = \sum_{l \ge 0} (\gamma\lambda)^l\, \delta_{t+l},
 \qquad
 \delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)
-$$
+```
 
 where $V$ is the critic. Actor and critic share a convolutional feature
 extractor: the Stable-Baselines3 `CnnPolicy` uses the "Nature CNN" (three
@@ -93,10 +93,10 @@ simulators.
 
 [`rewards.py`](../../src/cobraflex_rl/cobraflex_rl/rewards.py):
 
-$$
+```math
 r = w_\text{fwd}\max(\text{progress}, 0) - w_{e_y}|e_y| - w_{e_\psi}|e_\psi|
     - w_{\Delta s}|\Delta \text{steer}| - w_\text{term}\,[\text{done}]
-$$
+```
 
 The 2-D action adds throttle-change and stall terms, zero by default.
 
