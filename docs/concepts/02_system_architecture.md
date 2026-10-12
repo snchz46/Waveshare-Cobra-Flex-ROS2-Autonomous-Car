@@ -27,6 +27,16 @@ planning and actuation can override the controller.
 
 <img src="images/Basic Structure of a Mechatronic System.png"/>
 
+<sub>The ADS as a mechatronic system. Source: SE4ADS lecture, chapter 3.1.1.</sub>
+
+<img src="images/Driver Model Levels.png"/>
+
+<sub>Driver model combining Rasmussen's knowledge-, rule- and skill-based behaviour with Donges' navigation, guidance (<i>Bahnführung</i>) and stabilisation levels. Source: SE4ADS lecture, chapter 3.2.1.</sub>
+
+<img src="images/Main Functionalities of an ADS.png"/>
+
+<sub>The main tasks of an automated driving system. Source: SE4ADS lecture, chapter 3.2.1.</sub>
+
 ---
 
 ## Implementation

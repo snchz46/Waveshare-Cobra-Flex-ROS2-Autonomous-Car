@@ -24,6 +24,10 @@
 The agent seeks a policy $\pi_\theta(a \mid s)$ that maximises the expected
 discounted return $\mathbb{E}\left[\sum_t \gamma^t r_t\right]$.
 
+<img src="images/Agent Environment Loop.png" width="560"/>
+
+<sub>The reinforcement-learning loop between agent and environment. Source: Motion Planning lecture, part 3.</sub>
+
 ### Policy gradients and PPO
 
 Policy-gradient methods adjust $\theta$ so that actions with a positive
@@ -49,6 +53,10 @@ where $V$ is the critic. Actor and critic share a convolutional feature
 extractor: the Stable-Baselines3 `CnnPolicy` uses the "Nature CNN" (three
 convolutional layers followed by a 512-unit dense layer). Stacking four frames
 provides motion information that a single image does not contain.
+
+<img src="images/Q-Network Architecture.png"/>
+
+<sub>Q-network for Atari games with the same input as the policy here: four stacked 84×84 grayscale frames. The Nature CNN of the policy has a third convolutional layer and a 512-unit dense layer, and its heads output an action distribution and a state value instead of Q-values. Source: Motion Planning lecture, part 3.</sub>
 
 ### Sim-to-real transfer
 

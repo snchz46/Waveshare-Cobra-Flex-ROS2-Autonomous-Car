@@ -21,6 +21,10 @@ $$
 Neither quantity is known in advance: localisation requires the map, and
 mapping requires the pose.
 
+<img src="images/SLAM Chicken and Egg.png" width="260"/>
+
+<sub>SLAM as a chicken-and-egg problem. Source: SLAM lecture 02, introduction.</sub>
+
 ### Occupancy grids
 
 The map is a grid of cells, each holding the probability of being occupied.
@@ -34,6 +38,14 @@ $$
 The inverse sensor model marks the cells along a laser beam as free and the
 cell at its end as occupied.
 
+<img src="images/Inverse Sensor Model.png"/>
+
+<sub>Inverse sensor model of one beam: cells before the measured distance are free, cells within ±r/2 of it are occupied, cells behind it keep the prior. Source: SLAM lecture 11, occupancy grid maps.</sub>
+
+<img src="images/Lidar to Grid Map.gif" width="400"/>
+
+<sub>One 2-D scan ray-cast into an occupancy grid: free (green), occupied (red), unknown (beige). Source: [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics), A. Sakai, MIT licence.</sub>
+
 ### SLAM families
 
 | Approach | Principle | Cost |
@@ -41,6 +53,10 @@ cell at its end as occupied.
 | EKF-SLAM | One Gaussian over the pose and all landmarks | Quadratic in the number of landmarks |
 | FastSLAM | Particle filter over trajectories, one small map per particle (Rao-Blackwellisation) | Linear in particles × landmarks |
 | **Graph SLAM** (used here) | Poses are nodes, measurements are edges; the solution is the set of poses that best satisfies all edges | Sparse least squares |
+
+<img src="images/Bayes Filter Family.png"/>
+
+<sub>Estimation tools derived from the Bayes filter and the SLAM approaches built on them. SLAM Toolbox belongs to the graph-based family (right) and rasterises its result into an occupancy grid. Source: SLAM lecture 11, occupancy grid maps.</sub>
 
 ### Graph SLAM
 
@@ -57,6 +73,10 @@ $$
 
 which distributes the accumulated drift over the whole loop. The grid is then
 redrawn from the corrected poses.
+
+<img src="images/Scan Matching Effect.png"/>
+
+<sub>Occupancy grid maps without (left) and with (right) scan matching. Source: SLAM lecture 11, occupancy grid maps; courtesy of D. Hähnel.</sub>
 
 ---
 

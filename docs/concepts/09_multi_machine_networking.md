@@ -24,6 +24,10 @@ For work restricted to one machine (Gazebo exercises), `ROS_LOCALHOST_ONLY=1`
 (Humble) keeps all traffic local. Without it, a simulated `/cmd_vel` can reach
 a physical robot in the same domain.
 
+<img src="images/ROS Domains in the Lab.png"/>
+
+<sub>Lab network: each PC and its car share one `ROS_DOMAIN_ID`; the other setups on the same network use their own.</sub>
+
 ### Wi-Fi characteristics
 
 - **Shared medium.** All clients of an access point share its channel; every
@@ -41,6 +45,10 @@ a physical robot in the same domain.
 The raw image rate is width × height × bytes per pixel × frame rate.
 Compressed transport (`image_transport` JPEG) reduces a 640×360 frame by one to
 two orders of magnitude.
+
+<img src="images/Sensor Comparison.png"/>
+
+<sub>Automotive sensors compared, including their data rates. The 2-D RPLIDAR of the Cobra Flex produces far less data than an automotive LiDAR (table below). Source: SE4ADS lecture, chapter 3.1.1.</sub>
 
 ### Time synchronisation
 

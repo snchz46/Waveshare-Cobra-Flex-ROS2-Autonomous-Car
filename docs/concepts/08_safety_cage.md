@@ -34,9 +34,21 @@ The rules follow the safety engineering chain:
 4. **Monitor rules**: one rule per requirement, with thresholds in a versioned
    configuration file.
 
+<img src="images/ODD Boundary.png" width="420"/>
+
+<sub>The ODD boundary separates acceptable from unacceptable operating conditions. Source: SE4ADS lecture, chapter 3.3.2.</sub>
+
+<img src="images/STPA Control Structure.png" width="560"/>
+
+<sub>Generic control structure analysed by STPA: controller (control algorithm and process model), actuators, controlled process and sensors. Source: SE4ADS lecture, chapter 5.3.2, after A. Abdulkhaleq (2017).</sub>
+
 SOTIF adds **triggering conditions**: situations without any fault in which the
 performance of the function is insufficient, such as worn paint, glare or a gap
 in the line. The perception supervisor described below addresses them.
+
+<img src="images/SOTIF Event Space.png"/>
+
+<sub>SOTIF divides the event space into known/unknown and safe/unsafe states and aims to reduce the unknown unsafe events (red). Source: SE4ADS lecture, chapter 5.1.3.</sub>
 
 ### Independence
 

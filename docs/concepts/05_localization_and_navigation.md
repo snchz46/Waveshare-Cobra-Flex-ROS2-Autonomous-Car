@@ -25,6 +25,10 @@ The belief over the pose is a set of weighted samples (particles). Each cycle:
 (KLD sampling): many particles while the pose is uncertain, few after
 convergence.
 
+<img src="images/Monte Carlo Localisation.png"/>
+
+<sub>Monte Carlo localisation in a museum: particles spread over the whole map at initialisation (left) concentrate at the robot pose after a few updates (right). Source: SLAM lecture 09, particle filter and MCL; courtesy of S. Thrun, W. Burgard, D. Fox.</sub>
+
 ### Nav2 structure
 
 ```mermaid
@@ -49,6 +53,13 @@ distance), A* returns the same optimal path while expanding fewer nodes. NavFn
 computes a navigation function from the goal with Dijkstra by default;
 `use_astar` selects A*.
 
+<p>
+<img src="images/Dijkstra Search.gif" width="49%"/>
+<img src="images/A Star Search.gif" width="49%"/>
+</p>
+
+<sub>Dijkstra (left) and A* (right) on the same grid: both return a shortest path (red); A* expands fewer cells (cyan). Source: [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics), A. Sakai, MIT licence.</sub>
+
 ### Costmaps and inflation
 
 A costmap consists of layers: the **static** layer (saved map), the
@@ -64,6 +75,10 @@ $$
 with $k$ = `cost_scaling_factor`. A larger $k$ allows paths close to obstacles;
 a smaller $k$ moves them towards the centre of free space.
 
+<img src="images/Obstacle Growing.png" width="520"/>
+
+<sub>Obstacles grown by the radius of a round robot (grey): collision checking reduces to checking the centre point (yellow: robot positions on the grown boundary). The lethal band of the inflation layer, up to the inscribed radius, applies the same idea. Source: Motion Planning lecture, part 1.</sub>
+
 ### Local control: dynamic window
 
 DWB samples pairs $(v_x, \omega_z)$ reachable within the acceleration limits
@@ -73,12 +88,20 @@ weighted sum of **critics** (distance to the path, alignment with the goal,
 obstacle cost, among others) and sends the best pair. This is repeated at the
 controller frequency.
 
+<img src="images/Dynamic Window Approach.gif" width="400"/>
+
+<sub>Dynamic window approach: every step, the predicted trajectory of the best sampled command (green) is recomputed until the robot reaches the goal (blue cross) between the obstacles (black); the red line is the driven path. Source: [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics), A. Sakai, MIT licence.</sub>
+
 ### Behaviour trees
 
 Nav2 encodes the sequence "plan, follow, recover" as a behaviour tree: a tree
 of conditions and actions ticked from the root. It fulfils the role of state
 machines and state charts in behaviour planning and is extended with recovery
 actions such as spinning or backing up.
+
+<img src="images/State Chart Roundabout.png"/>
+
+<sub>Behaviour planning with a hierarchical state chart: lane following with the states free driving, follow object and stop. Source: Motion Planning lecture, part 3.</sub>
 
 ---
 

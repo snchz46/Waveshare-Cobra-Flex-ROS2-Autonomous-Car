@@ -20,6 +20,10 @@ the sum of all steps. Each step carries a small error, so the integrated pose
 turns by dragging its wheels sideways
 ([Kinematics §3.3](../../assets/Mathematical%20Model/Kinematics.md)).
 
+<img src="images/Odometry Drift.png"/>
+
+<sub>The same run with corrected poses (left) and integrated from odometry only (right). Source: SLAM lecture 04, motion and sensor models.</sub>
+
 ### Bayes filter
 
 State estimation maintains a belief over the state $x_t$ and updates it in two
@@ -49,6 +53,14 @@ $$
 
 $Q$ is the process noise (confidence in the model) and $R$ the measurement
 noise (confidence in the sensor). The gain $K$ weighs one against the other.
+
+<img src="images/Kalman Filter 1D Example.png"/>
+
+<sub>One Kalman cycle in 1-D: prediction (red), measurement (green) and corrected belief (blue), narrower than either. Source: SLAM lecture 05, Kalman filter and EKF.</sub>
+
+<img src="images/EKF Localisation.gif" width="480"/>
+
+<sub>EKF localisation in simulation: true path (blue), dead reckoning (black), noisy position fixes (green) and EKF estimate with its covariance ellipse (red). Source: [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics), A. Sakai, MIT licence.</sub>
 
 ### `robot_localization`
 

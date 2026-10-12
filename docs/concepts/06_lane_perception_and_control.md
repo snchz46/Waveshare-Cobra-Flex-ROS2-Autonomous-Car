@@ -29,6 +29,10 @@ $$
 and within a row $Y$ is linear in the column. This property allows a metric
 lane estimate from a single camera.
 
+<img src="images/Pinhole Projection.png" width="560"/>
+
+<sub>Pinhole model: the ray through the optical centre O maps the scene point P onto the image point p at focal length f. Source: Computer Vision lecture L02.</sub>
+
 ### Classical lane detection
 
 Standard processing chain:
@@ -44,6 +48,14 @@ Standard processing chain:
 5. **Lane state**: lateral offset $e_y$, heading error $e_\psi$, lane width,
    curvature.
 
+<img src="images/Gaussian Filtering Example.jpg"/>
+
+<sub>Gaussian filtering smooths noise and fine detail without introducing high-frequency artefacts. Source: Computer Vision lecture L02.</sub>
+
+<img src="images/Edge Detection.png"/>
+
+<sub>Edges appear as peaks of the first derivative of the intensity along an image row. Source: Computer Vision lecture L03.</sub>
+
 ### Pure pursuit
 
 A target point is selected on the lane centre at a look-ahead distance $L$,
@@ -58,6 +70,10 @@ $$
 
 A short $L$ responds quickly but oscillates; a long $L$ is smooth but cuts
 corners.
+
+<img src="images/Pure Pursuit Tracking.gif" width="420"/>
+
+<sub>Pure pursuit on a reference course (red): the vehicle steers towards a target point at the look-ahead distance, and its trajectory (blue) converges onto the course. Source: [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics), A. Sakai, MIT licence.</sub>
 
 ---
 

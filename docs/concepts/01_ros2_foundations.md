@@ -21,6 +21,13 @@
 
 <img src="images/Topic-SinglePublisherandSingleSubscriber.gif"/>
 
+<p>
+<img src="images/Service-SingleServiceClient.gif" width="49%"/>
+<img src="images/Action-SingleActionClient.gif" width="49%"/>
+</p>
+
+<sub>Topic (above), service (left) and action (right). Source: [ROS 2 documentation](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html), CC BY 4.0.</sub>
+
 ROS 2 is built on **DDS**. Nodes discover each other by multicast within a
 **domain** (`ROS_DOMAIN_ID`); nodes in different domains are not visible to
 each other. Each publisher/subscriber pair negotiates a **QoS profile**:
@@ -35,6 +42,10 @@ each other. Each publisher/subscriber pair negotiates a **QoS profile**:
 A best-effort subscriber can receive from a reliable publisher; the reverse
 combination is incompatible. An incompatible pair appears as a topic that
 exists but delivers no messages.
+
+<img src="images/ROS 2 Middleware Layers.png" width="420"/>
+
+<sub>ROS 2 layers: nodes call the client library, which reaches DDS through the middleware interface (RMW). Source: SE4ADS lecture, chapter 3.1.3.</sub>
 
 **TF2** maintains a tree of coordinate frames. Each edge has exactly one
 publisher: static edges come from the URDF through `robot_state_publisher`,
