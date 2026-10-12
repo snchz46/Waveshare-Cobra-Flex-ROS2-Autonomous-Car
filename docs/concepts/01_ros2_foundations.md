@@ -19,6 +19,8 @@
 | **Parameter** | Node configuration, usually loaded from YAML | `max_vel_x: 0.35` in `nav2_params.yaml` |
 | **Launch file** | Starts and connects a set of nodes | `cobraflex_sensors.launch.xml` |
 
+<img src="images/Topic-SinglePublisherandSingleSubscriber.gif"/>
+
 ROS 2 is built on **DDS**. Nodes discover each other by multicast within a
 **domain** (`ROS_DOMAIN_ID`); nodes in different domains are not visible to
 each other. Each publisher/subscriber pair negotiates a **QoS profile**:

@@ -25,6 +25,8 @@ An automated driving system is described by two architectures:
 Perception and state estimation supply all three levels. A supervisor between
 planning and actuation can override the controller.
 
+<img src="images/Basic Structure of a Mechatronic System.png"/>
+
 ---
 
 ## Implementation
