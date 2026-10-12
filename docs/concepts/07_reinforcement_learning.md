@@ -38,7 +38,7 @@ $r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\theta_\text{old}}(a_t \mid s_t)$
 
 ```math
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t\left[\min\left(r_t(\theta)\,\hat A_t,\;
-\operatorname{clip}\left(r_t(\theta),\, 1 - \varepsilon,\, 1 + \varepsilon\right)\hat A_t\right)\right]
+\text{clip}\left(r_t(\theta),\, 1 - \varepsilon,\, 1 + \varepsilon\right)\hat A_t\right)\right]
 ```
 
 The advantage is obtained by **generalised advantage estimation** (GAE),
