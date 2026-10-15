@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Lab session 1 - emergency braking at constant cruise speed.
+"""Lab session 2 - emergency braking at constant cruise speed.
 
 Input: /scan (sensor_msgs/LaserScan). Output: /cmd_vel (geometry_msgs/Twist).
 
-The eight gaps, marked A to H, are completed as described in Part 3 of
-the workbook. While a gap remains open, Python stops with an error that
+The eight gaps, marked A to H, are completed as described in the
+Session 2 workbook. While a gap remains open, Python stops with an error that
 names it. Execution, with ROS 2 sourced:
 
     python3 emergency_brake_node.py                 # physical robot
@@ -26,6 +26,7 @@ import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
+from rclpy.signals import SignalHandlerOptions
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32
 
@@ -138,7 +139,9 @@ class EmergencyBrake(Node):
 
 def main(args=None):
     """Run the node until Ctrl-C."""
-    rclpy.init(args=args)
+    # Ctrl-C raises KeyboardInterrupt and leaves ROS running, so that the
+    # node can still send its zero command. Gazebo keeps the last command.
+    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     node = None
     try:
         node = EmergencyBrake()

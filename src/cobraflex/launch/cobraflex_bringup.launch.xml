@@ -1,10 +1,13 @@
 <launch>
 
-    <!-- Base bringup for the physical robot: model, sensors and serial driver. -->
+    <!-- Layer 1 of the physical robot: robot model and serial driver. The
+         sensors are layer 2, cobraflex_sensors.launch.xml. -->
 
     <arg name="use_rviz" default="true"/>
     <arg name="serial_port" default="/dev/ttyACM1"/>
     <arg name="baudrate" default="115200"/>
+    <!-- 0.2 for Nav2, see cobraflex_driver.launch.xml. -->
+    <arg name="min_angular_in_place" default="0.0"/>
 
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_description.launch.xml">
         <arg name="use_rviz" value="$(var use_rviz)"/>
@@ -13,6 +16,7 @@
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_driver.launch.xml">
         <arg name="serial_port" value="$(var serial_port)"/>
         <arg name="baudrate" value="$(var baudrate)"/>
+        <arg name="min_angular_in_place" value="$(var min_angular_in_place)"/>
     </include>
 
 </launch>

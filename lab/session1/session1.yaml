@@ -1,0 +1,13 @@
+# Parameters of the Session 1 nodes, loaded by session1.launch.py.
+# Each top-level key is a node name; its parameters sit under
+# ros__parameters. The values differ from the defaults in the code, so
+# that `ros2 param get` shows whether this file was loaded.
+
+circle_driver:
+  ros__parameters:
+    speed: 0.15         # m/s
+    radius: 0.6         # m
+
+obstacle_monitor:
+  ros__parameters:
+    warn_distance: 0.4  # m

@@ -8,6 +8,10 @@
     <arg name="max_linear" default="0.53"/>
     <arg name="max_angular" default="6.0"/>
     <arg name="turn_threshold" default="0.3"/>
+    <!-- Minimum yaw rate of a pure rotation (static friction), see the
+         parameter of the same name in cobraflex_ros_driver.py: 0.0 while the
+         cage or the RL policy drives, 0.2 for Nav2 and teleoperation. -->
+    <arg name="min_angular_in_place" default="0.0"/>
  
 
     <!-- ========================= -->
@@ -25,6 +29,7 @@
         <param name="max_linear" value="$(var max_linear)"/>
         <param name="max_angular" value="$(var max_angular)"/>
         <param name="turn_threshold" value="$(var turn_threshold)"/>
+        <param name="min_angular_in_place" value="$(var min_angular_in_place)"/>
     </node>
 
 

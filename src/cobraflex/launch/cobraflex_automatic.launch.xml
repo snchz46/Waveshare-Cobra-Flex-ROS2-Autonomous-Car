@@ -1,6 +1,9 @@
 <launch>
 
-    <!-- SENSORS: LiDAR + ZED (already launched) -->
+    <!-- Layer 2 (LiDAR, ZED Mini, lane camera, EKF) is included here. This
+         file therefore replaces cobraflex_sensors.launch.xml and is not
+         started in addition to it: a second layer 2 finds the devices busy
+         and adds a second EKF publishing odom -> base_footprint. -->
     <include file="$(find-pkg-share cobraflex)/launch/cobraflex_sensors.launch.xml"/>
 
     <!-- AUTOMATIC AVOIDANCE -->

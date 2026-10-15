@@ -41,6 +41,7 @@ Parametros:
 | `max_angular` | Velocidad angular maxima en rad/s |
 | `turn_threshold` | Umbral de giro para las luces |
 | `cmd_timeout` | Temporizador de seguridad (deadman): segundos sin `/cmd_vel` antes de detener el robot; por defecto `0.5` |
+| `min_angular_in_place` | Velocidad angular minima de un giro sobre el sitio, en rad/s, para vencer el rozamiento estatico; por defecto `0.0` (desactivado). `0.2` con Nav2 y teleoperacion, `0.0` cuando conducen el safety cage o la politica RL. Argumento de launch del mismo nombre en `cobraflex_bringup.launch.xml` |
 
 El nodo reenvia el ultimo comando cada 50 ms, lo que anula el timeout del
 firmware. `cmd_timeout` es por tanto el unico mecanismo que detiene el robot si
@@ -111,6 +112,9 @@ Mapa o parametros alternativos:
 ```bash
 ros2 launch cobraflex navigation.launch.py map:=/ruta/mapa.yaml params_file:=/ruta/params.yaml
 ```
+
+Procedimiento completo en el robot real (encendido, bringup, aplicaciones,
+apagado): [docs/ROBOT_OPERATION.md](../../docs/ROBOT_OPERATION.md).
 
 ## Ejecutables
 

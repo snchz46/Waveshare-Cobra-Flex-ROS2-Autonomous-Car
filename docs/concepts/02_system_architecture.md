@@ -159,16 +159,20 @@ lane-following ODD limits speed to 0.5 m/s through cage rule C-04
 - **EKF required by the cage.** On the robot, `/odometry/filtered` is the only
   speed source of the cage. Without layer 2, rules C-03, C-04 and the
   high-energy trigger of C-05 are inactive without any warning.
+- **Layer 2 started twice.** `cobraflex_automatic.launch.xml` includes
+  `cobraflex_sensors.launch.xml`. Started in addition to it, the second
+  copy finds the sensors busy and adds a second EKF, which publishes
+  `odom → base_footprint` a second time.
 
 ---
 
 ## Commands
 
 ```bash
-# Robot, three terminals (see Usage §5)
-ros2 launch cobraflex cobraflex_bringup.launch.xml
+# Robot, three terminals (procedure: ROBOT_OPERATION.md, sections 6 and 7)
+ros2 launch cobraflex cobraflex_bringup.launch.xml use_rviz:=false
 ros2 launch cobraflex cobraflex_sensors.launch.xml
-ros2 launch cobraflex cobraflex_automatic.launch.xml      # or another layer-3 controller
+ros2 run cobraflex lidar_avoidance_node --ros-args -p forward_speed:=0.2   # or another layer-3 controller
 
 # Lab PC
 ros2 topic echo /cobraflex/battery
