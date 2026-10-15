@@ -111,7 +111,9 @@ repositories. They are built from source in the same workspace:
 | `sllidar_ros2` | RPLIDAR A2 | [Slamtec/sllidar_ros2](https://github.com/Slamtec/sllidar_ros2) |
 | `zed_wrapper` | ZED Mini | [stereolabs/zed-ros2-wrapper](https://github.com/stereolabs/zed-ros2-wrapper) |
 
-These packages are not required for simulation.
+These packages are not required for simulation. `zed_wrapper` builds only on
+a machine with the ZED SDK installed, in the release for the JetPack and CUDA
+version of the robot: [ZED SDK downloads](https://www.stereolabs.com/developers/release).
 
 Access to the serial link of the ESP32-S3 requires membership in the `dialout`
 group:
@@ -164,4 +166,5 @@ model that jumps in RViz indicates a second publisher of that edge; see
 ## Further documentation
 
 - [USAGE.md](USAGE.md): SLAM, navigation and lane-keeping controllers
+- [ROBOT_OPERATION.md](ROBOT_OPERATION.md): operation of the physical robot
 - [Mathematical Model](../assets/Mathematical%20Model/README.md): kinematics, control and parameters
