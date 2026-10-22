@@ -1,0 +1,77 @@
+# Guide check: installs the workspace on a clean Ubuntu 22.04 container and runs
+# the simulation procedures of the documentation.
+#
+#   install: guide      Steps 1-5 of docs/1_INSTALLATION.md, executed as written
+#                       (extracted from the Markdown by .github/scripts/run_guide.py).
+#   install: reference  Official Humble + Gazebo Harmonic installation
+#                       (.github/scripts/install_reference.sh).
+#
+# Both variants then run .github/scripts/sim_smoke_test.sh: xacro and SDF
+# validation, gazebo.launch.py topics and TF, SLAM and map saving, Nav2, driving
+# by /cmd_vel, LiDAR avoidance, lane keeping, teleoperation GUI, lab session code
+# and colcon test. The physical-robot procedures (docs/3_ROBOT_OPERATION.md)
+# require the hardware and are not covered.
+name: Guide check
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", "src/**", "lab/**", ".github/**", "README.md"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: guide-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guide-check:
+    name: install=${{ matrix.install }}
+    runs-on: ubuntu-22.04
+    container: ubuntu:22.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        install: [guide, reference]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      TZ: Etc/UTC
+      LOG_DIR: /tmp/smoke_logs
+    steps:
+      - name: Container prerequisites (not part of the guide)
+        run: |
+          apt-get update
+          apt-get install -y sudo git python3 ca-certificates
+          # Non-interactive apt for the unmodified guide commands.
+          printf 'APT::Get::Assume-Yes "true";\nDpkg::Options { "--force-confdef"; "--force-confold"; };\n' \
+            > /etc/apt/apt.conf.d/90-ci
+
+      - uses: actions/checkout@v4
+
+      - name: Workspace at ~/ros2_ws (replaces the git clone of step 4)
+        run: ln -sfn "$GITHUB_WORKSPACE" "$HOME/ros2_ws"
+
+      - name: Installation as written in docs/1_INSTALLATION.md
+        if: matrix.install == 'guide'
+        run: python3 .github/scripts/run_guide.py docs/1_INSTALLATION.md
+
+      - name: Reference installation (Humble + Gazebo Harmonic)
+        if: matrix.install == 'reference'
+        run: bash .github/scripts/install_reference.sh
+
+      - name: Headless display (not part of the guide)
+        if: always()
+        run: apt-get install -y xvfb mesa-utils libgl1-mesa-dri
+
+      - name: Simulation smoke test (docs/2_USAGE.md, lab/README.md)
+        if: always()
+        run: bash .github/scripts/sim_smoke_test.sh
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.install }}
+          path: /tmp/smoke_logs
+          if-no-files-found: ignore
