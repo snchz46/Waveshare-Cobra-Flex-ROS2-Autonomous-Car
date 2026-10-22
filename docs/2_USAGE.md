@@ -2,10 +2,10 @@
 
 Operation of the Cobra Flex stack in simulation and on the physical robot.
 
-Prerequisite: a built and sourced workspace ([INSTALLATION.md](INSTALLATION.md)).
+Prerequisite: a built and sourced workspace ([1_INSTALLATION.md](1_INSTALLATION.md)).
 Operation of the physical robot step by step, with the machine that runs each
 command, checks, shutdown and troubleshooting:
-[ROBOT_OPERATION.md](ROBOT_OPERATION.md).
+[3_ROBOT_OPERATION.md](3_ROBOT_OPERATION.md).
 Each command runs in its own terminal with
 `source ~/ros2_ws/install/setup.bash`.
 
@@ -126,7 +126,7 @@ ros2 run cobraflex lidar_avoidance_node
 
 The node subscribes to `/scan` and publishes `/cmd_vel`. Its `scan_timeout`
 stops the robot when no scans arrive; this timer must not be removed. On the
-physical robot: [ROBOT_OPERATION.md §7.2](ROBOT_OPERATION.md#72-lidar-obstacle-avoidance).
+physical robot: [3_ROBOT_OPERATION.md §7.2](3_ROBOT_OPERATION.md#72-lidar-obstacle-avoidance).
 
 ---
 
@@ -145,7 +145,7 @@ ros2 launch cobraflex cobraflex_mapping.launch.py rviz:=false
 ```
 
 Complete procedure, including navigation, obstacle avoidance and lane keeping
-on the robot: [ROBOT_OPERATION.md](ROBOT_OPERATION.md).
+on the robot: [3_ROBOT_OPERATION.md](3_ROBOT_OPERATION.md).
 
 Differences from simulation:
 
@@ -232,8 +232,8 @@ colcon test-result --verbose
 
 ## Further documentation
 
-- [INSTALLATION.md](INSTALLATION.md): setup from a clean machine
+- [1_INSTALLATION.md](1_INSTALLATION.md): setup from a clean machine
 - [Cobraflex_Wiki](https://www.waveshare.com/wiki/Cobra_Flex): Platform specifications directly from manufacturer
-- [ROBOT_OPERATION.md](ROBOT_OPERATION.md): operation of the physical robot
+- [3_ROBOT_OPERATION.md](3_ROBOT_OPERATION.md): operation of the physical robot
 - [Mathematical Model](../assets/Mathematical%20Model/README.md): kinematics, control, parameters
 - [`src/cobraflex/config/`](../src/cobraflex/config/): all tunable parameters, with rationale in comments

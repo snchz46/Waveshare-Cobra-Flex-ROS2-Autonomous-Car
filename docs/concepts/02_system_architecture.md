@@ -169,7 +169,7 @@ lane-following ODD limits speed to 0.5 m/s through cage rule C-04
 ## Commands
 
 ```bash
-# Robot, three terminals (procedure: ROBOT_OPERATION.md, sections 6 and 7)
+# Robot, three terminals (procedure: 3_ROBOT_OPERATION.md, sections 6 and 7)
 ros2 launch cobraflex cobraflex_bringup.launch.xml use_rviz:=false
 ros2 launch cobraflex cobraflex_sensors.launch.xml
 ros2 run cobraflex lidar_avoidance_node --ros-args -p forward_speed:=0.2   # or another layer-3 controller

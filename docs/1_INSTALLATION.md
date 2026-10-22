@@ -157,7 +157,7 @@ model that jumps in RViz indicates a second publisher of that edge; see
 | `colcon` finds no packages | Repository cloned into `~/ros2_ws/src` instead of as `~/ros2_ws` | Clone one level higher |
 | Python changes have no effect | Built without `--symlink-install` | Rebuild with the flag |
 | Robot model jumps in RViz | More than one publisher of `odom -> base_footprint` | Check the DiffDrive plugin, the OdometryPublisher and the EKF |
-| Nav2 does not start | No saved map | Run the mapping first; see [Usage](USAGE.md#1-slam-and-mapping) |
+| Nav2 does not start | No saved map | Run the mapping first; see [Usage](2_USAGE.md#1-slam-and-mapping) |
 | New asset directory missing in `share/` | Directory not listed in `setup.py` `data_files` | Add it there and rebuild |
 | Serial permission denied | User not in `dialout` | `sudo usermod -aG dialout $USER`, then log in again |
 
@@ -165,6 +165,6 @@ model that jumps in RViz indicates a second publisher of that edge; see
 
 ## Further documentation
 
-- [USAGE.md](USAGE.md): SLAM, navigation and lane-keeping controllers
-- [ROBOT_OPERATION.md](ROBOT_OPERATION.md): operation of the physical robot
+- [2_USAGE.md](2_USAGE.md): SLAM, navigation and lane-keeping controllers
+- [3_ROBOT_OPERATION.md](3_ROBOT_OPERATION.md): operation of the physical robot
 - [Mathematical Model](../assets/Mathematical%20Model/README.md): kinematics, control and parameters

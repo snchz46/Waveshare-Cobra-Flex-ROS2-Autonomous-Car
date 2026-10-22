@@ -114,7 +114,7 @@ ros2 launch cobraflex navigation.launch.py map:=/ruta/mapa.yaml params_file:=/ru
 ```
 
 Procedimiento completo en el robot real (encendido, bringup, aplicaciones,
-apagado): [docs/ROBOT_OPERATION.md](../../docs/ROBOT_OPERATION.md).
+apagado): [docs/3_ROBOT_OPERATION.md](../../docs/3_ROBOT_OPERATION.md).
 
 ## Ejecutables
 

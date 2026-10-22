@@ -98,7 +98,7 @@ The following documents are referenced rather than repeated:
 | [Kinematics](../../assets/Mathematical%20Model/Kinematics.md) | Skid-steer geometry, forward and inverse kinematics, odometry integration |
 | [Control](../../assets/Mathematical%20Model/Control.md) | `/cmd_vel` chain in Gazebo and on the robot |
 | [Parameters](../../assets/Mathematical%20Model/parameters.md) | Mass, inertia, sensors, limits, firmware constants |
-| [Installation](../INSTALLATION.md) · [Usage](../USAGE.md) | Machine setup, standard commands |
+| [Installation](../1_INSTALLATION.md) · [Usage](../2_USAGE.md) | Machine setup, standard commands |
 | [Worlds](../../src/cobraflex/worlds/README.md) · [Maps](../../src/cobraflex/maps/README.md) | Simulation worlds and saved maps |
 
 ## Identifiers

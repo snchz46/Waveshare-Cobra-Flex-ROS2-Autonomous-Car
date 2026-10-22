@@ -3,8 +3,8 @@
 Operation of the physical Cobra Flex from switching on to switching off:
 connection, bring-up, the applications that run on the robot, shutdown and
 troubleshooting. The guide addresses an operator who knows ROS 2 but not this
-repository. Machine setup is described in [INSTALLATION.md](INSTALLATION.md),
-the simulation in [USAGE.md](USAGE.md) and the theory in
+repository. Machine setup is described in [1_INSTALLATION.md](1_INSTALLATION.md),
+the simulation in [2_USAGE.md](2_USAGE.md) and the theory in
 [docs/concepts](concepts/README.md).
 
 ---
@@ -80,9 +80,9 @@ on it; teleoperation, avoidance and lane keeping do not.
 
 | Item | State |
 | --- | --- |
-| Robot | Ubuntu 22.04 with ROS 2 Humble on the Jetson; this repository built in `~/ros2_ws` together with `sllidar_ros2` and `zed_wrapper` (ZED SDK installed); login in the `dialout` group. Reinstallation: [INSTALLATION.md](INSTALLATION.md#hardware-dependencies) |
+| Robot | Ubuntu 22.04 with ROS 2 Humble on the Jetson; this repository built in `~/ros2_ws` together with `sllidar_ros2` and `zed_wrapper` (ZED SDK installed); login in the `dialout` group. Reinstallation: [1_INSTALLATION.md](1_INSTALLATION.md#hardware-dependencies) |
 | Batteries | Motor battery (3S Li-ion pack in the chassis) and powerbank (Jetson) charged |
-| Lab PC | Ubuntu 22.04, ROS 2 Humble, this repository built in `~/ros2_ws` ([INSTALLATION.md](INSTALLATION.md)), on the lab network |
+| Lab PC | Ubuntu 22.04, ROS 2 Humble, this repository built in `~/ros2_ws` ([1_INSTALLATION.md](1_INSTALLATION.md)), on the lab network |
 | Setup card | One per robot, with the access data ([§3](#3-conventions-and-setup-card)) |
 | Area | Floor free of people and cables; a box or stand that lifts the wheels off the ground for the first motion test |
 
@@ -481,7 +481,7 @@ drives the physical robot.
 | Lane keeping | `ros2 launch cobraflex lane_keeper_gazebo.launch.py` (own world, without `gazebo.launch.py`) |
 
 The simulation launch files default to `use_sim_time:=true` and open RViz
-themselves. Details and world selection: [USAGE.md](USAGE.md).
+themselves. Details and world selection: [2_USAGE.md](2_USAGE.md).
 
 ---
 

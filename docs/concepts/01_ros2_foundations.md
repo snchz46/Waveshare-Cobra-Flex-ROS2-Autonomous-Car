@@ -164,7 +164,7 @@ ros2 run tf2_tools view_frames          # writes frames.pdf
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-On the robot, start layers 1 and 2 as described in [Usage](../USAGE.md) §5 and
+On the robot, start layers 1 and 2 as described in [Usage](../2_USAGE.md) §5 and
 run the same inspection commands from the lab PC with the same
 `ROS_DOMAIN_ID` ([09](09_multi_machine_networking.md)).
 

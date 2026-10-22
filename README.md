@@ -120,7 +120,7 @@ it, known pitfalls and test commands. Index: **[docs/concepts](docs/concepts/REA
 - **Velocity envelope.** Nav2 plans within 0.35 m/s and 2.0 rad/s; the driver
   clamps all commands to 0.53 m/s and 6.0 rad/s before the firmware.
 - **Procedure.** Switching on, bring-up, applications and shutdown of the
-  robot: [docs/ROBOT_OPERATION.md](docs/ROBOT_OPERATION.md).
+  robot: [docs/3_ROBOT_OPERATION.md](docs/3_ROBOT_OPERATION.md).
 
 ---
 
@@ -147,7 +147,7 @@ ros2 launch safety_cage lane_following.launch.py        # PD baseline under the 
 
 The safety-cage launch requires the Python library `cage` of the thesis
 repository, which this repository does not contain
-([ROBOT_OPERATION.md §7.7](docs/ROBOT_OPERATION.md#77-components-not-operable-from-this-repository-alone)).
+([3_ROBOT_OPERATION.md §7.7](docs/3_ROBOT_OPERATION.md#77-components-not-operable-from-this-repository-alone)).
 
 Physical robot, commands on the robot over SSH:
 
@@ -156,9 +156,9 @@ ros2 launch cobraflex cobraflex_bringup.launch.xml use_rviz:=false   # descripti
 ros2 launch cobraflex cobraflex_sensors.launch.xml                   # LiDAR + ZED Mini + CSI camera + EKF
 ```
 
-Setup: **[docs/INSTALLATION.md](docs/INSTALLATION.md)** · Simulation:
-**[docs/USAGE.md](docs/USAGE.md)** · Physical robot:
-**[docs/ROBOT_OPERATION.md](docs/ROBOT_OPERATION.md)**.
+Setup: **[docs/1_INSTALLATION.md](docs/1_INSTALLATION.md)** · Simulation:
+**[docs/2_USAGE.md](docs/2_USAGE.md)** · Physical robot:
+**[docs/3_ROBOT_OPERATION.md](docs/3_ROBOT_OPERATION.md)**.
 
 ---
 
@@ -378,9 +378,9 @@ list: [`src/cobraflex/worlds/README.md`](src/cobraflex/worlds/README.md).
 | --- | --- |
 | **[Lab](lab/README.md)** | Lab session code completed by the students |
 | **[Concepts](docs/concepts/README.md)** | Theory of each subsystem and its implementation, mapped to the lectures |
-| **[Installation](docs/INSTALLATION.md)** | Machine setup, hardware dependencies, troubleshooting |
-| **[Usage](docs/USAGE.md)** | SLAM, navigation, lane keeping, hardware bring-up, debugging |
-| **[Robot operation](docs/ROBOT_OPERATION.md)** | Physical robot step by step: switching on, bring-up, teleoperation, LiDAR avoidance, SLAM, Nav2, lane keeping, shutdown, troubleshooting |
+| **[Installation](docs/1_INSTALLATION.md)** | Machine setup, hardware dependencies, troubleshooting |
+| **[Usage](docs/2_USAGE.md)** | SLAM, navigation, lane keeping, hardware bring-up, debugging |
+| **[Robot operation](docs/3_ROBOT_OPERATION.md)** | Physical robot step by step: switching on, bring-up, teleoperation, LiDAR avoidance, SLAM, Nav2, lane keeping, shutdown, troubleshooting |
 | **[Mathematical Model](assets/Mathematical%20Model/README.md)** | Kinematics, control architecture, parameter reference |
 | **[Teleop GUI](src/cobraflex_teleop_gui/README.md)** | Qt teleoperation window and its limits |
 | **[Worlds](src/cobraflex/worlds/README.md)** | SDF worlds and texture generators |
@@ -402,7 +402,7 @@ The repository is the ROS 2 workspace root. It contains `src/`, and
 │   ├── session1/                    # circle_driver, obstacle_monitor, launch and parameter file
 │   └── session2/                    # emergency_brake_node.py
 ├── docs/
-│   ├── INSTALLATION.md · USAGE.md · ROBOT_OPERATION.md
+│   ├── 1_INSTALLATION.md · 2_USAGE.md · 3_ROBOT_OPERATION.md
 │   └── concepts/                    # 01-09: theory and implementation per lecture
 ├── assets/                          # Documentation media and CAD (not built)
 │   ├── 3d-models/                   # STL / STEP for chassis and sensor mounts
