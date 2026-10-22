@@ -49,7 +49,7 @@
 | <img src="assets/videos/sim_camera_policy_cage.gif" width="400"/> | <img src="assets/videos/navigation.gif" width="400"/> |
 | <sub>Gazebo: PPO policy on <code>complex_b</code>; RViz shows the CV lane estimate and the policy input</sub> | <sub>Nav2 goal navigation in a mapped world</sub> |
 
-| SLAM and mapping | Navigation with SLAM |
+| SLAM | Navigation with SLAM |
 |:---:|:---:|
 | <img src="assets/videos/mapping.gif" width="400"/> | <img src="assets/videos/navigation2_with_slam.gif" width="400"/> |
 | <sub>Occupancy grid built online with SLAM Toolbox</sub> | <sub>Simultaneous navigation and mapping</sub> |

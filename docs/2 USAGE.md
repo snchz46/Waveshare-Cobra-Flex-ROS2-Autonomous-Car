@@ -13,17 +13,23 @@ Each command runs in its own terminal with
 
 ## Contents
 
-- [1. SLAM and mapping](#1-slam-and-mapping)
-- [2. Autonomous navigation](#2-autonomous-navigation)
-- [3. Lane keeping](#3-lane-keeping)
-- [4. Obstacle avoidance](#4-obstacle-avoidance)
-- [5. Physical robot](#5-physical-robot)
-- [6. World selection](#6-world-selection)
-- [7. Inspection and debugging](#7-inspection-and-debugging)
+- [Usage](#usage)
+  - [Contents](#contents)
+  - [1. Simulation in Gazebo](#1-simulation-in-gazebo)
+    - [1. SLAM and mapping](#1-slam-and-mapping)
+    - [2. Autonomous navigation](#2-autonomous-navigation)
+    - [3. Lane keeping](#3-lane-keeping)
+    - [4. Obstacle avoidance](#4-obstacle-avoidance)
+  - [2. Physical robot](#2-physical-robot)
+  - [6. World selection for Simulation in Gazebo](#6-world-selection-for-simulation-in-gazebo)
+  - [7. Inspection and debugging](#7-inspection-and-debugging)
+  - [Further documentation](#further-documentation)
 
 ---
 
-## 1. SLAM and mapping
+## 1. Simulation in Gazebo
+
+### 1. SLAM and mapping
 
 ```bash
 # Terminal 1: simulation (obstacles.world)
@@ -56,7 +62,7 @@ loop closure. See [parameters.md §5.1](../assets/Mathematical%20Model/parameter
 
 ---
 
-## 2. Autonomous navigation
+### 2. Autonomous navigation
 
 Prerequisite: a saved map.
 
@@ -90,7 +96,7 @@ configured for the robot footprint (0.228 × 0.180 m, circumscribed radius
 
 ---
 
-## 3. Lane keeping
+### 3. Lane keeping
 
 Lane keeping uses its own world and controller, independent of the SLAM/Nav2
 stack.
@@ -109,7 +115,7 @@ on the Jetson CSI camera.
 
 ---
 
-## 4. Obstacle avoidance
+### 4. Obstacle avoidance
 
 Reactive controller without map or planner:
 
@@ -124,7 +130,7 @@ physical robot: [ROBOT_OPERATION.md §7.2](ROBOT_OPERATION.md#72-lidar-obstacle-
 
 ---
 
-## 5. Physical robot
+## 2. Physical robot
 
 ```bash
 # On the robot, over SSH; RViz runs on the lab PC
@@ -159,7 +165,7 @@ fails. Every new `/cmd_vel` publisher must be consistent with it.
 
 ---
 
-## 6. World selection
+## 6. World selection for Simulation in Gazebo
 
 ```bash
 ros2 launch cobraflex gazebo_mesh.launch.py world:=oval_complex gui:=true
@@ -227,6 +233,7 @@ colcon test-result --verbose
 ## Further documentation
 
 - [INSTALLATION.md](INSTALLATION.md): setup from a clean machine
+- [Cobraflex_Wiki](https://www.waveshare.com/wiki/Cobra_Flex): Platform specifications directly from manufacturer
 - [ROBOT_OPERATION.md](ROBOT_OPERATION.md): operation of the physical robot
 - [Mathematical Model](../assets/Mathematical%20Model/README.md): kinematics, control, parameters
 - [`src/cobraflex/config/`](../src/cobraflex/config/): all tunable parameters, with rationale in comments
