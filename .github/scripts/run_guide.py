@@ -34,7 +34,13 @@ def main(path):
             script = "\n".join(lines)
             name = f"{title} / block {i}"
             print(f"\n::group::{name}\n{script}", flush=True)
-            rc = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script]).returncode
+            # stdin closed: a command that prompts fails instead of waiting.
+            try:
+                rc = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+                                    stdin=subprocess.DEVNULL, timeout=1800).returncode
+            except subprocess.TimeoutExpired:
+                rc = 124
+                print(f"::error title=Guide step timed out::{name} exceeded 30 min")
             print("::endgroup::", flush=True)
             if rc != 0:
                 print(f"::error title=Guide step failed::{path}: {name} exited with {rc}")

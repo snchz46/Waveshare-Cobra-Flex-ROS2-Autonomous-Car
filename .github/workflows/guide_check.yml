@@ -42,10 +42,14 @@ jobs:
       - name: Container prerequisites (not part of the guide)
         run: |
           apt-get update
-          apt-get install -y sudo git python3 ca-certificates
-          # Non-interactive apt for the unmodified guide commands.
+          apt-get install -y sudo git python3 ca-certificates tzdata
+          # Non-interactive apt for the unmodified guide commands. sudo resets
+          # DEBIAN_FRONTEND, so debconf is also set to Noninteractive globally;
+          # otherwise tzdata and keyboard-configuration wait for input.
           printf 'APT::Get::Assume-Yes "true";\nDpkg::Options { "--force-confdef"; "--force-confold"; };\n' \
             > /etc/apt/apt.conf.d/90-ci
+          echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+          echo 'Defaults env_keep += "DEBIAN_FRONTEND"' > /etc/sudoers.d/90-ci
 
       - uses: actions/checkout@v4
 
@@ -54,19 +58,23 @@ jobs:
 
       - name: Installation as written in docs/1_INSTALLATION.md
         if: matrix.install == 'guide'
-        run: python3 .github/scripts/run_guide.py docs/1_INSTALLATION.md
+        timeout-minutes: 60
+        run: python3 .github/scripts/run_guide.py docs/1_INSTALLATION.md < /dev/null
 
       - name: Reference installation (Humble + Gazebo Harmonic)
         if: matrix.install == 'reference'
-        run: bash .github/scripts/install_reference.sh
+        timeout-minutes: 60
+        run: bash .github/scripts/install_reference.sh < /dev/null
 
       - name: Headless display (not part of the guide)
         if: always()
+        timeout-minutes: 10
         run: apt-get install -y xvfb mesa-utils libgl1-mesa-dri
 
       - name: Simulation smoke test (docs/2_USAGE.md, lab/README.md)
         if: always()
-        run: bash .github/scripts/sim_smoke_test.sh
+        timeout-minutes: 60
+        run: bash .github/scripts/sim_smoke_test.sh < /dev/null
 
       - name: Upload logs
         if: always()
