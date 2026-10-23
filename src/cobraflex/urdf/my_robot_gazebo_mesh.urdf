@@ -240,7 +240,7 @@
     <joint name="camera_joint_lane" type="fixed">
         <parent link="body_link"/>
         <child link="camera_link_lane"/>
-        <origin xyz="${body_length/2 + 0.02} 0 -0.03" rpy="0 0 0"/>
+        <origin xyz="${body_length/2 + 0.01} 0 -0.03" rpy="0 0.30 0"/>
     </joint>
 
     <link name="camera_link_optical_lane"></link>
