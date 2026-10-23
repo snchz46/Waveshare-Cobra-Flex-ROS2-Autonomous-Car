@@ -34,9 +34,11 @@ def main(path):
             script = "\n".join(lines)
             name = f"{title} / block {i}"
             print(f"\n::group::{name}\n{script}", flush=True)
-            # stdin closed: a command that prompts fails instead of waiting.
+            # Interactive shell (-i): each block starts like a new terminal and
+            # reads ~/.bashrc, as a student's terminal does. stdin closed: a
+            # command that prompts fails instead of waiting.
             try:
-                rc = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+                rc = subprocess.run(["bash", "-i", "-e", "-o", "pipefail", "-c", script],
                                     stdin=subprocess.DEVNULL, timeout=1800).returncode
             except subprocess.TimeoutExpired:
                 rc = 124

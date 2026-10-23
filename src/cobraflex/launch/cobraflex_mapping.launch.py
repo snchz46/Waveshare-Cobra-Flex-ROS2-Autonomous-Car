@@ -15,7 +15,6 @@ def generate_launch_description():
     """Build the hardware mapping launch description."""
     pkg_share = get_package_share_directory("cobraflex")
 
-
     slam = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(

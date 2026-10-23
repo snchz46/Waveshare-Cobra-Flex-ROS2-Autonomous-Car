@@ -12,7 +12,6 @@ along the image Y axis (tall images).
 from PIL import Image, ImageDraw, ImageFilter
 import random
 import os
-import math
 
 PX_PER_M = 500
 ASPHALT = (0, 0, 0)

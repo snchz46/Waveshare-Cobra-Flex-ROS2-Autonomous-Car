@@ -38,6 +38,7 @@ jobs:
       DEBIAN_FRONTEND: noninteractive
       TZ: Etc/UTC
       LOG_DIR: /tmp/smoke_logs
+      GUIDE_VARIANT: install=${{ matrix.install }}
     steps:
       - name: Container prerequisites (not part of the guide)
         run: |

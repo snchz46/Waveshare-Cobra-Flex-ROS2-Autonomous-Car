@@ -24,7 +24,6 @@ Conventions (shared with the rest of road_assets):
 from __future__ import annotations
 
 import argparse
-import math
 import random
 from pathlib import Path
 
@@ -103,7 +102,7 @@ def _edges(draw, width_m, length_m, color=LINE_WHITE, sides=("left", "right")):
 
 def _dashed_centre(draw, width_m, length_m, color=LINE_WHITE, y0_m=0.0, y1_m=None):
     line_w = m_to_px(LINE_WIDTH_M)
-    w, h = m_to_px(width_m), m_to_px(length_m)
+    w = m_to_px(width_m)
     if y1_m is None:
         y1_m = length_m
     cx = w // 2
@@ -142,7 +141,8 @@ def _patches(img, n=6, seed=2):
         x = random.randint(m_to_px(0.02), max(m_to_px(0.02) + 1, w - pw - m_to_px(0.02)))
         y = random.randint(m_to_px(0.10), max(m_to_px(0.10) + 1, h - ph - m_to_px(0.10)))
         shade = random.randint(20, 45)
-        draw.rectangle([(x, y), (x + pw, y + ph)], fill=(shade, shade, shade + random.randint(-3, 3)))
+        draw.rectangle([(x, y), (x + pw, y + ph)],
+                       fill=(shade, shade, shade + random.randint(-3, 3)))
     return img
 
 
@@ -174,7 +174,8 @@ def _wet_sheen(img, seed=5):
         for y in range(y0, min(y0 + band_h, h)):
             for x in range(w):
                 r, g, b = px[x, y]
-                px[x, y] = (min(255, r + strength // 3), min(255, g + strength // 2), min(255, b + strength))
+                px[x, y] = (min(255, r + strength // 3), min(255, g + strength // 2),
+                            min(255, b + strength))
     return img
 
 
@@ -183,14 +184,18 @@ def _draw_arrow(draw, cx_px, cy_px, direction="straight", size_m=0.18):
     shaft_w, head_w, head_len = m_to_px(0.03), m_to_px(0.08), m_to_px(0.06)
     if direction == "straight":
         top, bot = cy_px - size_px // 2, cy_px + size_px // 2
-        draw.rectangle([(cx_px - shaft_w // 2, top + head_len), (cx_px + shaft_w // 2, bot)], fill=LINE_WHITE)
-        draw.polygon([(cx_px, top), (cx_px - head_w // 2, top + head_len), (cx_px + head_w // 2, top + head_len)], fill=LINE_WHITE)
+        draw.rectangle([(cx_px - shaft_w // 2, top + head_len), (cx_px + shaft_w // 2, bot)],
+                       fill=LINE_WHITE)
+        draw.polygon([(cx_px, top), (cx_px - head_w // 2, top + head_len),
+                      (cx_px + head_w // 2, top + head_len)], fill=LINE_WHITE)
     elif direction == "right":
         left, right = cx_px - size_px // 3, cx_px + size_px // 2
         bot = cy_px + size_px // 3
-        draw.rectangle([(left, cy_px - shaft_w // 2), (right - head_len, cy_px + shaft_w // 2)], fill=LINE_WHITE)
+        draw.rectangle([(left, cy_px - shaft_w // 2), (right - head_len, cy_px + shaft_w // 2)],
+                       fill=LINE_WHITE)
         draw.rectangle([(left, cy_px - shaft_w // 2), (left + shaft_w, bot)], fill=LINE_WHITE)
-        draw.polygon([(right, cy_px), (right - head_len, cy_px - head_w // 2), (right - head_len, cy_px + head_w // 2)], fill=LINE_WHITE)
+        draw.polygon([(right, cy_px), (right - head_len, cy_px - head_w // 2),
+                      (right - head_len, cy_px + head_w // 2)], fill=LINE_WHITE)
 
 
 # --- theme assembly ----------------------------------------------------------
@@ -259,8 +264,9 @@ def _render(theme: str, length_m: float, width_m: float) -> Image.Image:
         g0 = max(0, h_px // 2 - gap // 2)
         g1 = min(h_px, h_px // 2 + gap // 2)
         d.rectangle([(0, 0), (line_w - 1, h_px - 1)], fill=LINE_WHITE)            # left edge full
-        d.rectangle([(w_px - line_w, 0), (w_px - 1, g0 - 1)], fill=LINE_WHITE)    # right edge before gap
-        d.rectangle([(w_px - line_w, g1), (w_px - 1, h_px - 1)], fill=LINE_WHITE)  # right edge after gap
+        # right edge before and after the gap
+        d.rectangle([(w_px - line_w, 0), (w_px - 1, g0 - 1)], fill=LINE_WHITE)
+        d.rectangle([(w_px - line_w, g1), (w_px - 1, h_px - 1)], fill=LINE_WHITE)
         random.seed(70)
         px = img.load()
         for y in range(g0, g1):
@@ -289,7 +295,8 @@ def _render(theme: str, length_m: float, width_m: float) -> Image.Image:
             d.rectangle([(x, z0), (x + stripe_w - 1, z1 - 1)], fill=LINE_WHITE)
             x += stripe_w + stripe_gap
         stop_y = m_to_px(z0_m - 0.05)
-        d.rectangle([(line_w, stop_y - line_w - 1), (w_px - line_w - 1, stop_y - 1)], fill=LINE_WHITE)
+        d.rectangle([(line_w, stop_y - line_w - 1), (w_px - line_w - 1, stop_y - 1)],
+                    fill=LINE_WHITE)
         return img
 
     if theme == "double_solid":
@@ -300,8 +307,10 @@ def _render(theme: str, length_m: float, width_m: float) -> Image.Image:
         _edges(d, width_m, length_m)
         cx = w_px // 2
         gap_between = m_to_px(0.02)
-        d.rectangle([(cx - gap_between // 2 - line_w, 0), (cx - gap_between // 2 - 1, h_px - 1)], fill=LINE_WHITE)
-        d.rectangle([(cx + gap_between // 2, 0), (cx + gap_between // 2 + line_w - 1, h_px - 1)], fill=LINE_WHITE)
+        d.rectangle([(cx - gap_between // 2 - line_w, 0),
+                     (cx - gap_between // 2 - 1, h_px - 1)], fill=LINE_WHITE)
+        d.rectangle([(cx + gap_between // 2, 0),
+                     (cx + gap_between // 2 + line_w - 1, h_px - 1)], fill=LINE_WHITE)
         return img
 
     if theme == "arrows":

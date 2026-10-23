@@ -288,7 +288,10 @@ def main(args=None):
         pass
     finally:
         if node is not None:
-            node._publish_zero()
+            # After an external shutdown the context is invalid and publish()
+            # raises RCLError; the stop command is sent only while it is valid.
+            if rclpy.ok():
+                node._publish_zero()
             node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

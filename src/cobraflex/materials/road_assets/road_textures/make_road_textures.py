@@ -79,7 +79,8 @@ draw_continuous_edge_lines(draw1, SINGLE_TOTAL_M)
 save(
     img1,
     "road_single_lane_0p265m_x_10m.png",
-    f"single lane {LANE_USEFUL_M*100:.1f} cm useful + 2x1 cm edges = {SINGLE_TOTAL_M*100:.1f} cm total",
+    f"single lane {LANE_USEFUL_M*100:.1f} cm useful + 2x1 cm edges = "
+    f"{SINGLE_TOTAL_M*100:.1f} cm total",
 )
 
 img2 = make_image(TWO_LANE_TOTAL_M)

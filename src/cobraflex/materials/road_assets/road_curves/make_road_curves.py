@@ -114,8 +114,6 @@ def make_curve_tile(radius_m, angle_deg):
 
     outer_r_m = radius_m + HALF_WIDTH_M
     inner_r_m = max(0.0, radius_m - HALF_WIDTH_M)
-    outer_r_px = outer_r_m * PX_PER_M
-    inner_r_px = inner_r_m * PX_PER_M
 
     theta_start = -math.pi / 2
     theta_end = theta_start + math.radians(angle_deg)
@@ -141,13 +139,7 @@ def make_curve_tile(radius_m, angle_deg):
     asphalt_poly = outer_points + inner_points
     draw.polygon(asphalt_poly, fill=ASPHALT)
 
-    line_half_px = max(1, int(round(LINE_WIDTH_M * PX_PER_M / 2)))
-
     def draw_arc_line_at_radius(r_m, dashed=False):
-        r_px = r_m * PX_PER_M
-        r_outer = r_px + line_half_px
-        r_inner = max(0, r_px - line_half_px)
-
         if dashed:
             arc_len_m = r_m * math.radians(angle_deg)
             period_m = DASH_MARK_M + DASH_GAP_M

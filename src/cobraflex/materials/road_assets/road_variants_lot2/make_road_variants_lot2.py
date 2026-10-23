@@ -11,7 +11,7 @@ All variants share the same physical spec as lot 1:
   - 500 px/m resolution
 """
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 import random
 import math
 import os
@@ -72,7 +72,6 @@ def draw_dashed_centreline(draw, width_m, length_m, color=LINE_WHITE,
                            y_start_m=0.0, y_end_m=None):
     line_w = m_to_px(LINE_WIDTH_M)
     w = m_to_px(width_m)
-    h = m_to_px(length_m)
     if y_end_m is None:
         y_end_m = length_m
     cx = w // 2
@@ -135,6 +134,7 @@ draw = ImageDraw.Draw(img)
 draw_continuous_edges(draw, TWO_LANE_TOTAL_M, length)
 draw_dashed_centreline(draw, TWO_LANE_TOTAL_M, length)
 
+
 def draw_arrow(draw, cx_px, cy_px, direction="straight", size_m=0.18):
     size_px = m_to_px(size_m)
     shaft_w = m_to_px(0.03)
@@ -175,6 +175,7 @@ def draw_arrow(draw, cx_px, cy_px, direction="straight", size_m=0.18):
              (right - head_len, cy_px + head_w // 2)],
             fill=LINE_WHITE,
         )
+
 
 right_lane_cx = line_w + (w_px - 3 * line_w) // 4 + line_w
 draw_arrow(draw, cx_px=right_lane_cx, cy_px=m_to_px(1.2), direction="straight")
@@ -322,6 +323,8 @@ draw = ImageDraw.Draw(img)
 draw_continuous_edges(draw, TWO_LANE_TOTAL_M, length)
 draw_dashed_centreline(draw, TWO_LANE_TOTAL_M, length)
 random.seed(80)
+
+
 def draw_leaf(draw, cx, cy, size_px, colour):
     pts = []
     for ang_deg in range(0, 360, 30):
@@ -330,6 +333,7 @@ def draw_leaf(draw, cx, cy, size_px, colour):
         pts.append((cx + r_var * math.cos(ang),
                     cy + r_var * math.sin(ang)))
     draw.polygon(pts, fill=colour)
+
 
 leaf_palette = [
     (110, 55, 20), (130, 70, 25), (155, 90, 30),

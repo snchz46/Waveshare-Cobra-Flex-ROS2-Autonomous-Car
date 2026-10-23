@@ -135,12 +135,12 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "spawn_x",
-                default_value="-2.841", #oval: 0.0 a: -3.111 b: -2.8
+                default_value="-2.841",  # oval: 0.0, a: -3.111, b: -2.8
                 description="Robot spawn X position.",
             ),
             DeclareLaunchArgument(
                 "spawn_y",
-                default_value="-1.623", #oval: -0.1225 a: 1.105 b: -1.5
+                default_value="-1.623",  # oval: -0.1225, a: 1.105, b: -1.5
                 description="Robot spawn Y position.",
             ),
             DeclareLaunchArgument(
@@ -150,7 +150,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "spawn_yaw",
-                default_value="-0.321", #oval: 0.0 a: 0.755 b: -0.321
+                default_value="-0.321",  # oval: 0.0, a: 0.755, b: -0.321
                 description="Robot spawn yaw in radians.",
             ),
             gazebo_launch,

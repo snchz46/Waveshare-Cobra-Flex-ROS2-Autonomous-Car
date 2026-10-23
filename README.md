@@ -129,7 +129,9 @@ it, known pitfalls and test commands. Index: **[docs/concepts](docs/concepts/REA
 ```bash
 # 1. Clone as the workspace root (the repository contains src/)
 git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git ~/ros2_ws
-cd ~/ros2_ws && rosdep install --from-paths src --ignore-src -r -y
+cd ~/ros2_ws && source /opt/ros/humble/setup.bash
+rosdep install --from-paths src --ignore-src -r -y \
+  --skip-keys "ros_gz_sim ros_gz_bridge sllidar_ros2 zed_wrapper"
 
 # 2. Build
 colcon build --symlink-install && source install/setup.bash

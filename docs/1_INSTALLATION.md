@@ -30,12 +30,30 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-a
 
 sudo apt update && sudo apt upgrade
 sudo apt install ros-humble-desktop
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 ```
+
+The last line loads the ROS 2 environment in every new terminal.
 
 ## 2. Gazebo Harmonic
 
+Gazebo Harmonic is not available in the Ubuntu or ROS repositories; it is
+installed from the OSRF repository. With ROS 2 Humble, the ROS–Gazebo bridge
+for Harmonic is `ros-humble-ros-gzharmonic`. It replaces the
+`ros-humble-ros-gz*` packages, which belong to Gazebo Fortress; the two cannot
+be installed together
+([Gazebo documentation](https://gazebosim.org/docs/harmonic/ros_installation/)).
+
 ```bash
-sudo apt install gz-harmonic ros-humble-ros-gz
+sudo apt install curl lsb-release gnupg
+sudo curl -sSL https://packages.osrfoundation.org/gazebo.gpg \
+  -o /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] \
+  https://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" \
+  | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+
+sudo apt update
+sudo apt install gz-harmonic ros-humble-ros-gzharmonic
 ```
 
 ## 3. Project dependencies
@@ -54,7 +72,7 @@ sudo rosdep init && rosdep update
 
 | Package | Role |
 | --- | --- |
-| `ros-humble-ros-gz` | Gazebo Harmonic ↔ ROS 2 bridge |
+| `ros-humble-ros-gzharmonic` | Gazebo Harmonic ↔ ROS 2 bridge (section 2) |
 | `ros-humble-navigation2`, `ros-humble-nav2-bringup` | Nav2 stack and launch files |
 | `ros-humble-slam-toolbox` | Graph SLAM, occupancy grid |
 | `ros-humble-robot-localization` | EKF; publishes `odom -> base_footprint` on hardware |
@@ -73,13 +91,21 @@ sudo rosdep init && rosdep update
 ```bash
 git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git ~/ros2_ws
 cd ~/ros2_ws
-rosdep install --from-paths src --ignore-src -r -y
+source /opt/ros/humble/setup.bash
+rosdep install --from-paths src --ignore-src -r -y \
+  --skip-keys "ros_gz_sim ros_gz_bridge sllidar_ros2 zed_wrapper"
 ```
+
+rosdep requires the ROS 2 environment (`ROS_DISTRO`); without it, it installs
+nothing and still exits without an error. The skipped keys are provided by
+`ros-humble-ros-gzharmonic` (section 2) and by the hardware packages built from
+source on the robot ([Hardware dependencies](#hardware-dependencies)).
 
 ## 5. Build
 
 ```bash
 cd ~/ros2_ws
+source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
