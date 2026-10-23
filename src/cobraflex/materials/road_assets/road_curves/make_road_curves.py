@@ -58,7 +58,8 @@ def m_to_px(m):
 
 
 def compute_bbox(radius_m, angle_deg):
-    """Compute the tight bounding box for a left-turning arc.
+    """
+    Compute the tight bounding box for a left-turning arc.
 
     Entry is at (0, 0) on the centreline, heading +Y.
     Centre of curvature is at (-R, 0).
@@ -119,8 +120,13 @@ def make_curve_tile(radius_m, angle_deg):
     theta_end = theta_start + math.radians(angle_deg)
 
     def arc_theta_to_pil_angle(theta_rad):
-        """PIL: 0 deg = +X axis, increases CLOCKWISE. Image Y points down.
-        World Y points up. So world_theta maps to PIL angle by negation."""
+        """
+        Convert a world arc angle to a PIL arc angle.
+
+        PIL measures 0 deg along +X and increases clockwise, because the image
+        Y axis points down while the world Y axis points up; the world angle
+        therefore maps to the PIL angle by negation.
+        """
         return -math.degrees(theta_rad)
 
     n_poly = max(200, int(angle_deg * 4))

@@ -76,7 +76,8 @@ class AvoidanceWithLights(Node):
 
     @staticmethod
     def _sector_min(msg, ranges, start_ang, end_ang):
-        """Return the closest valid range in an angular sector.
+        """
+        Return the closest valid range in an angular sector.
 
         Angles are relative to the robot forward axis; the caller has already
         added `front_offset_rad`.
@@ -202,7 +203,7 @@ class AvoidanceWithLights(Node):
         self.target_lin = 0.0 if front < self.hard_stop_distance else 0.15
 
     def _scan_is_stale(self):
-        """True when no scan arrived within `scan_timeout` seconds."""
+        """Return True when no scan arrived within `scan_timeout` seconds."""
         if self.scan_timeout <= 0.0 or self.last_scan_time is None:
             return False
 

@@ -1,4 +1,5 @@
-"""Reproject the simulated ZED Mini depth image into a point cloud.
+"""
+Reproject the simulated ZED Mini depth image into a point cloud.
 
 Shared by gazebo.launch.py and gazebo_mesh.launch.py and kept in a separate
 file, so that the rationale below exists in one place only.

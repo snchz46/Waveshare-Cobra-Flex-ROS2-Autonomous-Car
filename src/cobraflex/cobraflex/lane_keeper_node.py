@@ -18,7 +18,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 
 def _gstreamer_pipeline(sensor_id=0, width=1280, height=720, fps=60, flip_method=0):
-    """GStreamer pipeline string for the Jetson CSI camera (nvarguscamerasrc)."""
+    """Build the GStreamer pipeline string for the Jetson CSI camera (nvarguscamerasrc)."""
     return (
         f"nvarguscamerasrc sensor-id={sensor_id} ! "
         f"video/x-raw(memory:NVMM), width=(int){width}, height=(int){height}, "
@@ -338,7 +338,7 @@ class LaneKeeperNode(Node):
         return cfg
 
     def _create_control_window(self):
-        """OpenCV trackbar window for live threshold/ROI tuning (debug mode)."""
+        """Open the OpenCV trackbar window for live threshold/ROI tuning (debug mode)."""
         try:
             cv2.namedWindow(self.controls_window_name, cv2.WINDOW_NORMAL)
             cv2.resizeWindow(self.controls_window_name, 560, 560)
@@ -383,7 +383,7 @@ class LaneKeeperNode(Node):
             )
 
     def _get_control_window_values(self):
-        """Current trackbar values as config overrides."""
+        """Return the current trackbar values as config overrides."""
         return {
             "roi_start_pct": cv2.getTrackbarPos("ROI start %", self.controls_window_name),
             "threshold_val": cv2.getTrackbarPos("Threshold", self.controls_window_name),
@@ -428,7 +428,7 @@ class LaneKeeperNode(Node):
         return msg
 
     def _build_camera_info_msg(self, width, height, stamp, frame_id, hfov_deg):
-        """CameraInfo with a pinhole model derived from the configured HFOV."""
+        """Build a CameraInfo with a pinhole model derived from the configured HFOV."""
         msg = CameraInfo()
         msg.header.stamp = stamp
         msg.header.frame_id = frame_id
@@ -471,7 +471,7 @@ class LaneKeeperNode(Node):
         cmd,
         confidence,
     ):
-        """RViz markers for the detected line points and the steering target."""
+        """Build the RViz markers for the detected line points and the steering target."""
         markers = MarkerArray()
         frame_id = cfg["marker_frame_id"]
         color_r, color_g, color_b = _status_color(status)
@@ -724,7 +724,7 @@ class LaneKeeperNode(Node):
         }
 
     def _timer_callback(self):
-        """Main control tick: grab a frame, process, publish /cmd_vel and visuals."""
+        """Run one control tick: grab a frame, process, publish /cmd_vel and visuals."""
         cfg = self._read_cfg()
 
         ret, frame = self.cap.read()

@@ -2,11 +2,13 @@
 """Wait for a ROS 2 condition: a message on a topic, or a TF transform.
 
     probe.py --topic /scan [--expr "len(msg.ranges) > 0"] [--print "msg.header.frame_id"]
+    probe.py --topic /camera/image_raw_lane --save frame.png
     probe.py --tf odom base_footprint
 
 The subscription copies the reliability and durability of the first publisher,
 so sensor topics (best effort) and latched topics (transient local) are both
-received. Exit status 0 when the condition holds before the timeout.
+received. --save writes the matching sensor_msgs/Image (rgb8, bgr8 or mono8)
+to a PNG file. Exit status 0 when the condition holds before the timeout.
 """
 import argparse
 import math
@@ -19,7 +21,20 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPo
 from rosidl_runtime_py.utilities import get_message
 
 
-def wait_topic(node, topic, expr, pexpr, deadline):
+def save_image(msg, path):
+    """Write a sensor_msgs/Image to an image file."""
+    import cv2
+    import numpy as np
+
+    channels = 1 if msg.encoding == "mono8" else 3
+    rows = np.frombuffer(bytes(msg.data), dtype=np.uint8).reshape(msg.height, msg.step)
+    img = rows[:, : msg.width * channels].reshape(msg.height, msg.width, channels)
+    if msg.encoding == "rgb8":
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(path, img)
+
+
+def wait_topic(node, topic, expr, pexpr, deadline, save=None):
     """Return the printed value when a message satisfies expr, else None."""
     typ = None
     pubs = []
@@ -47,6 +62,8 @@ def wait_topic(node, topic, expr, pexpr, deadline):
         try:
             if eval(expr, {"msg": msg, "math": math}):
                 result["value"] = eval(pexpr, {"msg": msg, "math": math}) if pexpr else "ok"
+                if save:
+                    save_image(msg, save)
         except Exception as exc:  # noqa: BLE001
             result.setdefault("error", repr(exc))
 
@@ -81,6 +98,7 @@ def main():
     ap.add_argument("--topic")
     ap.add_argument("--expr", default="True")
     ap.add_argument("--print", dest="pexpr")
+    ap.add_argument("--save", metavar="PNG")
     ap.add_argument("--tf", nargs=2, metavar=("PARENT", "CHILD"))
     ap.add_argument("--timeout", type=float, default=120.0)
     a = ap.parse_args()
@@ -90,7 +108,7 @@ def main():
     if a.tf:
         value = wait_tf(node, a.tf[0], a.tf[1], deadline)
     else:
-        value = wait_topic(node, a.topic, a.expr, a.pexpr, deadline)
+        value = wait_topic(node, a.topic, a.expr, a.pexpr, deadline, a.save)
     node.destroy_node()
     rclpy.shutdown()
     if value is None:

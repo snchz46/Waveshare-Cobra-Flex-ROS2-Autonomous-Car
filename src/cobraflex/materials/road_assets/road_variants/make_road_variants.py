@@ -87,7 +87,8 @@ def draw_dashed_centreline(draw, width_m, length_m, color=LINE_WHITE):
 
 
 def apply_line_wear(img, width_m, length_m, wear_level=0.3, seed=1):
-    """Erode line pixels stochastically to simulate faded paint.
+    """
+    Erode line pixels stochastically to simulate faded paint.
 
     wear_level is the probability a given line pixel gets darkened or removed.
     """
@@ -231,7 +232,8 @@ def save(img, name, description):
 
 
 def draw_side_road_tee(img, main_width_m, length_m, side_width_m, side_y_m, side_side="right"):
-    """Carve a perpendicular side road opening in the edge line.
+    """
+    Carve a perpendicular side road opening in the edge line.
 
     The side road itself is drawn as asphalt extending to the image edge with
     its own edge lines, so when the main road tile butts up against a side

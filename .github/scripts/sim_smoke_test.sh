@@ -55,6 +55,21 @@ check() { run_check fail "$@"; }
 soft() { run_check warn "$@"; }
 probe() { python3 "$SCRIPTS/probe.py" "$@"; }
 
+lifecycle_active() {  # lifecycle_active <node> <timeout s>
+  local end=$((SECONDS + $2))
+  while [ $SECONDS -lt $end ]; do
+    ros2 lifecycle get "$1" 2>/dev/null | grep -q "^active" && return 0
+    sleep 5
+  done
+  ros2 lifecycle get "$1"
+  return 1
+}
+
+measure() {  # measure <label> <command...>: last output line as an INFO row
+  local label=$1; shift
+  info "$label: $("$@" 2>&1 | tail -n 1)"
+}
+
 # Output of a command must contain a pattern (no tee: it would truncate logs).
 expect_output() {  # expect_output <pattern> <command...>
   local pattern=$1; shift
@@ -159,11 +174,15 @@ else
     "cd $WS && colcon build --packages-select cobraflex --symlink-install \
      && test -e $WS/install/cobraflex/share/cobraflex/maps/cobraflex_map.yaml"
 
+  # Order of docs/2_USAGE.md: initial pose first. AMCL publishes map -> odom only
+  # after an initial pose, and the activation of the planner (global costmap in
+  # the map frame) and of bt_navigator waits for that transform.
   start navigation ros2 launch cobraflex navigation.launch.py rviz:=false
-  check "navigation.launch.py: bt_navigator active" bash -c \
-    'for i in $(seq 1 120); do ros2 lifecycle get /bt_navigator 2>/dev/null | grep -q "^active" && exit 0; sleep 5; done; ros2 lifecycle get /bt_navigator; exit 1'
-  ros2 topic pub --once /initialpose geometry_msgs/msg/PoseWithCovarianceStamped \
+  check "navigation.launch.py: amcl active" lifecycle_active /amcl 600
+  timeout 15 ros2 topic pub -r 1 /initialpose geometry_msgs/msg/PoseWithCovarianceStamped \
     "{header: {frame_id: map}, pose: {pose: {orientation: {w: 1.0}}}}" >>"$LOG_DIR/checks.log" 2>&1
+  check "navigation.launch.py: TF map -> odom (AMCL)" probe --tf map odom --timeout 120
+  check "navigation.launch.py: bt_navigator active" lifecycle_active /bt_navigator 600
   check "navigation.launch.py: /global_costmap/costmap" probe --topic /global_costmap/costmap --timeout 120
   soft "navigation.launch.py: goal 0.4 m ahead reached" expect_output SUCCEEDED \
     timeout 300 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
@@ -189,8 +208,18 @@ else
     && warn "lane_keeper_gazebo_node raises RCLError on Ctrl-C (publishes after shutdown)"
   start lane_keeper_fn ros2 launch cobraflex lane_keeper_gazebo.launch.py \
     gui:=false use_rviz:=false show_debug_windows:=false
-  check "lane_keeper_gazebo.launch.py (no GUI): lane detected, forward command" \
-    probe --topic /cmd_vel --timeout 300 --expr "msg.linear.x > 0.1" --print "msg.angular.z"
+  check "lane_keeper_gazebo.launch.py (no GUI): /camera/image_raw_lane" \
+    probe --topic /camera/image_raw_lane --timeout 240 --save "$LOG_DIR/lane_camera.png"
+  measure "lane keeper camera frame" probe --topic /camera/image_raw_lane --timeout 60 \
+    --print "'%s %dx%d, mean %.1f' % (msg.encoding, msg.width, msg.height, sum(msg.data) / len(msg.data))"
+  measure "lane keeper white mask" probe --topic /lane/mask --timeout 120 --save "$LOG_DIR/lane_mask.png" \
+    --print "'white fraction %.4f' % (sum(1 for v in msg.data if v) / max(1, len(msg.data)))"
+  probe --topic /lane/image_overlay --timeout 60 --save "$LOG_DIR/lane_overlay.png" >/dev/null 2>&1
+  measure "lane keeper /cmd_vel" probe --topic /cmd_vel --timeout 30 \
+    --print "'linear.x %.2f, angular.z %.2f' % (msg.linear.x, msg.angular.z)"
+  check "lane_keeper_gazebo.launch.py (no GUI): lane detected, forward command" bash -c "
+    python3 $SCRIPTS/probe.py --topic /cmd_vel --timeout 300 --expr 'msg.linear.x > 0.1' --print 'msg.angular.z' \
+      || { echo '--- lane_keeper_gazebo_node log ---'; grep -a 'lane_keeper_gazebo_node' '$LOG_DIR/lane_keeper_fn.log' | tail -n 20; exit 1; }"
   check "lane_keeper_gazebo.launch.py (no GUI): robot advances along the lane" bash -c "
     a=\$(python3 $SCRIPTS/probe.py --topic /odom_truth --print 'msg.pose.pose.position.x, msg.pose.pose.position.y' --timeout 30 | tail -1)
     sleep 20

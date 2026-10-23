@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Camera lane keeper for Gazebo.
+"""
+Camera lane keeper for Gazebo.
 
 Rule-based (non-learned) lane-keeping controller and baseline for the RL
 camera agent. It uses the shared

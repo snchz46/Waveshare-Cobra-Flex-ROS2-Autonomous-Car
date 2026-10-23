@@ -18,7 +18,8 @@ from launch_ros.actions import Node
 
 
 def _resolve_world(context):
-    """Resolve `world:=` from a short map name or a full path.
+    """
+    Resolve `world:=` from a short map name or a full path.
 
     A bare token such as ``oval_zebra`` resolves to
     ``<cobraflex_share>/worlds/lane_following_oval_zebra.world``; a token that

@@ -112,7 +112,8 @@ class CobraFlexROSDriver(Node):
             self._turn_lights(True, True)
 
     def _lift_in_place_yaw(self, vx, wz):
-        """Raise a small pure-rotation yaw command to the stiction floor.
+        """
+        Raise a small pure-rotation yaw command to the stiction floor.
 
         Rationale: see the `min_angular_in_place` declaration. Only in-place
         rotations are affected: a zero yaw remains zero, and any command with
@@ -143,7 +144,7 @@ class CobraFlexROSDriver(Node):
         self._update_lights(wz)
 
     def _cmd_is_stale(self):
-        """True when no /cmd_vel arrived within `cmd_timeout` seconds."""
+        """Return True when no /cmd_vel arrived within `cmd_timeout` seconds."""
         if self.cmd_timeout <= 0.0 or self.last_cmd_time is None:
             return False
 
@@ -188,7 +189,8 @@ class CobraFlexROSDriver(Node):
         self.get_logger().info("Requested feedback stream (T=131)")
 
     def _publish_feedback(self, raw):
-        """Parse one feedback line and republish it on the ROS topics.
+        """
+        Parse one feedback line and republish it on the ROS topics.
 
         The T=1001 frame is built by `base_info_feedback()` in the stock
         Cobra_Flex firmware (Cobra_Driver/ugv_advance.h). The published build

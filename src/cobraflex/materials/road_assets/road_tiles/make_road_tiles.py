@@ -1,4 +1,5 @@
-"""Length-parametric road-tile factory (two-lane, 0.52 m).
+"""
+Length-parametric road-tile factory (two-lane, 0.52 m).
 
 Unlike ``road_variants/make_road_variants.py`` and ``road_variants_lot2``
 (which emit fixed 3-10 m PNGs that get UV-compressed when applied to a
