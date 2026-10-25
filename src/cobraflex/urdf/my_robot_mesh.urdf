@@ -20,6 +20,27 @@
     <xacro:property name="wheel_off_x" value="0.060" /> 
     <xacro:property name="wheel_off_y" value="${(chassis_width/2) + (wheel_width/2) + 0.002}" /> 
 
+    <!-- Sensor mounts of the V3 printed body (Inventor assembly
+         "Car HW Prototype V3"), in base_footprint: x from the midpoint between
+         the axles, z from the ground. The sensor joints subtract body_link_z,
+         which is also the source of body_joint, so the sensor poses do not
+         depend on the body geometry of this file.
+           lidar_scan_*  origin of /scan: rotation axis of the RPLIDAR A2 at
+                         the height of its laser plane, 30.8 mm above its base
+           zed_mount_*   mounting point on the bottom face of the ZED Mini,
+                         on the line of its two M2 threads
+           zed_center_*  camera centre (mount + height/2 along the pitched z
+                         axis); also the position of imu_link
+           zed_pitch     cradle pitch, 15 deg nose down -->
+    <xacro:property name="body_link_z" value="${wheel_radius + body_height/2 + chassis_height/2 - 0.01}" />
+    <xacro:property name="lidar_scan_x" value="0.035" />
+    <xacro:property name="lidar_scan_z" value="0.15305" />
+    <xacro:property name="zed_mount_x" value="0.0848" />
+    <xacro:property name="zed_mount_z" value="0.1195" />
+    <xacro:property name="zed_center_x" value="0.0882" />
+    <xacro:property name="zed_center_z" value="0.1323" />
+    <xacro:property name="zed_pitch" value="0.2618" />
+
     <link name="base_footprint">
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -56,62 +77,85 @@
     </joint>
 
     <link name="body_link">
+        <!-- cobraflex_body.stl: bot_V3 with the tapered cable chamber and the side
+             fairings, the top_V3 powerbank cabin, its lid, LiDAR pedestal, ZED
+             cradle and cap, Full Plate_wheels and lane-camera holder, in
+             millimetres in the Plate_bot frame of the CAD, whose origin is
+             (0.005, 0, 0.10725) in base_footprint. -->
         <visual>
-            <origin xyz="0 -0.015 0" rpy="0 0 0"/>
+            <origin xyz="0.005 0 ${0.10725 - body_link_z}" rpy="0 0 0"/>
             <geometry>
                 <mesh filename="file://$(find cobraflex)/meshes/cobraflex_body.stl" scale="0.001 0.001 0.001"/>
             </geometry>
             <material name="grey" />
         </visual>
-                <collision>
-            <origin xyz="0 0 ${body_height/2 + wheel_radius}" rpy="0 0 0"/>
+
+        <!-- Collision: lower deck, cable chamber and powerbank cabin (two boxes
+             following its taper). The front bay stays open, as on the printed body;
+             the side fairings stay inside the track of the wheels. -->
+        <!-- lower deck: Full Plate_wheels and floor -->
+        <collision>
+            <origin xyz="0.0075 0 ${0.09475 - body_link_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="${body_length} ${body_width} ${body_height}"/>
+                <box size="0.237 0.16 0.031"/>
+            </geometry>
+        </collision>
+        <!-- cable chamber: tapered rear box, as the box of equal volume -->
+        <collision>
+            <origin xyz="-0.06 0 ${0.13875 - body_link_z}" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.102 0.1299 0.057"/>
+            </geometry>
+        </collision>
+        <!-- powerbank cabin (top_V3), lower half -->
+        <collision>
+            <origin xyz="-0.01525 0 ${0.17850 - body_link_z}" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.188 0.1145 0.0225"/>
+            </geometry>
+        </collision>
+        <!-- powerbank cabin, upper half and lid -->
+        <collision>
+            <origin xyz="-0.01575 0 ${0.20250 - body_link_z}" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.18 0.0995 0.0255"/>
             </geometry>
         </collision>
 
         <!-- ==== body_link inertia derived from CAD, not from a macro.
-             inertial_box is not to be restored here. The box model distributes
-             body_mass uniformly over 0.228 x 0.180 x 0.100, whereas the real
-             deck is dominated by the 550 g powerbank, compact and low in the
-             centre shell; the box overestimates every moment by 35-54 %:
+             inertial_box is not to be restored here: the box model spreads
+             body_mass uniformly, whereas the deck is dominated by the 550 g
+             powerbank, which the V3.4 body carries high, in the cabin over the
+             cable chamber, with the ZED Mini and the lane camera low at the nose.
 
-                        macro          CAD
-                 ixx    0.00315456     0.00206253    -34.6 %
-                 iyy    0.00461161     0.00210198    -54.4 %
-                 izz    0.00627817     0.00359719    -42.7 %
+             Source: Inventor assembly "Car HW Prototype V3" (V3.4), integrated on
+             the part meshes. Masses: Full Plate_wheels with the lane-camera holder
+             at their weighed 91.3 g; bot_V3, the top_V3 cabin, its lid, the LiDAR
+             pedestal, the ZED cradle and its cap at 0.539 g/cm3 (the density that
+             reproduces the weighed PLA shells); powerbank 0.550, ZED Mini 0.060
+             and lane camera 0.005 kg at their positions. CAD total 953.0 g.
+             The tensor refers to the link CoG and is scaled to body_mass, which
+             keeps the weighed budget until the printed shells are weighed. The
+             same pipeline applied to the previous body reproduces its declared
+             tensor within 3 %.
 
-             Source: Inventor assembly with every component at its weighed
-             density (composite 0.908 g/cm3; PLA shells at 0.539 g/cm3, which
-             reproduces their measured 277.8 g). The tensor refers to the link
-             CoG and is scaled from the CAD mass of 898.7 g to body_mass.
-
-             The CoG lies 12.6 mm below the box centre (52.6 mm below the
-             LiDAR, which lidar_joint places at 0.090); hence the origin
-             0.037415 instead of body_height/2.
-
-             The CAD reports ixz = 1.26e-04 (6 % of ixx; the sensor mast is
-             forward and high, the powerbank low). It is set to zero until the
-             +X direction of the CAD is confirmed: the macro cannot represent
-             it, and a sign error would couple pitch in the wrong direction,
-             which is worse than omitting the term.
-
-             base_link, the wheels and the LiDAR were checked with the same
-             method and are within 5-6 % of their macro values; they keep the
-             macros. See assets/Mathematical Model/parameters.md 2.1. -->
+             CoG in base_footprint: (0.00784, -0.00011, 0.16761) m. The
+             CAD +X axis is the vehicle forward axis (axle positions and sensor
+             directions), so the products of inertia are declared. See
+             assets/Mathematical Model/parameters.md 2.1. -->
         <inertial>
-            <origin xyz="0 0 0.037415" rpy="0 0 0"/>
+            <origin xyz="0.00784 -0.00011 ${0.16761 - body_link_z}" rpy="0 0 0"/>
             <mass value="${body_mass}" />
-            <inertia ixx="0.00206253" ixy="0.0" ixz="0.0"
-                     iyy="0.00210198" iyz="0.0"
-                     izz="0.00359719" />
+            <inertia ixx="0.00237140" ixy="0.00000544" ixz="0.00062313"
+                     iyy="0.00425067" iyz="-0.00000222"
+                     izz="0.00415922" />
         </inertial>
     </link>
 
     <joint name="body_joint" type="fixed">
         <parent link="base_link"/>
         <child link="body_link"/>
-        <origin xyz="0 0 ${body_height/2 + chassis_height/2 - 0.01}"/> 
+        <origin xyz="0 0 ${body_link_z - wheel_radius}"/>
     </joint>
 
     <xacro:macro name="left_wheel_link" params="prefix x_location y_location">
@@ -195,28 +239,36 @@
     </gazebo>
 
     <link name="lidar_link">
+        <!-- lidar_link is the origin of the scan, at the height of the optics; the
+             A2 extends from 30.8 mm below to 10.2 mm above it, so collision and
+             inertial are centred 10.3 mm below the link origin.
+             The A2 mesh is in the frame of the A2 CAD model (y up, base at
+             y = -9.3 mm, laser plane at y = 21.5 mm); the visual origin turns it to the
+             mounted orientation and puts its optics on the link origin. Its yaw of
+             -pi/2 also cancels the half turn of lidar_joint, so the unit keeps its
+             cable towards the rear. -->
         <visual>
-            <origin xyz="-0.005 -0.075 -0.05" rpy="${pi/2} 0 ${pi}"/>
+            <origin xyz="0 0 -0.0215" rpy="${pi/2} 0 ${-pi/2}"/>
             <geometry>
                 <mesh filename="file://$(find cobraflex)/meshes/rplidar-a2m4-r1.stl" scale="0.001 0.001 0.001"/>
             </geometry>
-                <material name="blue" />
+            <material name="blue" />
         </visual>
         <collision>
-            <origin xyz="0 0 0"/>
+            <origin xyz="0 0 -0.0103"/>
             <geometry>
                 <cylinder length="0.04" radius="0.0375"/>
             </geometry>
         </collision>
         <xacro:inertial_cylinder mass="0.190" length="0.04" radius="0.0375">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 -0.0103" rpy="0 0 0"/>
         </xacro:inertial_cylinder>
     </link>
 
     <joint name="lidar_joint" type="fixed">
         <parent link="body_link"/>
         <child link="lidar_link"/>
-        <origin xyz="0 0 ${body_height/2 + 0.04}" rpy="0 0 0"/>
+        <origin xyz="${lidar_scan_x} 0 ${lidar_scan_z - body_link_z}" rpy="0 0 ${pi}"/>
     </joint>
 
     <link name="camera_link">
@@ -237,7 +289,7 @@
     <joint name="camera_joint" type="fixed">
         <parent link="body_link"/>
         <child link="camera_link"/>
-        <origin xyz="${body_length/2 - 0.0475} 0 0.02" rpy="0 0 0"/>
+        <origin xyz="${zed_center_x} 0 ${zed_center_z - body_link_z}" rpy="0 ${zed_pitch} 0"/>
     </joint>
 
     <link name="camera_link_optical"></link>
@@ -280,7 +332,7 @@
     <link name="imu_link" />
 
     <joint name="imu_joint" type="fixed">
-        <origin xyz="${body_length/2 - 0.0475} 0 0.02" rpy="0 0 0" />
+        <origin xyz="${zed_center_x} 0 ${zed_center_z - body_link_z}" rpy="0 ${zed_pitch} 0" />
         <parent link="body_link"/>
         <child link="imu_link" />
     </joint>

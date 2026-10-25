@@ -43,6 +43,27 @@
     <xacro:property name="wheel_off_x" value="0.060" />
     <xacro:property name="wheel_off_y" value="${(chassis_width/2) + (wheel_width/2) + 0.002}" />
 
+    <!-- Sensor mounts of the V3 printed body (Inventor assembly
+         "Car HW Prototype V3"), in base_footprint: x from the midpoint between
+         the axles, z from the ground. The sensor joints subtract body_link_z,
+         which is also the source of body_joint, so the sensor poses do not
+         depend on the body geometry of this file.
+           lidar_scan_*  origin of /scan: rotation axis of the RPLIDAR A2 at
+                         the height of its laser plane, 30.8 mm above its base
+           zed_mount_*   mounting point on the bottom face of the ZED Mini,
+                         on the line of its two M2 threads
+           zed_center_*  camera centre (mount + height/2 along the pitched z
+                         axis); also the position of imu_link
+           zed_pitch     cradle pitch, 15 deg nose down -->
+    <xacro:property name="body_link_z" value="${wheel_radius + body_height/2 + chassis_height/2}" />
+    <xacro:property name="lidar_scan_x" value="0.035" />
+    <xacro:property name="lidar_scan_z" value="0.15305" />
+    <xacro:property name="zed_mount_x" value="0.0848" />
+    <xacro:property name="zed_mount_z" value="0.1195" />
+    <xacro:property name="zed_center_x" value="0.0882" />
+    <xacro:property name="zed_center_z" value="0.1323" />
+    <xacro:property name="zed_pitch" value="0.2618" />
+
     <!-- ==== Visual materials. Colours match the parts of the physical robot. -->
     <material name="carbon">      <color rgba="0.34 0.35 0.39 1"/></material>
     <material name="dark_grey">   <color rgba="0.46 0.48 0.52 1"/></material>
@@ -219,145 +240,207 @@
     <joint name="viz_servo_joint" type="fixed"><parent link="base_link"/><child link="viz_servo"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
     <link name="body_link">
-        <!-- Electronics deck: two plates on standoffs carrying the Jetson and
-             the LiPo, which occupy this volume on the physical robot. The side
-             skirts keep the 0.180 m width of the body. -->
+        <!-- V3.4 printed body (Inventor assembly "Car HW Prototype V3"): floor
+             following Full Plate_wheels, tapered and empty rear cable chamber and
+             front-bay side fairings (bot_V3), powerbank cabin (top_V3) and its lid,
+             LiDAR pedestal and ZED clamp in the open front bay, on the unchanged
+             Full Plate_wheels with the lane-camera holder. Positions are the CAD
+             positions in base_footprint, offset by body_link_z; the leaning walls
+             are drawn as tilted boxes. -->
 
-        <!-- lower deck plate -->
+        <!-- Full Plate_wheels, top skin -->
         <visual>
-            <origin xyz="0 0 -0.046" rpy="0 0 0"/>
-            <geometry>
-                <box size="${body_length} 0.176 0.008"/>
-            </geometry>
+            <origin xyz="0 0 ${0.10575 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.222 0.16 0.003"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- bot_V3 floor -->
+        <visual>
+            <origin xyz="-0.001 0 ${0.10875 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.22 0.16 0.003"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- cable chamber, rear wall -->
+        <visual>
+            <origin xyz="-0.1095 0 ${0.13875 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.003 0.126 0.057"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- cable chamber, front wall above the cable entry -->
+        <visual>
+            <origin xyz="-0.0171 0 ${0.15715 - body_link_z}" rpy="0 -0.1394 0"/>
+            <geometry><box size="0.003 0.128 0.0204"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- cable chamber, left wall -->
+        <visual>
+            <origin xyz="-0.062 0.0661 ${0.13875 - body_link_z}" rpy="0.2276 0 0"/>
+            <geometry><box size="0.098 0.003 0.0585"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- cable chamber, right wall -->
+        <visual>
+            <origin xyz="-0.062 -0.0661 ${0.13875 - body_link_z}" rpy="-0.2276 0 0"/>
+            <geometry><box size="0.098 0.003 0.0585"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- front-bay fairing, left -->
+        <visual>
+            <origin xyz="0.044 0.0775 ${0.12765 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.106 0.003 0.0348"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- front-bay fairing, right -->
+        <visual>
+            <origin xyz="0.044 -0.0775 ${0.12765 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.106 0.003 0.0348"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- powerbank cabin (top_V3), floor -->
+        <visual>
+            <origin xyz="-0.015 0 ${0.16925 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.192 0.122 0.004"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- powerbank cabin, left flank -->
+        <visual>
+            <origin xyz="-0.01555 0.0516 ${0.19175 - body_link_z}" rpy="0.3218 0 0"/>
+            <geometry><box size="0.183 0.0025 0.0432"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- powerbank cabin, right flank -->
+        <visual>
+            <origin xyz="-0.01555 -0.0516 ${0.19175 - body_link_z}" rpy="-0.3218 0 0"/>
+            <geometry><box size="0.183 0.0025 0.0432"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- powerbank cabin, front wall -->
+        <visual>
+            <origin xyz="0.07485 0 ${0.19175 - body_link_z}" rpy="0 -0.1974 0"/>
+            <geometry><box size="0.0025 0.1 0.0418"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- powerbank cabin, rear wall -->
+        <visual>
+            <origin xyz="-0.10594 0 ${0.19175 - body_link_z}" rpy="0 0.1543 0"/>
+            <geometry><box size="0.0025 0.1 0.0416"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- cabin lid -->
+        <visual>
+            <origin xyz="-0.016 0 ${0.21375 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.176 0.092 0.003"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- LiDAR pedestal -->
+        <visual>
+            <origin xyz="0.035 0 ${0.11625 - body_link_z}" rpy="0 0 0"/>
+            <geometry><cylinder radius="0.04" length="0.012"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- ZED cradle bed -->
+        <visual>
+            <origin xyz="0.09275 0 ${0.11527 - body_link_z}" rpy="0 ${zed_pitch} 0"/>
+            <geometry><box size="0.0305 0.128 0.004"/></geometry>
+            <material name="mid_grey" />
+        </visual>
+        <!-- powerbank (XTPower XT-27000), connector backwards -->
+        <visual>
+            <origin xyz="-0.003 0 ${0.19125 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.14 0.08 0.04"/></geometry>
             <material name="carbon" />
         </visual>
 
-        <!-- upper deck plate (the lidar mounts on this) -->
-        <visual>
-            <origin xyz="0 0 0.047" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.150 0.140 0.006"/>
-            </geometry>
-            <material name="carbon" />
-        </visual>
-
-        <!-- ===== SENSOR MAST =====================================
-             The three front sensors are children of body_link at fixed
-             offsets that must not change (the 0.3 rad pitch and mount height
-             of the lane camera feed the IPM in camera_geometry.py). These
-             visuals represent the supporting structure ahead of the deck; no
-             sensor frame is moved:
-
-               nose shelf   deck front edge -> under camera_link_lane (x 0.124)
-               mast         shelf -> ZED height, seated 1 mm into the deck
-               cross-bar    top plate the ZED body (z 0.020..0.047) rests on,
-                            in viz_mast_plate below because it is anodised
-
-             The mast is placed at x 0.099..0.109, 2 mm clear of the LiPo
-             pack, which ends at x=0.097. -->
-        <visual>
-            <origin xyz="0.116 0 -0.0445" rpy="0 0 0"/>
-            <geometry><box size="0.026 0.046 0.007"/></geometry>
-            <material name="carbon" />
-        </visual>
-        <visual>
-            <origin xyz="0.104 0 -0.011" rpy="0 0 0"/>
-            <geometry><box size="0.010 0.056 0.064"/></geometry>
-            <material name="carbon" />
-        </visual>
-
+        <!-- Collision: lower deck, cable chamber and powerbank cabin (two boxes
+             following its taper). The front bay stays open, as on the printed body;
+             the side fairings stay inside the track of the wheels. -->
+        <!-- lower deck: Full Plate_wheels and floor -->
         <collision>
-            <origin xyz="0 0 ${body_height/2 + wheel_radius}" rpy="0 0 0"/>
+            <origin xyz="0.0075 0 ${0.09475 - body_link_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="${body_length} ${body_width} ${body_height}"/>
+                <box size="0.237 0.16 0.031"/>
+            </geometry>
+        </collision>
+        <!-- cable chamber: tapered rear box, as the box of equal volume -->
+        <collision>
+            <origin xyz="-0.06 0 ${0.13875 - body_link_z}" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.102 0.1299 0.057"/>
+            </geometry>
+        </collision>
+        <!-- powerbank cabin (top_V3), lower half -->
+        <collision>
+            <origin xyz="-0.01525 0 ${0.17850 - body_link_z}" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.188 0.1145 0.0225"/>
+            </geometry>
+        </collision>
+        <!-- powerbank cabin, upper half and lid -->
+        <collision>
+            <origin xyz="-0.01575 0 ${0.20250 - body_link_z}" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.18 0.0995 0.0255"/>
             </geometry>
         </collision>
 
         <!-- ==== body_link inertia derived from CAD, not from a macro.
-             inertial_box is not to be restored here. The box model distributes
-             body_mass uniformly over 0.228 x 0.180 x 0.100, whereas the real
-             deck is dominated by the 550 g powerbank, compact and low in the
-             centre shell; the box overestimates every moment by 35-54 %:
+             inertial_box is not to be restored here: the box model spreads
+             body_mass uniformly, whereas the deck is dominated by the 550 g
+             powerbank, which the V3.4 body carries high, in the cabin over the
+             cable chamber, with the ZED Mini and the lane camera low at the nose.
 
-                        macro          CAD
-                 ixx    0.00315456     0.00206253    -34.6 %
-                 iyy    0.00461161     0.00210198    -54.4 %
-                 izz    0.00627817     0.00359719    -42.7 %
+             Source: Inventor assembly "Car HW Prototype V3" (V3.4), integrated on
+             the part meshes. Masses: Full Plate_wheels with the lane-camera holder
+             at their weighed 91.3 g; bot_V3, the top_V3 cabin, its lid, the LiDAR
+             pedestal, the ZED cradle and its cap at 0.539 g/cm3 (the density that
+             reproduces the weighed PLA shells); powerbank 0.550, ZED Mini 0.060
+             and lane camera 0.005 kg at their positions. CAD total 953.0 g.
+             The tensor refers to the link CoG and is scaled to body_mass, which
+             keeps the weighed budget until the printed shells are weighed. The
+             same pipeline applied to the previous body reproduces its declared
+             tensor within 3 %.
 
-             Source: Inventor assembly with every component at its weighed
-             density (composite 0.908 g/cm3; PLA shells at 0.539 g/cm3, which
-             reproduces their measured 277.8 g). The tensor refers to the link
-             CoG and is scaled from the CAD mass of 898.7 g to body_mass.
-
-             The CoG lies 12.6 mm below the box centre (52.6 mm below the
-             LiDAR, which lidar_joint places at 0.090); hence the origin
-             0.037415 instead of body_height/2.
-
-             The CAD reports ixz = 1.26e-04 (6 % of ixx; the sensor mast is
-             forward and high, the powerbank low). It is set to zero until the
-             +X direction of the CAD is confirmed: the macro cannot represent
-             it, and a sign error would couple pitch in the wrong direction,
-             which is worse than omitting the term.
-
-             base_link, the wheels and the LiDAR were checked with the same
-             method and are within 5-6 % of their macro values; they keep the
-             macros. See assets/Mathematical Model/parameters.md 2.1. -->
+             CoG in base_footprint: (0.00784, -0.00011, 0.16761) m. The
+             CAD +X axis is the vehicle forward axis (axle positions and sensor
+             directions), so the products of inertia are declared. See
+             assets/Mathematical Model/parameters.md 2.1. -->
         <inertial>
-            <origin xyz="0 0 0.037415" rpy="0 0 0"/>
+            <origin xyz="0.00784 -0.00011 ${0.16761 - body_link_z}" rpy="0 0 0"/>
             <mass value="${body_mass}" />
-            <inertia ixx="0.00206253" ixy="0.0" ixz="0.0"
-                     iyy="0.00210198" iyz="0.0"
-                     izz="0.00359719" />
+            <inertia ixx="0.00237140" ixy="0.00000544" ixz="0.00062313"
+                     iyy="0.00425067" iyz="-0.00000222"
+                     izz="0.00415922" />
         </inertial>
     </link>
 
     <joint name="body_joint" type="fixed">
         <parent link="base_link"/>
         <child link="body_link"/>
-        <origin xyz="0 0 ${body_height/2 + chassis_height/2}"/>
+        <origin xyz="0 0 ${body_link_z - wheel_radius}"/>
     </joint>
 
     <!-- ==== body_link cosmetic sub-assemblies (see header note) ==== -->
 
-    <!-- Jetson enclosure -->
+    <!-- Jetson enclosure, at the Orin position of the CAD: in the chassis,
+         under Full Plate_wheels -->
     <link name="viz_jetson">
         <visual>
-            <origin xyz="-0.028 0 -0.020" rpy="0 0 0"/>
+            <origin xyz="0.0435 0 ${0.0735 - body_link_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="0.105 0.092 0.043"/>
+                <box size="0.099 0.090 0.025"/>
             </geometry>
             <material name="dark_grey" />
         </visual>
     </link>
     <joint name="viz_jetson_joint" type="fixed"><parent link="body_link"/><child link="viz_jetson"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
-    <!-- Jetson heatsink + the four standoffs between the deck plates -->
+    <!-- Jetson heatsink -->
     <link name="viz_deck_hardware">
         <visual>
-            <origin xyz="-0.028 0 0.008" rpy="0 0 0"/>
+            <origin xyz="0.0435 0 ${0.091 - body_link_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="0.082 0.082 0.014"/>
+                <box size="0.082 0.082 0.010"/>
             </geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="0.066 0.062 0.001" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.0035" length="0.086"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="0.066 -0.062 0.001" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.0035" length="0.086"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="-0.066 0.062 0.001" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.0035" length="0.086"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="-0.066 -0.062 0.001" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.0035" length="0.086"/></geometry>
             <material name="alu" />
         </visual>
     </link>
@@ -397,16 +480,6 @@
         </visual>
     </link>
     <joint name="viz_skirts_joint" type="fixed"><parent link="body_link"/><child link="viz_skirts"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- camera mount plate on top of the mast; the ZED body sits on it -->
-    <link name="viz_mast_plate">
-        <visual>
-            <origin xyz="0.104 0 0.019" rpy="0 0 0"/>
-            <geometry><box size="0.014 0.100 0.008"/></geometry>
-            <material name="anodised" />
-        </visual>
-    </link>
-    <joint name="viz_mast_plate_joint" type="fixed"><parent link="body_link"/><child link="viz_mast_plate"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
     <xacro:macro name="left_wheel_link" params="prefix x_location y_location">
         <joint name="${prefix}_wheel_joint" type="continuous">
@@ -537,40 +610,44 @@
     </gazebo>
 
     <link name="lidar_link">
-        <!-- RPLIDAR A2M8: base ring, rotating head, cap and laser window, on
-             three standoffs to the deck.
-             The visual is at the link origin, consistent with <collision>.
-             The joint, the collision and the lidar_link frame determine the
-             sensor pose; the visual does not. -->
+        <!-- RPLIDAR A2M8: base ring, rotating head, cap and laser window, on the
+             12 mm pedestal of the V3 body (drawn in body_link).
+             lidar_link is the origin of the scan, at the height of the optics; the
+             A2 extends from 30.8 mm below to 10.2 mm above it, so collision and
+             inertial are centred 10.3 mm below the link origin.
+             The joint and the lidar_link frame determine the sensor pose. -->
 
         <!-- base ring -->
         <visual>
-            <origin xyz="0 0 -0.013" rpy="0 0 0"/>
+            <origin xyz="0 0 -0.0233" rpy="0 0 0"/>
             <geometry><cylinder length="0.014" radius="0.0375"/></geometry>
             <material name="lidar_body" />
         </visual>
         <!-- top cap -->
         <visual>
-            <origin xyz="0 0 0.014" rpy="0 0 0"/>
+            <origin xyz="0 0 0.0037" rpy="0 0 0"/>
             <geometry><cylinder length="0.012" radius="0.0375"/></geometry>
             <material name="lidar_body" />
         </visual>
 
         <collision>
-            <origin xyz="0 0 0"/>
+            <origin xyz="0 0 -0.0103"/>
             <geometry>
                 <cylinder length="0.04" radius="0.0375"/>
             </geometry>
         </collision>
         <xacro:inertial_cylinder mass="0.190" length="0.04" radius="0.0375">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 -0.0103" rpy="0 0 0"/>
         </xacro:inertial_cylinder>
     </link>
 
+    <!-- lidar_link is placed at the scan origin (lidar_scan_*): in the V3 body the
+         A2 stands on a 12 mm pedestal in the front bay. The rear cable chamber
+         occludes the sector beyond about +-119 deg from the front. -->
     <joint name="lidar_joint" type="fixed">
         <parent link="body_link"/>
         <child link="lidar_link"/>
-        <origin xyz="0 0 ${body_height/2 + 0.04}" rpy="0 0 ${pi}"/>
+        <origin xyz="${lidar_scan_x} 0 ${lidar_scan_z - body_link_z}" rpy="0 0 ${pi}"/>
     </joint>
 
     <!-- ==== lidar_link cosmetic sub-assemblies (see header note) ==== -->
@@ -578,7 +655,7 @@
     <!-- rotating head + laser aperture -->
     <link name="viz_lidar_head">
         <visual>
-            <origin xyz="0 0 0.001" rpy="0 0 0"/>
+            <origin xyz="0 0 -0.0095" rpy="0 0 0"/>
             <geometry><cylinder length="0.018" radius="0.0350"/></geometry>
             <material name="lidar_head" />
         </visual>
@@ -587,58 +664,37 @@
 
     <link name="viz_lidar_aperture">
         <visual>
-            <origin xyz="0.030 0 0.001" rpy="0 0 0"/>
+            <origin xyz="0.030 0 0" rpy="0 0 0"/>
             <geometry><box size="0.012 0.024 0.013"/></geometry>
             <material name="lens" />
         </visual>
     </link>
     <joint name="viz_lidar_aperture_joint" type="fixed"><parent link="lidar_link"/><child link="viz_lidar_aperture"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
-    <!-- three standoffs bridging the 20 mm gap down to the upper deck -->
-    <link name="viz_lidar_standoffs">
-        <visual>
-            <origin xyz="0.028 0 -0.030" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.003" length="0.020"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="-0.014 0.02425 -0.030" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.003" length="0.020"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="-0.014 -0.02425 -0.030" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.003" length="0.020"/></geometry>
-            <material name="alu" />
-        </visual>
-    </link>
-    <joint name="viz_lidar_standoffs_joint" type="fixed"><parent link="lidar_link"/><child link="viz_lidar_standoffs"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
     <!-- ZED Mini mount. zed_camera_link is the root link of the zed_camera macro
-         (zed_descr.urdf.xacro); this joint attaches the ZED subtree to the
-         robot. Without it, base_footprint and zed_camera_link are two separate
-         roots and robot_state_publisher publishes an incomplete tree.
+         (zed_descr.urdf.xacro), the mounting point on the bottom face of the
+         camera; this joint attaches the ZED subtree to the robot. Without it,
+         base_footprint and zed_camera_link are two separate roots and
+         robot_state_publisher publishes an incomplete tree.
 
-         Offset: zed_camera_link is 0.11 m ahead of and 0.13725 m above
-         base_footprint. body_link is 0.11725 m above it (base_joint 0.03725 +
-         body_joint 0.08), which gives (0.11, 0, 0.02) from body_link.
-
-         camera_link below is at body_length/2 = 0.114 in x, 4 mm from
-         zed_camera_link. The ZED keeps 0.11, the geometry of the recorded runs;
-         the camera is not moved to reconcile the two. Open item: measure the
-         physical mount and correct both (docs/17 §2 [VERIFY]). -->
+         Pose from the V3 printed body (zed_mount_*, zed_pitch): the camera rests
+         on a cradle at the nose, pitched 15 deg nose down. The ZED odometry is
+         expressed in zed_camera_link and ekf_hw.yaml transforms it into
+         base_footprint through this joint, so the pitch must match the
+         physical cradle. -->
     <joint name="zed_mount_joint" type="fixed">
         <parent link="body_link"/>
         <child link="zed_camera_link"/>
-        <origin xyz="0.11 0 0.02" rpy="0 0 0"/>
+        <origin xyz="${zed_mount_x} 0 ${zed_mount_z - body_link_z}" rpy="0 ${zed_pitch} 0"/>
     </joint>
 
     <link name="camera_link">
-        <!-- Former mono-camera frame, without visual: it lies at body_link
-             (0.114, 0, 0.02), inside the ZED Mini body drawn by
-             zed_camera_link, and no sensor in robot.gazebo references it.
-             Link, joint and collision are kept, since the RViz configurations
-             list this frame. -->
+        <!-- Former mono-camera frame, without visual, at body_link
+             (0.114, 0, 0.02). It lay inside the ZED Mini of the previous
+             mount; the V3 cradle places the camera centre about 26 mm behind
+             it. No sensor in robot.gazebo references it. Link, joint and
+             collision are kept, since the RViz configurations list this
+             frame. -->
         <collision>
              <geometry>
                 <box size="0.01 0.1 0.02"/>
@@ -707,10 +763,12 @@
         <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
     </joint>
 
+    <!-- imu_link carries the simulated ZED Mini IMU ("ZEDm IMU" in robot.gazebo)
+         and sits at the camera centre with the cradle pitch. -->
     <link name="imu_link" />
 
     <joint name="imu_joint" type="fixed">
-        <origin xyz="${body_length/2 - 0.04} 0 0.02" rpy="0 0 0" />
+        <origin xyz="${zed_center_x} 0 ${zed_center_z - body_link_z}" rpy="0 ${zed_pitch} 0" />
         <parent link="body_link"/>
         <child link="imu_link" />
     </joint>

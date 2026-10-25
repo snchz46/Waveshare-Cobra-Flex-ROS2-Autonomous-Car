@@ -7,7 +7,7 @@ reference them; a CAD change is applied to both locations.
 | File | Content |
 | --- | --- |
 | `cobraflex_chassis.stl` | Chassis |
-| `cobraflex_body.stl` | Body shell |
+| `cobraflex_body.stl` | Body shell, V3.4 printed body (Plate_bot frame) |
 | `cobraflex_wheel.stl` | Wheel |
 | `Cobra Flex Full Plate_top.stl`, `Cobra Flex Full Plate_bot.stl`, `Cobra Flex Full Plate_wheels.stl` | Complete assembly, split into top, bottom and wheels |
 | `Intel Realsense RPLIDAR A2.stl` | RPLIDAR A2 |

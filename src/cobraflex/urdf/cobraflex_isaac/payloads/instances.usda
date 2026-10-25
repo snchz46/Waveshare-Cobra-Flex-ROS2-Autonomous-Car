@@ -45,7 +45,7 @@ def Scope "Instances"
     }
 
     def Xform "cobraflex_body" (
-        prepend references = @./geometries.usd@</Geometries/cobraflex_body>
+        prepend references = @./geometries_body_v3.usda@</Geometries/cobraflex_body>
     )
     {
         over "cobraflex_body" (

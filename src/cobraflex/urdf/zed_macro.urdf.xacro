@@ -218,10 +218,12 @@
           </collision>
         </xacro:if>
       </link>
+      <!-- Lens positions of the ZED Mini: 0.02 m ahead of the camera centre (middle of the
+           housing) and 7.75 mm to its right (camera CAD model and Stereolabs zedm.stl). -->
       <joint name="${name}_left_camera_joint" type="fixed">
         <parent link="${name}_camera_center"/>
         <child link="${name}_left_camera_frame"/>
-        <origin xyz="${optical_offset_x + 0.02} ${baseline/2 - 0.007} 0" rpy="0 0 0" />
+        <origin xyz="${optical_offset_x + 0.02} ${baseline/2 - 0.00775} 0" rpy="0 0 0" />
       </joint>
 
       <link name="${name}_left_camera_frame_optical"/>
@@ -254,7 +256,7 @@
       <joint name="${name}_right_camera_joint" type="fixed">
         <parent link="${name}_camera_center"/>
         <child link="${name}_right_camera_frame"/>
-        <origin xyz="${optical_offset_x + 0.02} -${baseline/2 + 0.007} 0" rpy="0 0 0" />
+        <origin xyz="${optical_offset_x + 0.02} -${baseline/2 + 0.00775} 0" rpy="0 0 0" />
       </joint>
 
       <link name="${name}_right_camera_frame_optical"/>

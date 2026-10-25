@@ -219,17 +219,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        viz_lidar_standoffs:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         viz_lipo:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        viz_mast_plate:
           Alpha: 1
           Show Axes: false
           Show Trail: false

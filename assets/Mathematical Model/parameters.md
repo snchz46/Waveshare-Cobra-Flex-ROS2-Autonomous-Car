@@ -257,7 +257,7 @@ the URDFs:
 | Link | ixx | iyy | izz | Origin |
 |---|---|---|---|---|
 | `base_link` | 0.00344605 | 0.00934367 | 0.01157940 | `inertial_box` macro |
-| `body_link` | **0.00206253** | **0.00210198** | **0.00359719** | **Hand-written, from CAD** |
+| `body_link` | **0.00237140** | **0.00425067** | **0.00415922** | **Hand-written, from CAD (V3.4 body)** |
 | Wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 | `inertial_cylinder` macro |
 | `lidar_link` | 9.213021e-05 | 9.213021e-05 | 1.335938e-04 | `inertial_cylinder` macro |
 
@@ -266,28 +266,36 @@ Comparison of the `body_link` tensor with the `inertial_box` values for a
 
 | | Macro | Declared | Difference |
 |---|---|---|---|
-| ixx | 0.00315456 | 0.00206253 | −34.6 % |
-| iyy | 0.00461161 | 0.00210198 | −54.4 % |
-| izz | 0.00627817 | 0.00359719 | −42.7 % |
+| ixx | 0.00315456 | 0.00237140 | −24.8 % |
+| iyy | 0.00461161 | 0.00425067 | −7.8 % |
+| izz | 0.00627817 | 0.00415922 | −33.8 % |
 
-`body_link` is the only link whose box model deviates significantly. An
-Inventor assembly with every component at its weighed density (composite
-0.908 g/cm³; PLA shells at 0.539 g/cm³, which reproduces their measured
-277.8 g) places the tensor 35–54 % below the macro, because the 550 g powerbank
-is compact and located low in the centre shell instead of being distributed
-over the 0.228 × 0.180 × 0.100 m box. For the same reason the inertial origin
-is `0 0 0.037415` instead of `body_height/2`: the CAD centre of gravity is
-12.6 mm below the box centre.
+`body_link` is the only link whose box model deviates significantly. The tensor
+is computed from the Inventor assembly of the V3.4 printed body (*Car HW
+Prototype V3*), integrated on the part meshes: Full Plate_wheels and the
+lane-camera holder at their weighed 91.3 g; bot_V3, the top_V3 powerbank cabin,
+its lid, the LiDAR pedestal, the ZED cradle and its cap at 0.539 g/cm³, the
+density that reproduces the weighed PLA shells; the powerbank (0.550 kg), the
+ZED Mini (0.060 kg) and the lane camera (0.005 kg) at their positions. The CAD
+total is 953.0 g. The tensor refers to the link centre of gravity and is
+scaled to the declared 0.8928 kg, which keeps the weighed budget until the
+printed shells are weighed. The same pipeline applied to the previous body
+reproduces its declared tensor within 3 % (ixx −0.4 %, iyy −2.8 %, izz −1.5 %).
+
+The centre of gravity lies at $(0.00784, −0.00011, 0.16761)$ m in
+`base_footprint`: the powerbank sits high, in the cabin, and the tapered rear
+box below it is an empty cable chamber. The products of inertia are declared:
+ixy = 5.444e−06, iyz = −2.223e−06 and ixz = 6.231e−04 kg·m²; the principal
+axes are pitched by 17° from the body axes. The +X axis of the CAD is
+the vehicle forward axis (axle positions and sensor directions), and Inventor
+reports products of inertia as tensor elements with the sign convention of URDF
+(checked on the ZED cradle); the sign of `ixz` is therefore determined.
 
 `base_link`, the wheels and the LiDAR were checked with the same method and are
 within 5–6 % of their macro values; they therefore keep the macros. The
 hand-written tensor applies to `body_link` only, and `inertial_box` is not to
 be restored on `body_link`.
 
-Open item: the CAD reports `ixz` = 1.26e−04 for `body_link` (6 % of `ixx`). It
-is set to zero until the +X direction of the CAD is confirmed. The macro cannot
-represent the term, and a sign error would couple pitch in the wrong direction,
-which is worse than omitting it.
 
 #### Centre of gravity (reference frame open)
 
@@ -425,7 +433,7 @@ motor specification, which is not recorded here.
 
 | Parameter | Value |
 |-----------|-------|
-| Mount | `lidar_joint`, parent `body_link`, $(0, 0, 0.090)$ m, yaw $\pi$ |
+| Mount | `lidar_joint`, parent `body_link`; `lidar_link` at $(0.035, 0, 0.15305)$ m from `base_footprint`, yaw $\pi$ |
 | Type | 2D planar laser (`gpu_lidar`) |
 | Model | RPLIDAR A2 |
 | Samples per scan | 4000 |
@@ -438,9 +446,24 @@ motor specification, which is not recorded here.
 | Noise (mean) | 0.0 |
 | Noise (stddev) | 0.01 |
 
-The mount offset is `body_height/2 + 0.04` = 0.05 + 0.04 = 0.090 m above
-`body_link`. The yaw of $\pi$ means that the zero bearing of the sensor points
-**backwards** along $-x$.
+`lidar_link` is the origin of the scan, both for the `sllidar` driver
+(`frame_id`) and for the `gpu_lidar` pose: the rotation axis of the A2 at the
+height of its laser plane, 30.8 mm above the base of the unit (Slamtec A2M8
+datasheet LD208, fig. 5-1; the A2 CAD model gives 31.0 mm). In the V3 printed body the unit stands on a 12 mm pedestal in a front
+bay, 0.035 m ahead of the axle midpoint, with the optics 0.153 m above the
+ground (0.194 m in the previous body). The joint takes these values from the
+properties `lidar_scan_x` and `lidar_scan_z` and subtracts `body_link_z`, so
+the pose relative to `base_footprint` is the same in every description file
+although `body_joint` differs between them. The rear cable chamber occludes the
+sector beyond about ±128° from the front; on the hardware, returns from that
+sector lie below the 0.15 m minimum range of the A2. The yaw of $\pi$ means
+that the zero bearing of the sensor points **backwards** along $-x$, towards
+the cable of the unit, as the `sllidar` driver publishes it. The yaw is the same
+in every description file (`my_robot_basic`, `my_robot_gazebo`, `my_robot_mesh`,
+`my_robot_gazebo_mesh` and the Isaac URDF and USD); where the A2 is drawn with its
+mesh, the visual origin cancels the half turn, so the unit keeps its cable at
+the rear. `lidar_avoidance_node` assumes the same convention
+(`front_offset_deg` = 180).
 
 The 4000 simulated samples are a Gazebo setting, not a hardware value: a
 physical RPLIDAR A2 delivers about 400 points per revolution at 10 Hz. A
@@ -517,18 +540,26 @@ analysis, with references to the Gazebo sources, is in
 
 **Mounts** (both with parent `body_link`):
 
-| Joint | Child | Origin from `body_link` [m] | Orientation |
+| Joint | Child | Origin [m] | Orientation |
 |---|---|---|---|
-| `zedm_mount_joint` | `zedm_camera_link` | (0.0665, 0, 0.00675) | None |
-| `camera_joint_lane` | `camera_link_lane` | (0.124, 0, −0.030) | Pitch +0.30 rad, nose down |
+| `zedm_mount_joint` | `zedm_camera_link` | (0.0848, 0, 0.1195) from `base_footprint` | Pitch +0.2618 rad (15°), nose down |
+| `camera_joint_lane` | `camera_link_lane` | (0.124, 0, −0.030) from `body_link` | Pitch +0.30 rad, nose down |
 
-The offset of `zedm_mount_joint` is `body_length/2 - 0.0475` in $x$ and
-`0.02 - 0.0265/2` in $z$. The stereo baseline is 0.063 m, from the `zedm`
+`zedm_camera_link` is the mounting point on the bottom face of the camera. In
+the V3 printed body the camera rests on a cradle at the nose, pitched 15° nose
+down so that the ground is visible from about 0.10 m ahead of the robot; the
+mounting point lies on the line of the two M2 threads of the camera. The
+joint takes its values from `zed_mount_x`, `zed_mount_z` and `zed_pitch`. On
+the hardware the ZED odometry is expressed in `zed_camera_link` and
+`ekf_hw.yaml` transforms it into `base_footprint` through this joint; the
+pitch therefore has to match the cradle.
+The stereo baseline is 0.063 m, from the `zedm`
 branch of `zed_macro.urdf.xacro`. The two frames are placed asymmetrically
-about `zedm_camera_center` (left at $y = +0.0245$, right at $y = -0.0385$):
-the separation is the correct 0.063 m, but the midpoint lies 7 mm to the right
-of the centre frame. This asymmetry originates in the Stereolabs description
-and is left unchanged.
+about `zedm_camera_center` (left at $y = +0.02375$, right at $y = −0.03925$,
+both 0.02 m ahead of it): the separation is the correct 0.063 m and the
+midpoint lies 7.75 mm to the right of the centre frame, which sits on the middle
+of the housing. The lenses of the ZED Mini are offset by this amount relative
+to its housing (CAD model of the camera and Stereolabs `zedm.stl`).
 
 The lane camera models the IMX219-160 **as consumed by the controller**, not as
 captured by the sensor: `lane_keeper_node` processes 640×360 frames at 20 Hz
@@ -579,11 +610,14 @@ configured as listed in the table above.
 |-----------|-------|
 | Sensor name | `ZEDm IMU` |
 | Attached to | `imu_link` |
-| Mount | `imu_joint`, parent `body_link`, (0.074, 0, 0.020) m |
+| Mount | `imu_joint`, parent `body_link`; `imu_link` at $(0.0882, 0, 0.1323)$ m from `base_footprint`, pitch 0.2618 rad |
 | Topic | `imu` |
 | Rate | 200 Hz |
 
-The mount offset is `body_length/2 - 0.04` = 0.114 − 0.04 = 0.074 m in $x$.
+`imu_link` models the IMU of the ZED Mini and is placed at `zedm_camera_center`
+with the pitch of the camera cradle (`zed_center_x`, `zed_center_z`,
+`zed_pitch`); the simulated accelerometer therefore measures gravity in the
+tilted frame, as the physical sensor does.
 
 The hardware provides no equivalent stream. The chassis carries an ICM-20948
 and `json_cmd.h` documents IMU fields in the feedback frame, but these fields
