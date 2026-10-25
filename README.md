@@ -418,7 +418,8 @@ The repository is the ROS 2 workspace root. It contains `src/`, and
     │   │   ├── cobraflex_ros_driver.py      # /cmd_vel -> JSON over serial
     │   │   ├── lidar_avoidance_node.py      # /scan -> /cmd_vel avoidance
     │   │   ├── lane_keeper_node.py          # CSI camera lane keeping (hardware)
-    │   │   └── lane_keeper_gazebo_node.py   # CV + pure-pursuit lane keeping (sim)
+    │   │   ├── lane_keeper_gazebo_node.py   # CV + pure-pursuit lane keeping (sim)
+    │   │   └── scan_min_range_node.py       # 0.15 m LiDAR minimum range on /scan (sim)
     │   ├── config/                  # EKF, SLAM Toolbox, Nav2, gz bridge, ZED
     │   ├── launch/                  # Bringup, sensors, Gazebo, mapping, navigation
     │   ├── maps/                    # Saved occupancy grids (gitignored)

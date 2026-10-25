@@ -28,7 +28,8 @@ where applicable; see in particular §1.4, §2.1 and §3.2.
 | Wheelbase (front to rear) | $L$ | 0.120 m | 2 × `wheel_off_x` = 2 × 0.060 |
 | Chassis length | - | 0.228 m | `chassis_length` |
 | Chassis width | - | 0.130 m | `chassis_width` |
-| Chassis height | - | 0.060 m | `chassis_height` |
+| Chassis height (inertia box) | - | 0.060 m | `chassis_height` |
+| Chassis envelope height | - | 0.074 m | `chassis_box_height` |
 
 $L$ does not appear in the kinematic equations, since an ideal differential
 drive has no wheelbase. It is relevant in [Kinematics.md §3.3](./Kinematics.md):
@@ -37,14 +38,21 @@ the distance between the two axles causes the sideways wheel scrub in turns.
 > **URDF wheelbase and physical wheelbase.** The URDF value `wheel_off_x =
 > ±0.060` gives **0.120 m**; the physical measurement (13.08.2026) gives
 > **0.154 m**, 22 % more. The table reports the URDF value, which is the
-> wheelbase of the simulated robot. The Gazebo `DiffDrive` plugin is kinematic
-> and uses only `wheel_separation`, so no simulation result is affected. The
-> modelled chassis is nevertheless shorter than the physical one, and any
-> future dynamic model must use 0.154 m.
+> wheelbase of the simulated robot. The axle bushings of `cobraflex_chassis.stl`
+> lie at x = ±0.077 m, in agreement with the physical value. The Gazebo
+> `DiffDrive` plugin is kinematic and uses only `wheel_separation`, so no
+> simulation result is affected. The modelled chassis is nevertheless
+> shorter than the physical one, and any future dynamic model must use
+> 0.154 m.
 
 `my_robot_mesh.urdf` and `my_robot_gazebo_mesh.urdf` render the chassis with
-custom meshes (`cobraflex_chasis.stl`). The box dimensions above are declared
-in all four URDFs and are used by the collision and inertia macros.
+its mesh (`cobraflex_chassis.stl`); `my_robot_basic.urdf` and
+`my_robot_gazebo.urdf` draw it as one box. The inertia box is `chassis_length`
+× `chassis_width` × `chassis_height`. The collision box of every description,
+and the visual of the two box descriptions, is the envelope of the mesh:
+`chassis_length` × `chassis_width` × `chassis_box_height`, centred
+`chassis_box_z` = 0.030 m above `base_link`, from 0.030 m above the ground to
+the underside of Full Plate_wheels (0.104 m), where the body starts.
 
 ### 1.3 Wheel positions
 
@@ -52,22 +60,23 @@ in all four URDFs and are used by the collision and inertia macros.
 
 | Wheel | Position $(x, y, z)$ [m] | Joint |
 |-------|---------------------------|-------|
-| Wheel 1 (FL) | (+0.060, +0.077, −0.020) | `front_left_wheel_joint` |
-| Wheel 2 (RL) | (−0.060, +0.077, −0.020) | `rear_left_wheel_joint` |
-| Wheel 3 (RR) | (−0.060, −0.077, −0.020) | `rear_right_wheel_joint` |
-| Wheel 4 (FR) | (+0.060, −0.077, −0.020) | `front_right_wheel_joint` |
+| Wheel 1 (FL) | (+0.060, +0.077, 0) | `front_left_wheel_joint` |
+| Wheel 2 (RL) | (−0.060, +0.077, 0) | `rear_left_wheel_joint` |
+| Wheel 3 (RR) | (−0.060, −0.077, 0) | `rear_right_wheel_joint` |
+| Wheel 4 (FR) | (+0.060, −0.077, 0) | `front_right_wheel_joint` |
 
 The lateral offset `wheel_off_y` is computed in the URDFs as
 `chassis_width/2 + wheel_width/2 + 0.002` = 0.077 m; the separation of 0.154 m
 is consistent with §1.2.
 
-The vertical offset is **−0.020 m** in all four URDFs. `base_joint` raises
-`base_link` by one wheel radius (0.03725 m) above `base_footprint`, which alone
-would place the axles at axle height; the additional −0.020 m places them
-0.01725 m above the `base_footprint` plane, so the wheels extend 0.020 m below
-it. Planar kinematics uses only $x$ and $y$, and no equation in these documents
-depends on this offset; `base_footprint` is however not at ground level. The
-value is left unchanged pending a check against the CAD.
+The vertical offset is **0** in all descriptions. `base_joint` raises
+`base_link` by one wheel radius (0.03725 m) above `base_footprint`, so the
+axles lie on the `base_link` plane and the tyres touch the `base_footprint`
+plane, which is the ground. The axle bushings of `cobraflex_chassis.stl` lie
+0.003 m above that plane. Until October 2026, `my_robot_basic.urdf` and
+`my_robot_gazebo.urdf` lowered the wheel joints by 0.020 m, so that in Gazebo
+the robot stood 0.020 m above the ground. Planar kinematics uses only $x$ and
+$y$ and does not depend on this offset.
 
 ### 1.4 Firmware kinematic constants (open discrepancy)
 

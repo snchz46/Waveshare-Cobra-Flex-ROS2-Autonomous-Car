@@ -9,6 +9,13 @@
     <xacro:property name="chassis_height" value="0.060" />
     <xacro:property name="chassis_mass" value="2.0172" />
 
+    <!-- Envelope of the chassis (cobraflex_chassis.stl) in base_link: from
+         30 mm above the ground to the underside of Full Plate_wheels
+         (104.25 mm), where the body starts. Collision box of every
+         description; chassis_height stays the size of the inertia box. -->
+    <xacro:property name="chassis_box_height" value="0.074" />
+    <xacro:property name="chassis_box_z" value="0.030" />
+
     <xacro:property name="body_length" value="0.228" />
     <xacro:property name="body_width" value="0.180" />
     <xacro:property name="body_height" value="0.100" />
@@ -60,9 +67,9 @@
             <material name="black" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 ${chassis_box_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+                <box size="${chassis_length} ${chassis_width} ${chassis_box_height}"/>
             </geometry>
         </collision>
         <xacro:inertial_box mass="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">

@@ -9,6 +9,7 @@ the files that implement them.
 | Gazebo plugins | DiffDrive, OdometryPublisher, LiDAR, cameras, IMU | [`urdf/robot.gazebo`](../../src/cobraflex/urdf/robot.gazebo) |
 | Worlds | SDF worlds with lane textures and obstacles | [`worlds/`](../../src/cobraflex/worlds/README.md) |
 | ROS bridge | Gazebo ↔ ROS 2 topic mapping | [`config/gz_bridge.yaml`](../../src/cobraflex/config/gz_bridge.yaml) |
+| LiDAR minimum range | 0.15 m minimum range of the RPLIDAR A2M8, applied between the bridge (`scan_gz`) and `/scan` | [`cobraflex/scan_min_range_node.py`](../../src/cobraflex/cobraflex/scan_min_range_node.py) |
 | Spawning | Robot spawn and bridge start-up | [`launch/gazebo.launch.py`](../../src/cobraflex/launch/gazebo.launch.py), [`launch/gazebo_mesh.launch.py`](../../src/cobraflex/launch/gazebo_mesh.launch.py) |
 
 ## Procedure for model changes

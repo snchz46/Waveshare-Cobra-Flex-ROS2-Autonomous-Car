@@ -438,8 +438,8 @@ def Xform "cobraflex_robot" (
                     uniform token purpose = "guide"
                     double size = 1
                     quatf xformOp:orient = (1, 0, 0, 0)
-                    float3 xformOp:scale = (0.228, 0.13, 0.06)
-                    double3 xformOp:translate = (0, 0, 0)
+                    float3 xformOp:scale = (0.228, 0.13, 0.074)
+                    double3 xformOp:translate = (0, 0, 0.03)
                     uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                 }
             }

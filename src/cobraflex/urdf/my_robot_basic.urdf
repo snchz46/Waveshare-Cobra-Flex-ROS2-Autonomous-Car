@@ -6,6 +6,12 @@
 
     <xacro:include filename="inertial_macros.xacro" />
 
+    <!-- Lightweight description of the robot, published by
+         robot_state_publisher on the Jetson (cobraflex_description.launch.xml).
+         Primitives only, no meshes: the chassis is one box, the V3.4 body and
+         the sensors are drawn with boxes and cylinders. Frames, sensor poses,
+         collisions and inertias are those of the mesh descriptions. -->
+
     <!-- ==== Mass budget. Measured total mass of the robot: 3.5 kg.
          The link masses below sum to this value, so that Gazebo simulates the
          vehicle on which the controllers are tuned:
@@ -32,14 +38,21 @@
     <xacro:property name="chassis_height" value="0.060" />
     <xacro:property name="chassis_mass" value="2.0172" />
 
+    <!-- Envelope of the chassis (cobraflex_chassis.stl) in base_link: from
+         30 mm above the ground to the underside of Full Plate_wheels
+         (104.25 mm), where the body starts. Collision box of every
+         description; chassis_height stays the size of the inertia box. -->
+    <xacro:property name="chassis_box_height" value="0.074" />
+    <xacro:property name="chassis_box_z" value="0.030" />
+
     <xacro:property name="body_length" value="0.228" />
     <xacro:property name="body_width" value="0.180" />
     <xacro:property name="body_height" value="0.100" />
     <xacro:property name="body_mass" value="0.8928" />
-    
-    <xacro:property name="wheel_radius" value="0.03725" /> 
+
+    <xacro:property name="wheel_radius" value="0.03725" />
     <xacro:property name="wheel_width" value="0.02" />
-    
+
     <xacro:property name="wheel_off_x" value="0.060" />
     <xacro:property name="wheel_off_y" value="${(chassis_width/2) + (wheel_width/2) + 0.002}" />
 
@@ -47,7 +60,9 @@
          "Car HW Prototype V3"), in base_footprint: x from the midpoint between
          the axles, z from the ground. The sensor joints subtract body_link_z,
          which is also the source of body_joint, so the sensor poses do not
-         depend on the body geometry of this file.
+         depend on the body geometry of this file. body_link lies on the top
+         face of Full Plate_wheels (0.10725), as in the mesh descriptions; the
+         lane camera is placed relative to it.
            lidar_scan_*  origin of /scan: rotation axis of the RPLIDAR A2 at
                          the height of its laser plane, 30.8 mm above its base
            zed_mount_*   mounting point on the bottom face of the ZED Mini,
@@ -55,7 +70,7 @@
            zed_center_*  camera centre (mount + height/2 along the pitched z
                          axis); also the position of imu_link
            zed_pitch     cradle pitch, 15 deg nose down -->
-    <xacro:property name="body_link_z" value="${wheel_radius + body_height/2 + chassis_height/2}" />
+    <xacro:property name="body_link_z" value="${wheel_radius + body_height/2 + chassis_height/2 - 0.01}" />
     <xacro:property name="lidar_scan_x" value="0.035" />
     <xacro:property name="lidar_scan_z" value="0.15305" />
     <xacro:property name="zed_mount_x" value="0.0848" />
@@ -66,18 +81,12 @@
 
     <!-- ==== Visual materials. Colours match the parts of the physical robot. -->
     <material name="carbon">      <color rgba="0.34 0.35 0.39 1"/></material>
-    <material name="dark_grey">   <color rgba="0.46 0.48 0.52 1"/></material>
     <material name="mid_grey">    <color rgba="0.64 0.66 0.70 1"/></material>
-    <material name="alu">         <color rgba="0.82 0.84 0.87 1"/></material>
     <material name="tyre">        <color rgba="0.26 0.26 0.29 1"/></material>
-    <material name="rim">         <color rgba="0.88 0.90 0.93 1"/></material>
-    <material name="lipo">        <color rgba="0.90 0.26 0.16 1"/></material>
     <material name="pcb_green">   <color rgba="0.13 0.62 0.32 1"/></material>
     <material name="lidar_body">  <color rgba="0.32 0.36 0.44 1"/></material>
     <material name="lidar_head">  <color rgba="0.52 0.57 0.66 1"/></material>
     <material name="lens">        <color rgba="0.16 0.17 0.22 1"/></material>
-    <material name="copper">      <color rgba="0.85 0.53 0.24 1"/></material>
-    <material name="anodised">    <color rgba="0.16 0.45 0.82 1"/></material>
 
     <!-- base_footprint is the root of this description.
          robot_localization publishes odom -> <base_link_frame>, and
@@ -96,19 +105,20 @@
     <link name="base_footprint"/>
 
     <link name="base_link">
-        <!-- main chassis plate -->
+        <!-- Cobra Flex chassis: frame, motors, driver board, motor battery and
+             Jetson, as the envelope box (chassis_box_*). -->
         <visual>
-            <origin xyz="0 0 -0.024" rpy="0 0 0"/>
+            <origin xyz="0 0 ${chassis_box_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="${chassis_length} 0.112 0.010"/>
+                <box size="${chassis_length} ${chassis_width} ${chassis_box_height}"/>
             </geometry>
             <material name="carbon" />
         </visual>
 
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 ${chassis_box_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+                <box size="${chassis_length} ${chassis_width} ${chassis_box_height}"/>
             </geometry>
         </collision>
         <xacro:inertial_box mass="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">
@@ -121,123 +131,6 @@
         <child link="base_link"/>
         <origin xyz="0 0 ${wheel_radius}"/>
     </joint>
-
-    <!-- ==== base_link cosmetic sub-assemblies (see header note) ==== -->
-
-    <!-- side rails (battery / ESC pods) -->
-    <link name="viz_chassis_rails">
-        <visual>
-            <origin xyz="0 0.055 -0.004" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.170 0.020 0.034"/>
-            </geometry>
-            <material name="dark_grey" />
-        </visual>
-        <visual>
-            <origin xyz="0 -0.055 -0.004" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.170 0.020 0.034"/>
-            </geometry>
-            <material name="dark_grey" />
-        </visual>
-    </link>
-    <joint name="viz_chassis_rails_joint" type="fixed"><parent link="base_link"/><child link="viz_chassis_rails"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- front + rear bumpers -->
-    <link name="viz_bumpers">
-        <visual>
-            <origin xyz="0.108 0 -0.016" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.022 0.124 0.020"/>
-            </geometry>
-            <material name="mid_grey" />
-        </visual>
-        <visual>
-            <origin xyz="-0.109 0 -0.016" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.020 0.116 0.020"/>
-            </geometry>
-            <material name="mid_grey" />
-        </visual>
-    </link>
-    <joint name="viz_bumpers_joint" type="fixed"><parent link="base_link"/><child link="viz_bumpers"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- Axle housings, driveshaft and the four body mounts. body_joint raises
-         body_link by 0.080 m, which leaves a 17 mm gap between the electronics
-         deck and the chassis rails; the mounts close this gap in RViz. They
-         run from the top face of the chassis plate (z=-0.019) to the underside
-         of the deck (z=+0.030): length 0.049, centred at z=+0.0055, at
-         |y|=0.036 to clear the side rails (0.045..0.065) and |x|=0.078 to
-         clear the servo, motor and driveshaft. The cylinder axis is Z, hence
-         the rotations. -->
-    <link name="viz_drivetrain">
-        <visual>
-            <origin xyz="${wheel_off_x} 0 -0.012" rpy="${pi/2} 0 0"/>
-            <geometry>
-                <cylinder radius="0.011" length="0.104"/>
-            </geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="-${wheel_off_x} 0 -0.012" rpy="${pi/2} 0 0"/>
-            <geometry>
-                <cylinder radius="0.011" length="0.104"/>
-            </geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="0 0 -0.012" rpy="0 ${pi/2} 0"/>
-            <geometry>
-                <cylinder radius="0.006" length="0.108"/>
-            </geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="0.078 0.036 0.0055" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.006" length="0.049"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="0.078 -0.036 0.0055" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.006" length="0.049"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="-0.078 0.036 0.0055" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.006" length="0.049"/></geometry>
-            <material name="alu" />
-        </visual>
-        <visual>
-            <origin xyz="-0.078 -0.036 0.0055" rpy="0 0 0"/>
-            <geometry><cylinder radius="0.006" length="0.049"/></geometry>
-            <material name="alu" />
-        </visual>
-    </link>
-    <joint name="viz_drivetrain_joint" type="fixed"><parent link="base_link"/><child link="viz_drivetrain"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- motor can, transversely mounted ahead of the rear axle -->
-    <link name="viz_motor">
-        <visual>
-            <origin xyz="-0.030 0.020 0.002" rpy="${pi/2} 0 0"/>
-            <geometry>
-                <cylinder radius="0.0165" length="0.048"/>
-            </geometry>
-            <material name="copper" />
-        </visual>
-    </link>
-    <joint name="viz_motor_joint" type="fixed"><parent link="base_link"/><child link="viz_motor"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- steering servo, ahead of the front axle -->
-    <link name="viz_servo">
-        <visual>
-            <origin xyz="0.082 -0.018 0.000" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.040 0.021 0.037"/>
-            </geometry>
-            <material name="anodised" />
-        </visual>
-    </link>
-    <joint name="viz_servo_joint" type="fixed"><parent link="base_link"/><child link="viz_servo"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
     <link name="body_link">
         <!-- V3.4 printed body (Inventor assembly "Car HW Prototype V3"): floor
@@ -419,73 +312,13 @@
         <origin xyz="0 0 ${body_link_z - wheel_radius}"/>
     </joint>
 
-    <!-- ==== body_link cosmetic sub-assemblies (see header note) ==== -->
-
-    <!-- Jetson enclosure, at the Orin position of the CAD: in the chassis,
-         under Full Plate_wheels -->
-    <link name="viz_jetson">
-        <visual>
-            <origin xyz="0.0435 0 ${0.0735 - body_link_z}" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.099 0.090 0.025"/>
-            </geometry>
-            <material name="dark_grey" />
-        </visual>
-    </link>
-    <joint name="viz_jetson_joint" type="fixed"><parent link="body_link"/><child link="viz_jetson"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- Jetson heatsink -->
-    <link name="viz_deck_hardware">
-        <visual>
-            <origin xyz="0.0435 0 ${0.091 - body_link_z}" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.082 0.082 0.010"/>
-            </geometry>
-            <material name="alu" />
-        </visual>
-    </link>
-    <joint name="viz_deck_hardware_joint" type="fixed"><parent link="body_link"/><child link="viz_deck_hardware"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- LiPo pack -->
-    <link name="viz_lipo">
-        <visual>
-            <origin xyz="0.058 0 -0.028" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.078 0.046 0.028"/>
-            </geometry>
-            <material name="lipo" />
-        </visual>
-    </link>
-    <joint name="viz_lipo_joint" type="fixed"><parent link="body_link"/><child link="viz_lipo"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <!-- Side skirts: 0.180 m body width. Lowered by 8 mm
-         (z -0.030 -> -0.034, height 0.040 -> 0.048), so that the lower edge
-         reaches base_link z=+0.022 and meets the chassis rails. The wheels
-         reach base_link z=+0.01725 and overlap the skirts in y; this leaves
-         4.75 mm of wheel-arch clearance. -->
-    <link name="viz_skirts">
-        <visual>
-            <origin xyz="0 0.086 -0.034" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.190 0.008 0.048"/>
-            </geometry>
-            <material name="mid_grey" />
-        </visual>
-        <visual>
-            <origin xyz="0 -0.086 -0.034" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.190 0.008 0.048"/>
-            </geometry>
-            <material name="mid_grey" />
-        </visual>
-    </link>
-    <joint name="viz_skirts_joint" type="fixed"><parent link="body_link"/><child link="viz_skirts"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <xacro:macro name="left_wheel_link" params="prefix x_location y_location">
+    <!-- Wheel: the joint lies on the axle line of base_link, so the tyres
+         touch the base_footprint plane. -->
+    <xacro:macro name="wheel_link" params="prefix x_location y_location">
         <joint name="${prefix}_wheel_joint" type="continuous">
             <parent link="base_link"/>
             <child link="${prefix}_wheel"/>
-            <origin xyz="${x_location} ${y_location} -0.02" rpy="-${pi/2} 0 0"/>
+            <origin xyz="${x_location} ${y_location} 0" rpy="-${pi/2} 0 0"/>
             <axis xyz="0 0 1"/>
         </joint>
 
@@ -510,107 +343,30 @@
             </xacro:inertial_cylinder>
         </link>
 
-        <!-- Rim and hub nut, separate from the tyre for distinct colours in
-             RViz. Both share the axle axis; the hub uses the rim material,
-             since at r=0.0075 a separate material is not visible. -->
-        <link name="viz_${prefix}_rim">
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <cylinder radius="0.0245" length="0.0295"/>
-                </geometry>
-                <material name="rim" />
-            </visual>
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <cylinder radius="0.0075" length="0.0335"/>
-                </geometry>
-                <material name="rim" />
-            </visual>
-        </link>
-        <joint name="viz_${prefix}_rim_joint" type="fixed"><parent link="${prefix}_wheel"/><child link="viz_${prefix}_rim"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
         <gazebo reference="${prefix}_wheel">
             <mu1>0.8</mu1>
             <mu2>0.8</mu2>
         </gazebo>
     </xacro:macro>
 
-    <xacro:macro name="right_wheel_link" params="prefix x_location y_location">
-        <joint name="${prefix}_wheel_joint" type="continuous">
-            <parent link="base_link"/>
-            <child link="${prefix}_wheel"/>
-            <origin xyz="${x_location} ${y_location} -0.02" rpy="-${pi/2} 0 0"/>
-            <axis xyz="0 0 1"/>
-        </joint>
+    <xacro:wheel_link prefix="front_left" x_location="${wheel_off_x}" y_location="${wheel_off_y}" />
+    <xacro:wheel_link prefix="front_right" x_location="${wheel_off_x}" y_location="-${wheel_off_y}" />
 
-        <link name="${prefix}_wheel">
-            <!-- Tyre. The Z axis of the link is the axle (the joint rotates it
-                 by -pi/2 about X). The visual width is the real 0.0275 m; the
-                 collision uses ${wheel_width}. -->
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <cylinder radius="${wheel_radius}" length="0.0275"/>
-                </geometry>
-                <material name="tyre" />
-            </visual>
-            <collision>
-                <geometry>
-                    <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
-                </geometry>
-            </collision>
-            <xacro:inertial_cylinder mass="0.1" length="${wheel_width}" radius="${wheel_radius}">
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-            </xacro:inertial_cylinder>
-        </link>
-
-        <!-- Rim and hub nut, separate from the tyre for distinct colours in
-             RViz. Both share the axle axis; the hub uses the rim material,
-             since at r=0.0075 a separate material is not visible. -->
-        <link name="viz_${prefix}_rim">
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <cylinder radius="0.0245" length="0.0295"/>
-                </geometry>
-                <material name="rim" />
-            </visual>
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <cylinder radius="0.0075" length="0.0335"/>
-                </geometry>
-                <material name="rim" />
-            </visual>
-        </link>
-        <joint name="viz_${prefix}_rim_joint" type="fixed"><parent link="${prefix}_wheel"/><child link="viz_${prefix}_rim"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-        <gazebo reference="${prefix}_wheel">
-            <mu1>0.8</mu1>
-            <mu2>0.8</mu2>
-        </gazebo>
-    </xacro:macro>
-
-    <xacro:left_wheel_link prefix="front_left" x_location="${wheel_off_x}" y_location="${wheel_off_y}" />
-    <xacro:right_wheel_link prefix="front_right" x_location="${wheel_off_x}" y_location="-${wheel_off_y}" />
-    
-    <xacro:left_wheel_link prefix="rear_left" x_location="-${wheel_off_x}" y_location="${wheel_off_y}" />
-    <xacro:right_wheel_link prefix="rear_right" x_location="-${wheel_off_x}" y_location="-${wheel_off_y}" />
+    <xacro:wheel_link prefix="rear_left" x_location="-${wheel_off_x}" y_location="${wheel_off_y}" />
+    <xacro:wheel_link prefix="rear_right" x_location="-${wheel_off_x}" y_location="-${wheel_off_y}" />
 
 
     <gazebo reference="base_footprint">
         <mu1>1.0</mu1>
         <mu2>1.0</mu2>
     </gazebo>
-    
+
     <gazebo reference="base_link">
         <material name="grey" />
     </gazebo>
 
     <link name="lidar_link">
-        <!-- RPLIDAR A2M8: base ring, rotating head, cap and laser window, on the
+        <!-- RPLIDAR A2M8: base ring, rotating head, laser window and cap, on the
              12 mm pedestal of the V3 body (drawn in body_link).
              lidar_link is the origin of the scan, at the height of the optics; the
              A2 extends from 30.8 mm below to 10.2 mm above it, so collision and
@@ -622,6 +378,18 @@
             <origin xyz="0 0 -0.0233" rpy="0 0 0"/>
             <geometry><cylinder length="0.014" radius="0.0375"/></geometry>
             <material name="lidar_body" />
+        </visual>
+        <!-- rotating head -->
+        <visual>
+            <origin xyz="0 0 -0.0095" rpy="0 0 0"/>
+            <geometry><cylinder length="0.018" radius="0.0350"/></geometry>
+            <material name="lidar_head" />
+        </visual>
+        <!-- laser window -->
+        <visual>
+            <origin xyz="0.030 0 0" rpy="0 0 0"/>
+            <geometry><box size="0.012 0.024 0.013"/></geometry>
+            <material name="lens" />
         </visual>
         <!-- top cap -->
         <visual>
@@ -643,33 +411,12 @@
 
     <!-- lidar_link is placed at the scan origin (lidar_scan_*): in the V3 body the
          A2 stands on a 12 mm pedestal in the front bay. The rear cable chamber
-         occludes the sector beyond about +-119 deg from the front. -->
+         occludes the sector beyond about +-128 deg from the front. -->
     <joint name="lidar_joint" type="fixed">
         <parent link="body_link"/>
         <child link="lidar_link"/>
         <origin xyz="${lidar_scan_x} 0 ${lidar_scan_z - body_link_z}" rpy="0 0 ${pi}"/>
     </joint>
-
-    <!-- ==== lidar_link cosmetic sub-assemblies (see header note) ==== -->
-
-    <!-- rotating head + laser aperture -->
-    <link name="viz_lidar_head">
-        <visual>
-            <origin xyz="0 0 -0.0095" rpy="0 0 0"/>
-            <geometry><cylinder length="0.018" radius="0.0350"/></geometry>
-            <material name="lidar_head" />
-        </visual>
-    </link>
-    <joint name="viz_lidar_head_joint" type="fixed"><parent link="lidar_link"/><child link="viz_lidar_head"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-
-    <link name="viz_lidar_aperture">
-        <visual>
-            <origin xyz="0.030 0 0" rpy="0 0 0"/>
-            <geometry><box size="0.012 0.024 0.013"/></geometry>
-            <material name="lens" />
-        </visual>
-    </link>
-    <joint name="viz_lidar_aperture_joint" type="fixed"><parent link="lidar_link"/><child link="viz_lidar_aperture"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
     <!-- ZED Mini mount. zed_camera_link is the root link of the zed_camera macro
          (zed_descr.urdf.xacro), the mounting point on the bottom face of the
@@ -719,13 +466,23 @@
 
     <link name="camera_link_lane">
         <!-- Lane camera read by the RL policy (IMX219 CSI module): green PCB,
-             lens barrel along +X. The joint pitches the link 0.30 rad down;
-             the IPM in camera_geometry.py depends on this pitch and on the
-             mount height, which must not change. -->
+             lens barrel and retaining ring along +X. The joint pitches the link
+             0.30 rad down; the IPM in camera_geometry.py depends on this pitch
+             and on the mount height (0.07725 m), which must not change. -->
         <visual>
             <origin xyz="-0.002 0 0" rpy="0 0 0"/>
             <geometry><box size="0.004 0.025 0.024"/></geometry>
             <material name="pcb_green" />
+        </visual>
+        <visual>
+            <origin xyz="0.004 0 0" rpy="0 ${pi/2} 0"/>
+            <geometry><cylinder radius="0.0055" length="0.009"/></geometry>
+            <material name="lens" />
+        </visual>
+        <visual>
+            <origin xyz="0.0090 0 0" rpy="0 ${pi/2} 0"/>
+            <geometry><cylinder radius="0.0034" length="0.001"/></geometry>
+            <material name="lens" />
         </visual>
         <collision>
              <geometry>
@@ -739,21 +496,6 @@
         <child link="camera_link_lane"/>
         <origin xyz="${body_length/2 + 0.01} 0 -0.03" rpy="0 0.3 0"/>
     </joint>
-
-    <!-- lens barrel + retaining ring of the lane camera -->
-    <link name="viz_lane_cam_lens">
-        <visual>
-            <origin xyz="0.004 0 0" rpy="0 ${pi/2} 0"/>
-            <geometry><cylinder radius="0.0055" length="0.009"/></geometry>
-            <material name="lens" />
-        </visual>
-        <visual>
-            <origin xyz="0.0090 0 0" rpy="0 ${pi/2} 0"/>
-            <geometry><cylinder radius="0.0034" length="0.001"/></geometry>
-            <material name="lens" />
-        </visual>
-    </link>
-    <joint name="viz_lane_cam_lens_joint" type="fixed"><parent link="camera_link_lane"/><child link="viz_lane_cam_lens"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
 
     <link name="camera_link_optical_lane"></link>
 
@@ -772,5 +514,4 @@
         <parent link="body_link"/>
         <child link="imu_link" />
     </joint>
-
 </robot>

@@ -34,10 +34,10 @@ wheel joint origins relative to `base_link`**, from `urdf/my_robot_gazebo.urdf`
 
 | Wheel | Name | Position $(x, y, z)$ [m] | Joint |
 |-------|------|---------------------------|-------|
-| W1 | Front left | (+0.060, +0.077, −0.020) | `front_left_wheel_joint` |
-| W2 | Rear left | (−0.060, +0.077, −0.020) | `rear_left_wheel_joint` |
-| W3 | Rear right | (−0.060, −0.077, −0.020) | `rear_right_wheel_joint` |
-| W4 | Front right | (+0.060, −0.077, −0.020) | `front_right_wheel_joint` |
+| W1 | Front left | (+0.060, +0.077, 0) | `front_left_wheel_joint` |
+| W2 | Rear left | (−0.060, +0.077, 0) | `rear_left_wheel_joint` |
+| W3 | Rear right | (−0.060, −0.077, 0) | `rear_right_wheel_joint` |
+| W4 | Front right | (+0.060, −0.077, 0) | `front_right_wheel_joint` |
 
 Both offsets are derived from xacro properties:
 
@@ -50,13 +50,11 @@ With `chassis_width` = 0.130 m and `wheel_width` = 0.020 m, `wheel_off_y`
 = 0.065 + 0.010 + 0.002 = **0.077 m**; the two sides are therefore 0.154 m
 apart.
 
-> **Vertical offset of −0.020 m.** `base_joint` raises `base_link` by one wheel
-> radius (0.03725 m) above `base_footprint`, which would place the wheel axles
-> at axle height. The wheel joints lower them by a further 0.020 m, so the axles
-> are 0.01725 m above the `base_footprint` plane and the wheels extend 0.020 m
-> below it. Planar kinematics uses only $x$ and $y$ and is not affected, but
-> `base_footprint` is consequently not at ground level. This is a property of
-> the robot description, not of the kinematics, and is left unchanged.
+> **Vertical offset.** `base_joint` raises `base_link` by one wheel radius
+> (0.03725 m) above `base_footprint`, and the wheel joints lie on the
+> `base_link` plane: the axles are at axle height and `base_footprint` is at
+> ground level. Planar kinematics uses only $x$ and $y$ and does not depend on
+> this offset.
 
 ### 2.2 Geometric parameters
 

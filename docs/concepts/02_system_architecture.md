@@ -127,7 +127,7 @@ flowchart LR
 
 | Topic | Type | Source → destination |
 | --- | --- | --- |
-| `/scan` | `sensor_msgs/LaserScan` | LiDAR → SLAM, AMCL, costmaps, avoidance |
+| `/scan` | `sensor_msgs/LaserScan` | LiDAR (Gazebo: `scan_min_range_node`) → SLAM, AMCL, costmaps, avoidance |
 | `/zed/zed_node/odom` | `nav_msgs/Odometry` | ZED → EKF |
 | `/odometry/filtered` | `nav_msgs/Odometry` | EKF → cage speed input, analysis |
 | `camera/image_raw_lane` | `sensor_msgs/Image` | CSI camera → RL policy, CV estimator |
