@@ -86,6 +86,17 @@ def generate_launch_description():
         output="screen",
     )
 
+    # /scan with the minimum range of the RPLIDAR A2M8: returns below 0.15 m
+    # become inf, as sllidar_ros2 publishes them on the hardware. The bridge
+    # delivers the raw gpu_lidar scan on scan_gz (see gz_bridge.yaml).
+    scan_min_range_node = Node(
+        package="cobraflex",
+        executable="scan_min_range_node",
+        name="scan_min_range",
+        output="screen",
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
+
     # /camera/left/points, reprojected from the depth image instead of being
     # bridged from Gazebo. The reason (a frame-convention mismatch) is
     # documented in zed_depth_cloud.launch.py, next to the node.
@@ -149,6 +160,7 @@ def generate_launch_description():
             gazebo_server,
             gazebo_client,
             ros_gz_bridge,
+            scan_min_range_node,
             spawn_robot,
             ekf_node,
             depth_cloud_node,

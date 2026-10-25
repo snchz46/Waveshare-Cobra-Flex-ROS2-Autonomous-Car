@@ -11,6 +11,7 @@ downloads.
 | `cobraflex_chassis.stl` | 12 MB | Author CAD design |
 | `cobraflex_wheel.stl` | 4.5 MB | Author CAD design |
 | `rplidar-a2m4-r1.stl` | 176 KB | Slamtec RPLIDAR A2 visual mesh |
+| `rplidar-a2m4-r1_hull.stl` | 55 KB | Convex hull of the A2 mesh: `lidar_link` visual of the mesh descriptions, cannot occlude the simulated scan |
 | `zedmini_camera.stl` | 78 KB | Stereolabs ZED Mini visual reference |
 
 The meshes are **visual only**. Collision geometry in the URDFs consists of

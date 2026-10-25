@@ -49,8 +49,11 @@
   gz_type_name: "gz.msgs.IMU"
   direction: GZ_TO_ROS
 
-# gz topic published by Sensors plugin
-- ros_topic_name: "scan"
+# gz topic published by Sensors plugin. Bridged as scan_gz: scan_min_range_node
+# republishes it on /scan with the 0.15 m minimum range of the RPLIDAR A2M8
+# (the gpu_lidar itself renders from 0.015 m, so that the body of the robot
+# still blocks the rear sector).
+- ros_topic_name: "scan_gz"
   gz_topic_name: "scan"
   ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "gz.msgs.LaserScan"

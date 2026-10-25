@@ -92,6 +92,21 @@ Version para Gazebo (estimador CV calibrado y pure pursuit de `cobraflex_rl`):
 ros2 launch cobraflex lane_keeper_gazebo.launch.py
 ```
 
+### Rango minimo del LiDAR en simulacion
+
+`scan_min_range_node` recibe el scan de Gazebo en `scan_gz` y lo republica en
+`/scan` con `range_min = 0.15`; las lecturas mas cortas pasan a `inf`, como las
+publica `sllidar_ros2` con el RPLIDAR A2M8 real. El `gpu_lidar` sigue
+renderizando desde 0.015 m para que el propio robot tape el sector trasero; con
+un recorte cercano de 0.15 m ese sector se volveria transparente.
+`gazebo.launch.py` y `gazebo_mesh.launch.py` lo arrancan.
+
+| Parametro | Descripcion |
+| --- | --- |
+| `range_min` | Rango minimo en metros; por defecto `0.15` |
+| `input_topic` | Scan de Gazebo; por defecto `scan_gz` |
+| `output_topic` | Scan publicado; por defecto `scan` |
+
 ## Launch files
 
 | Funcion | Comando |
@@ -127,3 +142,4 @@ Ejecutables registrados en `setup.py`; son los unicos validos para
 | `lidar_avoidance_node` | `cobraflex.lidar_avoidance_node` |
 | `lane_keeper_node` | `cobraflex.lane_keeper_node` |
 | `lane_keeper_gazebo_node` | `cobraflex.lane_keeper_gazebo_node` |
+| `scan_min_range_node` | `cobraflex.scan_min_range_node` |

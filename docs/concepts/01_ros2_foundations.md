@@ -124,8 +124,10 @@ the RViz fixed frame. The complete tree is shown in the
 
 [`gz_bridge.yaml`](../../src/cobraflex/config/gz_bridge.yaml) maps Gazebo
 topics to ROS: `clock`, `joint_states`, `odom`, `odom_truth`, `tf`, `imu`,
-`scan`, the stereo camera topics and `camera/image_raw_lane` from Gazebo to
-ROS, and `cmd_vel` from ROS to Gazebo.
+`scan` (as `scan_gz`), the stereo camera topics and `camera/image_raw_lane` from
+Gazebo to ROS, and `cmd_vel` from ROS to Gazebo. `scan_min_range_node`
+republishes `scan_gz` on `/scan` with the 0.15 m minimum range of the RPLIDAR
+A2M8.
 
 ---
 

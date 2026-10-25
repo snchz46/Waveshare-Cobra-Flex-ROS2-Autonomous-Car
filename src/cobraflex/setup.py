@@ -113,6 +113,7 @@ setup(
             "lidar_avoidance_node = cobraflex.lidar_avoidance_node:main",
             "lane_keeper_node = cobraflex.lane_keeper_node:main",
             "lane_keeper_gazebo_node = cobraflex.lane_keeper_gazebo_node:main",
+            "scan_min_range_node = cobraflex.scan_min_range_node:main",
         ],
     },
 )

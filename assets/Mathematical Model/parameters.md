@@ -440,7 +440,7 @@ motor specification, which is not recorded here.
 | Angular resolution | 0.090° |
 | Minimum angle | −180° (−3.14 rad) |
 | Maximum angle | +180° (+3.14 rad) |
-| Minimum range | 0.015 m |
+| Minimum range | 0.015 m rendered; 0.15 m on `/scan` (`scan_min_range_node`) |
 | Maximum range | 8.0 m |
 | Frequency | 10 Hz |
 | Noise (mean) | 0.0 |
@@ -464,6 +464,21 @@ in every description file (`my_robot_basic`, `my_robot_gazebo`, `my_robot_mesh`,
 mesh, the visual origin cancels the half turn, so the unit keeps its cable at
 the rear. `lidar_avoidance_node` assumes the same convention
 (`front_offset_deg` = 180).
+
+The `gpu_lidar` of `robot.gazebo` renders the visuals of the robot itself. In
+the mesh descriptions `lidar_link` is therefore drawn with the convex hull of
+the A2 mesh (`rplidar-a2m4-r1_hull.stl`): the parts of the detailed mesh inside
+the head, next to the window, faced the sensor and cut four sectors of the
+front scan (about ±19–56°), whereas every face of the hull is turned away from
+the sensor inside it. Self-occlusion is then limited to the rear sector, as on
+the hardware; in simulation these rays return the chamber wall at about
+0.05 m. The A2 discards returns below its 0.15 m minimum range, and
+`sllidar_ros2` publishes them as `inf`. `scan_min_range_node` applies the same
+rule to the simulated scan: the bridge delivers it on `scan_gz`, and the node
+republishes it on `/scan` with `range_min` = 0.15 m and the shorter returns set
+to `inf`. The near clip of the `gpu_lidar` stays at 0.015 m, since a near clip
+of 0.15 m would stop rendering the chamber and make the rear sector
+transparent.
 
 The 4000 simulated samples are a Gazebo setting, not a hardware value: a
 physical RPLIDAR A2 delivers about 400 points per revolution at 10 Hz. A

@@ -239,11 +239,16 @@
              y = -9.3 mm, laser plane at y = 21.5 mm); the visual origin turns it to the
              mounted orientation and puts its optics on the link origin. Its yaw of
              -pi/2 also cancels the half turn of lidar_joint, so the unit keeps its
-             cable towards the rear. -->
+             cable towards the rear.
+             The visual is the convex hull of the A2 mesh (rplidar-a2m4-r1_hull.stl).
+             The gpu_lidar of robot.gazebo renders the visuals, and the parts of the
+             detailed mesh inside the head, next to the window, face the sensor and
+             cut four sectors of the front scan; seen from the sensor, inside it,
+             every face of the hull is turned away and is not rendered. -->
         <visual>
             <origin xyz="0 0 -0.0215" rpy="${pi/2} 0 ${-pi/2}"/>
             <geometry>
-                <mesh filename="file://$(find cobraflex)/meshes/rplidar-a2m4-r1.stl" scale="0.001 0.001 0.001"/>
+                <mesh filename="file://$(find cobraflex)/meshes/rplidar-a2m4-r1_hull.stl" scale="0.001 0.001 0.001"/>
             </geometry>
             <material name="blue" />
         </visual>
