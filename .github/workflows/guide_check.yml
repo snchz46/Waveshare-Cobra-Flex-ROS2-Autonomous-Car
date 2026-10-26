@@ -11,13 +11,11 @@
 # by /cmd_vel, LiDAR avoidance, lane keeping, teleoperation GUI, lab session code
 # and colcon test. The physical-robot procedures (docs/3_ROBOT_OPERATION.md)
 # require the hardware and are not covered.
+#
+# Manual trigger only: Actions tab > Guide check > Run workflow.
 name: Guide check
 
 on:
-  push:
-    branches: [main]
-    paths: ["docs/**", "src/**", "lab/**", ".github/**", "README.md"]
-  pull_request:
   workflow_dispatch:
 
 concurrency:
