@@ -8,7 +8,7 @@
 
     <!-- Lightweight description of the robot, published by
          robot_state_publisher on the Jetson (cobraflex_description.launch.xml).
-         Primitives only, no meshes: the chassis is one box, the V3.4 body and
+         Primitives only, no meshes: the chassis is one box, the V4 body and
          the sensors are drawn with boxes and cylinders. Frames, sensor poses,
          collisions and inertias are those of the mesh descriptions. -->
 
@@ -133,15 +133,15 @@
     </joint>
 
     <link name="body_link">
-        <!-- V3.4 printed body (Inventor assembly "Car HW Prototype V3"): floor
-             following Full Plate_wheels, tapered and empty rear cable chamber and
-             front-bay side fairings (bot_V3), powerbank cabin (top_V3) and its lid,
-             LiDAR pedestal and ZED clamp in the open front bay, on the unchanged
-             Full Plate_wheels with the lane-camera holder. Positions are the CAD
-             positions in base_footprint, offset by body_link_z; the leaning walls
-             are drawn as tilted boxes. -->
+        <!-- V4 printed body (Inventor assembly "Car HW Prototype V3"): floor
+             following the wheels plate, tapered and empty rear cable chamber with
+             the rear port and its cover, front-bay side fairings (bot_V3),
+             powerbank cabin (top_V3) and its lid, LiDAR pedestal and ZED clamp in
+             the open front bay, on cam_plate_V4 (Full Plate_wheels with the
+             lane-camera pod). Positions are the CAD positions in base_footprint,
+             offset by body_link_z; the leaning walls are drawn as tilted boxes. -->
 
-        <!-- Full Plate_wheels, top skin -->
+        <!-- cam_plate_V4, top skin -->
         <visual>
             <origin xyz="0 0 ${0.10575 - body_link_z}" rpy="0 0 0"/>
             <geometry><box size="0.222 0.16 0.003"/></geometry>
@@ -247,7 +247,7 @@
         <!-- Collision: lower deck, cable chamber and powerbank cabin (two boxes
              following its taper). The front bay stays open, as on the printed body;
              the side fairings stay inside the track of the wheels. -->
-        <!-- lower deck: Full Plate_wheels and floor -->
+        <!-- lower deck: cam_plate_V4 (without the camera pod) and floor -->
         <collision>
             <origin xyz="0.0075 0 ${0.09475 - body_link_z}" rpy="0 0 0"/>
             <geometry>
@@ -279,30 +279,32 @@
         <!-- ==== body_link inertia derived from CAD, not from a macro.
              inertial_box is not to be restored here: the box model spreads
              body_mass uniformly, whereas the deck is dominated by the 550 g
-             powerbank, which the V3.4 body carries high, in the cabin over the
+             powerbank, which the V4 body carries high, in the cabin over the
              cable chamber, with the ZED Mini and the lane camera low at the nose.
 
-             Source: Inventor assembly "Car HW Prototype V3" (V3.4), integrated on
-             the part meshes. Masses: Full Plate_wheels with the lane-camera holder
-             at their weighed 91.3 g; bot_V3, the top_V3 cabin, its lid, the LiDAR
-             pedestal, the ZED cradle and its cap at 0.539 g/cm3 (the density that
-             reproduces the weighed PLA shells); powerbank 0.550, ZED Mini 0.060
-             and lane camera 0.005 kg at their positions. CAD total 953.0 g.
+             Source: Inventor assembly "Car HW Prototype V3" (V4), integrated on
+             the part meshes. Masses: cam_plate_V4 (the wheels plate with the
+             lane-camera pod) at the density of the plate and holder it replaces,
+             weighed together at 91.3 g (0.790 g/cm3); bot_V3, the top_V3 cabin,
+             its lid, the LiDAR pedestal, the ZED cradle and its cap and the rear
+             port cover at 0.539 g/cm3 (the density that reproduces the weighed PLA
+             shells); powerbank 0.550, ZED Mini 0.060 and lane camera 0.005 kg at
+             their positions. CAD total 948.4 g.
              The tensor refers to the link CoG and is scaled to body_mass, which
              keeps the weighed budget until the printed shells are weighed. The
              same pipeline applied to the previous body reproduces its declared
              tensor within 3 %.
 
-             CoG in base_footprint: (0.00784, -0.00011, 0.16761) m. The
+             CoG in base_footprint: (0.00695, -0.00011, 0.16769) m. The
              CAD +X axis is the vehicle forward axis (axle positions and sensor
              directions), so the products of inertia are declared. See
              assets/Mathematical Model/parameters.md 2.1. -->
         <inertial>
-            <origin xyz="0.00784 -0.00011 ${0.16761 - body_link_z}" rpy="0 0 0"/>
+            <origin xyz="0.00695 -0.00011 ${0.16769 - body_link_z}" rpy="0 0 0"/>
             <mass value="${body_mass}" />
-            <inertia ixx="0.00237140" ixy="0.00000544" ixz="0.00062313"
-                     iyy="0.00425067" iyz="-0.00000222"
-                     izz="0.00415922" />
+            <inertia ixx="0.00236950" ixy="0.00000511" ixz="0.00060274"
+                     iyy="0.00431625" iyz="-0.00000228"
+                     izz="0.00420891" />
         </inertial>
     </link>
 
@@ -491,10 +493,13 @@
         </collision>
     </link>
 
+    <!-- Lane camera: optical centre in the pod of cam_plate_V4, 0.130 m ahead of
+         base_footprint and 0.07725 m above the floor, pitched 0.30 rad down
+         (CAD). The IPM of the lane estimator uses the height and the pitch. -->
     <joint name="camera_joint_lane" type="fixed">
         <parent link="body_link"/>
         <child link="camera_link_lane"/>
-        <origin xyz="${body_length/2 + 0.01} 0 -0.03" rpy="0 0.3 0"/>
+        <origin xyz="0.13 0 -0.03" rpy="0 0.3 0"/>
     </joint>
 
     <link name="camera_link_optical_lane"></link>

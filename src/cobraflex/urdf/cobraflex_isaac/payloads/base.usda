@@ -193,7 +193,7 @@ def Xform "cobraflex_robot" (
                     {
                         quatf xformOp:orient = (0.9887711, 0, 0.14943811, 0)
                         float3 xformOp:scale = (1, 1, 1)
-                        double3 xformOp:translate = (0.124, 0, -0.03)
+                        double3 xformOp:translate = (0.13, 0, -0.03)
                         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                         def Cylinder "cylinder" (

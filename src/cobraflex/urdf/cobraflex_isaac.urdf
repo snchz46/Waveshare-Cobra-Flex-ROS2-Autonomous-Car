@@ -44,7 +44,7 @@
     <origin xyz="0 0 0.03725" />
   </joint>
   <link name="body_link">
-    <!-- V3.4 printed body: CAD mesh, four collision boxes and the CAD tensor; same
+    <!-- V4 printed body: CAD mesh, four collision boxes and the CAD tensor; same
          values as the xacro descriptions (body_link at 0.10725). -->
     <visual>
       <origin rpy="0 0 0" xyz="0.005 0 0" />
@@ -78,9 +78,9 @@
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="0.00784 -0.00011 0.06036" />
+      <origin rpy="0 0 0" xyz="0.00695 -0.00011 0.06044" />
       <mass value="0.8928" />
-      <inertia ixx="0.00237140" ixy="0.00000544" ixz="0.00062313" iyy="0.00425067" iyz="-0.00000222" izz="0.00415922" />
+      <inertia ixx="0.00236950" ixy="0.00000511" ixz="0.00060274" iyy="0.00431625" iyz="-0.00000228" izz="0.00420891" />
     </inertial>
   </link>
   <joint name="body_joint" type="fixed">
@@ -286,7 +286,7 @@
   <joint name="camera_joint_lane" type="fixed">
     <parent link="body_link" />
     <child link="camera_link_lane" />
-    <origin rpy="0 0.30 0" xyz="0.124 0 -0.03" />
+    <origin rpy="0 0.30 0" xyz="0.13 0 -0.03" />
   </joint>
   <link name="camera_link_optical_lane" />
   <joint name="camera_optical_joint_lane" type="fixed">

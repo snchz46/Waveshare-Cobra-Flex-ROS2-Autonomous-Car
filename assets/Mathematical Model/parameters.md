@@ -266,7 +266,7 @@ the URDFs:
 | Link | ixx | iyy | izz | Origin |
 |---|---|---|---|---|
 | `base_link` | 0.00344605 | 0.00934367 | 0.01157940 | `inertial_box` macro |
-| `body_link` | **0.00237140** | **0.00425067** | **0.00415922** | **Hand-written, from CAD (V3.4 body)** |
+| `body_link` | **0.00236950** | **0.00431625** | **0.00420891** | **Hand-written, from CAD (V4 body)** |
 | Wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 | `inertial_cylinder` macro |
 | `lidar_link` | 9.213021e-05 | 9.213021e-05 | 1.335938e-04 | `inertial_cylinder` macro |
 
@@ -275,26 +275,28 @@ Comparison of the `body_link` tensor with the `inertial_box` values for a
 
 | | Macro | Declared | Difference |
 |---|---|---|---|
-| ixx | 0.00315456 | 0.00237140 | −24.8 % |
-| iyy | 0.00461161 | 0.00425067 | −7.8 % |
-| izz | 0.00627817 | 0.00415922 | −33.8 % |
+| ixx | 0.00315456 | 0.00236950 | −24.9 % |
+| iyy | 0.00461161 | 0.00431625 | −6.4 % |
+| izz | 0.00627817 | 0.00420891 | −33.0 % |
 
 `body_link` is the only link whose box model deviates significantly. The tensor
-is computed from the Inventor assembly of the V3.4 printed body (*Car HW
-Prototype V3*), integrated on the part meshes: Full Plate_wheels and the
-lane-camera holder at their weighed 91.3 g; bot_V3, the top_V3 powerbank cabin,
-its lid, the LiDAR pedestal, the ZED cradle and its cap at 0.539 g/cm³, the
-density that reproduces the weighed PLA shells; the powerbank (0.550 kg), the
+is computed from the Inventor assembly of the V4 printed body (*Car HW
+Prototype V3*), integrated on the part meshes. cam_plate_V4, the wheels plate
+with the lane-camera pod, takes the density of the plate and holder it replaces,
+weighed together at 91.3 g (0.790 g/cm³), since it is derived from that plate
+and has nearly its volume. bot_V3, the top_V3 powerbank cabin, its lid, the LiDAR
+pedestal, the ZED cradle and its cap and the rear port cover are at 0.539 g/cm³,
+the density that reproduces the weighed PLA shells; the powerbank (0.550 kg), the
 ZED Mini (0.060 kg) and the lane camera (0.005 kg) at their positions. The CAD
-total is 953.0 g. The tensor refers to the link centre of gravity and is
+total is 948.4 g. The tensor refers to the link centre of gravity and is
 scaled to the declared 0.8928 kg, which keeps the weighed budget until the
 printed shells are weighed. The same pipeline applied to the previous body
 reproduces its declared tensor within 3 % (ixx −0.4 %, iyy −2.8 %, izz −1.5 %).
 
-The centre of gravity lies at $(0.00784, −0.00011, 0.16761)$ m in
+The centre of gravity lies at $(0.00695, −0.00011, 0.16769)$ m in
 `base_footprint`: the powerbank sits high, in the cabin, and the tapered rear
 box below it is an empty cable chamber. The products of inertia are declared:
-ixy = 5.444e−06, iyz = −2.223e−06 and ixz = 6.231e−04 kg·m²; the principal
+ixy = 5.105e−06, iyz = −2.280e−06 and ixz = 6.027e−04 kg·m²; the principal
 axes are pitched by 17° from the body axes. The +X axis of the CAD is
 the vehicle forward axis (axle positions and sensor directions), and Inventor
 reports products of inertia as tensor elements with the sign convention of URDF
@@ -567,7 +569,7 @@ analysis, with references to the Gazebo sources, is in
 | Joint | Child | Origin [m] | Orientation |
 |---|---|---|---|
 | `zedm_mount_joint` | `zedm_camera_link` | (0.0848, 0, 0.1195) from `base_footprint` | Pitch +0.2618 rad (15°), nose down |
-| `camera_joint_lane` | `camera_link_lane` | (0.124, 0, −0.030) from `body_link` | Pitch +0.30 rad, nose down |
+| `camera_joint_lane` | `camera_link_lane` | (0.130, 0, −0.030) from `body_link` | Pitch +0.30 rad, nose down |
 
 `zedm_camera_link` is the mounting point on the bottom face of the camera. In
 the V3 printed body the camera rests on a cradle at the nose, pitched 15° nose

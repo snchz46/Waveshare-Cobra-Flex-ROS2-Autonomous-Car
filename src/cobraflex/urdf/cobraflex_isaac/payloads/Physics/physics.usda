@@ -40,10 +40,10 @@ over "cobraflex_robot"
                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                 )
                 {
-                    point3f physics:centerOfMass = (0.00784, -0.00011, 0.06036)
-                    float3 physics:diagonalInertia = (0.00217563, 0.00425068, 0.00435498)
+                    point3f physics:centerOfMass = (0.00695, -0.00011, 0.06044)
+                    float3 physics:diagonalInertia = (0.00218957, 0.00431626, 0.00438883)
                     float physics:mass = 0.8928
-                    quatf physics:principalAxes = (0.9884380, 0.0021063, 0.1516006, -0.0017515)
+                    quatf physics:principalAxes = (0.9894887, 0.0047508, 0.1445179, -0.0020111)
 
                     over "lidar_link" (
                         prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
@@ -297,7 +297,7 @@ over "cobraflex_robot"
             prepend rel physics:body0 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link>
             custom rel physics:body1
             prepend rel physics:body1 = </cobraflex_robot/Geometry/base_footprint/base_link/body_link/camera_link_lane>
-            point3f physics:localPos0 = (0.124, 0, -0.03)
+            point3f physics:localPos0 = (0.13, 0, -0.03)
             point3f physics:localPos1 = (0, 0, 0)
             quatf physics:localRot0 = (0.9887711, 0, 0.14943811, 0)
             quatf physics:localRot1 = (1, 0, 0, 0)
