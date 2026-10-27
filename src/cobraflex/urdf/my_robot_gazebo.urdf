@@ -137,8 +137,8 @@
         </visual>
         <!-- powerbank cabin (top_V3), floor -->
         <visual>
-            <origin xyz="-0.015 0 ${0.16925 - body_link_z}" rpy="0 0 0"/>
-            <geometry><box size="0.192 0.122 0.004"/></geometry>
+            <origin xyz="-0.015 0 ${0.16875 - body_link_z}" rpy="0 0 0"/>
+            <geometry><box size="0.192 0.122 0.003"/></geometry>
             <material name="grey" />
         </visual>
         <!-- powerbank cabin, left flank -->
@@ -226,25 +226,25 @@
              the part meshes. Masses: cam_plate_V4 (the wheels plate with the
              lane-camera pod) at the density of the plate and holder it replaces,
              weighed together at 91.3 g (0.790 g/cm3); bot_V3, the top_V3 cabin,
-             its lid, the LiDAR pedestal, the ZED cradle and its cap and the rear
-             port cover at 0.539 g/cm3 (the density that reproduces the weighed PLA
-             shells); powerbank 0.550, ZED Mini 0.060 and lane camera 0.005 kg at
-             their positions. CAD total 948.4 g.
+             its lid, the LiDAR pedestal, the ZED cradle and its cap, the rear
+             port cover and the power-bank button pin at 0.539 g/cm3 (the density
+             that reproduces the weighed PLA shells); powerbank 0.550, ZED Mini
+             0.060 and lane camera 0.005 kg at their positions. CAD total 938.3 g.
              The tensor refers to the link CoG and is scaled to body_mass, which
              keeps the weighed budget until the printed shells are weighed. The
              same pipeline applied to the previous body reproduces its declared
              tensor within 3 %.
 
-             CoG in base_footprint: (0.00695, -0.00011, 0.16769) m. The
+             CoG in base_footprint: (0.006, -0.00012, 0.16706) m. The
              CAD +X axis is the vehicle forward axis (axle positions and sensor
              directions), so the products of inertia are declared. See
              assets/Mathematical Model/parameters.md 2.1. -->
         <inertial>
-            <origin xyz="0.00695 -0.00011 ${0.16769 - body_link_z}" rpy="0 0 0"/>
+            <origin xyz="0.006 -0.00012 ${0.16706 - body_link_z}" rpy="0 0 0"/>
             <mass value="${body_mass}" />
-            <inertia ixx="0.00236950" ixy="0.00000511" ixz="0.00060274"
-                     iyy="0.00431625" iyz="-0.00000228"
-                     izz="0.00420891" />
+            <inertia ixx="0.00236116" ixy="0.00000439" ixz="0.00062746"
+                     iyy="0.00432964" iyz="-0.00000211"
+                     izz="0.00423665" />
         </inertial>
     </link>
 

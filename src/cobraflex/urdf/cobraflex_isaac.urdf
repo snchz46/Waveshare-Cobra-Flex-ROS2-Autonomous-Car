@@ -78,9 +78,9 @@
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="0.00695 -0.00011 0.06044" />
+      <origin rpy="0 0 0" xyz="0.006 -0.00012 0.05981" />
       <mass value="0.8928" />
-      <inertia ixx="0.00236950" ixy="0.00000511" ixz="0.00060274" iyy="0.00431625" iyz="-0.00000228" izz="0.00420891" />
+      <inertia ixx="0.00236116" ixy="0.00000439" ixz="0.00062746" iyy="0.00432964" iyz="-0.00000211" izz="0.00423665" />
     </inertial>
   </link>
   <joint name="body_joint" type="fixed">

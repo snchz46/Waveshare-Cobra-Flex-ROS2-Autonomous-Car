@@ -40,10 +40,10 @@ over "cobraflex_robot"
                     prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
                 )
                 {
-                    point3f physics:centerOfMass = (0.00695, -0.00011, 0.06044)
-                    float3 physics:diagonalInertia = (0.00218957, 0.00431626, 0.00438883)
+                    point3f physics:centerOfMass = (0.006, -0.00012, 0.05981)
+                    float3 physics:diagonalInertia = (0.00217059, 0.00432965, 0.00442722)
                     float physics:mass = 0.8928
-                    quatf physics:principalAxes = (0.9894887, 0.0047508, 0.1445179, -0.0020111)
+                    quatf physics:principalAxes = (0.9891455, 0.0035801, 0.1468865, -0.0016592)
 
                     over "lidar_link" (
                         prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]

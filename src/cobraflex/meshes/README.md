@@ -21,8 +21,9 @@ Replacing a mesh changes the visualisation only, not the physics.
 
 `cobraflex_body.stl` contains the printed parts of the V4 body (bot_V3
 with the tapered cable chamber, side fairings and rear port, the port cover,
-the top_V3 powerbank cabin, its lid, LiDAR pedestal, ZED cradle and cap, and
-cam_plate_V4, the wheels plate with the lane-camera pod),
+the top_V3 powerbank cabin with the display window and the button pin, its lid,
+LiDAR pedestal, ZED cradle and cap, and cam_plate_V4, the wheels plate with the
+lane-camera pod),
 exported in the Plate_bot frame of the CAD: x forward, z = 0 on top of
 Full Plate_wheels. The URDFs place this origin at (0.005, 0, 0.10725) in
 `base_footprint`.
