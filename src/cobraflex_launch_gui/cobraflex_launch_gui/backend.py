@@ -137,8 +137,11 @@ class Backend:
 class _Running:
     """Process handle and bookkeeping of one running launch."""
 
-    def __init__(self, process: QProcess):
+    def __init__(self, process: QProcess, pgid: Optional[int]):
         self.process = process
+        #: Process group of the launch (its PID, set by setsid), or None. It
+        #: outlives ros2 launch while any of its processes is still alive.
+        self.pgid = pgid
         self.buffer = ""
         self.stopping = False
         self.restart = False
@@ -186,12 +189,12 @@ class RosBackend(Backend):
             self.on_state_changed(launch)
             return
 
-        running = _Running(proc)
+        launch.pid = int(proc.processId())
+        running = _Running(proc, launch.pid if self._setsid else None)
         self._running[launch.uid] = running
         proc.readyReadStandardOutput.connect(lambda: self._on_output(launch, running))
         proc.finished.connect(lambda code, status: self._on_finished(launch, code, status))
         launch.state = "running"
-        launch.pid = int(proc.processId())
         self._log(launch, "INFO", f"{build_command(launch)}  (PID {launch.pid})")
         self.on_state_changed(launch)
 
@@ -239,6 +242,13 @@ class RosBackend(Backend):
                 if not r.process.waitForFinished(SIGKILL_TIMEOUT_MS):
                     self._signal_tree(r.process.processId(), signal.SIGKILL)
                     r.process.waitForFinished(1000)
+        # Processes orphaned inside the group, e.g. a gz sim that ignored
+        # SIGINT after ros2 launch terminated only its sh wrapper.
+        for r in items:
+            if not self._wait_group(r.pgid, max(0.0, deadline - time.monotonic())):
+                self._signal_group(r.pgid, signal.SIGTERM)
+                if not self._wait_group(r.pgid, SIGKILL_TIMEOUT_MS / 1000.0):
+                    self._signal_group(r.pgid, signal.SIGKILL)
         self._terminate_strays(self._pending_strays)
 
     # Signals ----------------------------------------------------------------
@@ -262,6 +272,30 @@ class RosBackend(Backend):
             return f"PID {pid}"
         except OSError:
             return ""
+
+    @staticmethod
+    def _signal_group(pgid: Optional[int], sig: int) -> bool:
+        """Signal a launch's process group; False if it has no process left.
+
+        Valid after ros2 launch has exited: Linux does not reuse a PID while
+        it is the ID of a process group with members. Signal 0 only tests.
+        """
+        if not pgid or pgid == os.getpgrp():
+            return False
+        try:
+            os.killpg(pgid, sig)
+            return True
+        except OSError:
+            return False
+
+    def _wait_group(self, pgid: Optional[int], timeout_s: float) -> bool:
+        """Block until a process group is empty; return whether it is."""
+        end = time.monotonic() + timeout_s
+        while self._signal_group(pgid, 0):
+            if time.monotonic() >= end:
+                return False
+            time.sleep(0.1)
+        return True
 
     def _interrupt(self, running: _Running, pid: int) -> int:
         """SIGINT the launch group and the descendants outside of it.
@@ -301,24 +335,37 @@ class RosBackend(Backend):
         return killed
 
     def _escalate(self, launch: Launch, running: _Running) -> None:
-        """SIGTERM what survived the grace period; SIGKILL after a second one."""
+        """SIGTERM what survived the grace period; SIGKILL after a second one.
+
+        ros2 launch may have exited already while a process of its group is
+        still alive: it signals only its direct children, so a process behind
+        a wrapper (sh -c ruby gz sim) can outlive it.
+        """
         killed = self._terminate_strays(running.strays)
         if killed:
             self._log(launch, "WARN", f"SIGTERM sent to {killed} remaining process(es)")
-        current = self._running.get(launch.uid) is running
-        if not current or running.process.state() == QProcess.NotRunning:
+        if self._launch_alive(launch, running):
+            target = self._signal_tree(launch.pid or 0, signal.SIGTERM)
+            self._log(launch, "WARN", f"still running after SIGINT; SIGTERM sent to {target}")
+        elif self._signal_group(running.pgid, signal.SIGTERM):
+            self._log(launch, "WARN", f"process group {running.pgid} still running after "
+                                      "ros2 launch exited; SIGTERM sent")
+        else:
             return
-        target = self._signal_tree(launch.pid or 0, signal.SIGTERM)
-        self._log(launch, "WARN", f"still running after SIGINT; SIGTERM sent to {target}")
         QTimer.singleShot(SIGKILL_TIMEOUT_MS, lambda: self._kill(launch, running))
 
     def _kill(self, launch: Launch, running: _Running) -> None:
-        if self._running.get(launch.uid) is not running:
-            return
-        if running.process.state() != QProcess.NotRunning:
+        if self._launch_alive(launch, running):
             self._signal_tree(launch.pid or 0, signal.SIGKILL)
             running.process.kill()
             self._log(launch, "WARN", "SIGKILL sent")
+        elif self._signal_group(running.pgid, signal.SIGKILL):
+            self._log(launch, "WARN", f"SIGKILL sent to process group {running.pgid}")
+
+    def _launch_alive(self, launch: Launch, running: _Running) -> bool:
+        """Return whether ros2 launch of this run (not of a restart) still runs."""
+        return (self._running.get(launch.uid) is running
+                and running.process.state() != QProcess.NotRunning)
 
     # Process output ---------------------------------------------------------
 
