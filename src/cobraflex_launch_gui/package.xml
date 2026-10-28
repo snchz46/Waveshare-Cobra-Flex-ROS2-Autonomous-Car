@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>cobraflex_launch_gui</name>
+  <version>0.3.0</version>
+  <description>
+    Qt launch manager for the workspace: lists the launch files of every
+    sourced overlay workspace, edits their arguments, starts and stops them
+    with one log pane per launch, and draws the live ROS graph (nodes and
+    topics) and the TF tree.
+
+    It is a package of its own for the same reason as cobraflex_teleop_gui:
+    PyQt5 and Graphviz stay out of the dependency set of cobraflex, which is
+    installed on every machine of the stack, the Jetson included. Nothing else
+    in the workspace depends on this one.
+  </description>
+  <maintainer email="sasamt02@hs-esslingen.de">Samuel Sanchez</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>graphviz</exec_depend>
+  <exec_depend>python3-pyqt5</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>tf2_msgs</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

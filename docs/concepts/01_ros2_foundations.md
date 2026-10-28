@@ -74,6 +74,7 @@ globally consistent but discontinuous.
 | `safety_cage` | ament_python | ROS wrapper of the runtime safety monitor |
 | `cobraflex_safety_msgs` | ament_cmake | `CageStatus.msg` |
 | `cobraflex_teleop_gui` | ament_python | Qt window for manual driving |
+| `cobraflex_launch_gui` | ament_python | Qt launch manager with live ROS graph and TF tree |
 
 `cobraflex` provides exactly four `ros2 run` executables:
 `cobraflex_ros_driver`, `lidar_avoidance_node`, `lane_keeper_node` and
@@ -161,6 +162,9 @@ ros2 topic info /cmd_vel --verbose      # publishers, subscribers, QoS
 ros2 topic hz /scan
 rqt_graph
 ros2 run tf2_tools view_frames          # writes frames.pdf
+
+# Same information in one window: launch files, ROS graph, TF tree
+ros2 run cobraflex_launch_gui launch_gui
 
 # Keyboard driving
 ros2 run teleop_twist_keyboard teleop_twist_keyboard

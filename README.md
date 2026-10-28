@@ -89,6 +89,11 @@ flowchart LR
 Execution of the lab scripts is described in **[lab/README.md](lab/README.md)**.
 Solutions are not included in this repository.
 
+The launch manager starts every launch file of the sourced workspaces,
+including the students' own package, and shows the live ROS graph and TF
+tree: `ros2 run cobraflex_launch_gui launch_gui`
+([README](src/cobraflex_launch_gui/README.md)).
+
 ### Concept pages
 
 Each page presents the theory, the nodes, topics and parameters that implement
@@ -142,6 +147,9 @@ ros2 launch cobraflex_teleop_gui teleop_gui.launch.py   # manual driving
 ros2 launch cobraflex mapping.launch.py                 # SLAM + RViz
 ros2 launch cobraflex navigation.launch.py              # Nav2 (requires a saved map)
 
+# Alternative to separate terminals: launch manager with ROS graph and TF tree
+ros2 run cobraflex_launch_gui launch_gui
+
 # 3b. Lane following: each launch file starts its own world; run one at a time
 ros2 launch cobraflex lane_keeper_gazebo.launch.py      # CV estimator + pure pursuit
 ros2 launch safety_cage lane_following.launch.py        # PD baseline under the safety cage
@@ -179,6 +187,7 @@ Setup: **[docs/1_INSTALLATION.md](docs/1_INSTALLATION.md)** · Simulation:
 | **Safety cage** | Runtime monitor between controller and actuators: rules C-01 to C-06, perception supervisor, enforcement and monitoring modes, `/cage_status` | [08](docs/concepts/08_safety_cage.md) |
 | **Hardware driver** | `/cmd_vel` → JSON over USB serial to the ESP32-S3; velocity clamps, 0.5 s deadman, 20 Hz keep-alive | [02](docs/concepts/02_system_architecture.md) |
 | **Teleoperation** | Qt GUI (buttons, virtual joystick, sliders) and `teleop_twist_keyboard` | [`cobraflex_teleop_gui`](src/cobraflex_teleop_gui/README.md) |
+| **Launch manager** | Qt window: launch files of all sourced workspaces with argument editor, presets and per-launch logs; live ROS graph and TF tree with diagnostics | [`cobraflex_launch_gui`](src/cobraflex_launch_gui/README.md) |
 | **Multi-machine operation** | Robot and PC on one ROS 2 graph over Wi-Fi; network rules for several robots | [09](docs/concepts/09_multi_machine_networking.md) |
 
 Every value in the documentation references its source file and is marked as
@@ -385,6 +394,7 @@ list: [`src/cobraflex/worlds/README.md`](src/cobraflex/worlds/README.md).
 | **[Robot operation](docs/3_ROBOT_OPERATION.md)** | Physical robot step by step: switching on, bring-up, teleoperation, LiDAR avoidance, SLAM, Nav2, lane keeping, shutdown, troubleshooting |
 | **[Mathematical Model](assets/Mathematical%20Model/README.md)** | Kinematics, control architecture, parameter reference |
 | **[Teleop GUI](src/cobraflex_teleop_gui/README.md)** | Qt teleoperation window and its limits |
+| **[Launch manager](src/cobraflex_launch_gui/README.md)** | Launch files, ROS graph and TF tree in one window |
 | **[Worlds](src/cobraflex/worlds/README.md)** | SDF worlds and texture generators |
 | **[Maps](src/cobraflex/maps/README.md)** | Saving and loading occupancy grids |
 | **[Gazebo Simulation](assets/Gazebo%20Simulation/README.md)** | Simulation fundamentals |
@@ -394,7 +404,7 @@ list: [`src/cobraflex/worlds/README.md`](src/cobraflex/worlds/README.md).
 ## Repository structure
 
 The repository is the ROS 2 workspace root. It contains `src/`, and
-`colcon build` from the top level builds all five packages.
+`colcon build` from the top level builds all six packages.
 
 ```text
 .
@@ -431,14 +441,16 @@ The repository is the ROS 2 workspace root. It contains `src/`, and
     ├── cobraflex_rl/                # Lane perception, RL training/evaluation, CSI camera node
     ├── safety_cage/                 # Runtime safety monitor
     ├── cobraflex_safety_msgs/       # CageStatus.msg
-    └── cobraflex_teleop_gui/        # Qt teleoperation window
+    ├── cobraflex_teleop_gui/        # Qt teleoperation window
+    └── cobraflex_launch_gui/        # Qt launch manager, ROS graph and TF tree
 ```
 
 `cobraflex` depends on `cobraflex_rl` in two places: `lane_keeper_gazebo_node`
 imports `cobraflex_rl.cv_lane_controller`, and `cobraflex_sensors.launch.xml`
 runs its `csi_camera_node`. The deployed controller and the evaluation
-therefore execute identical code. `cobraflex_teleop_gui` is a separate package
-to keep PyQt5 out of the Jetson dependencies.
+therefore execute identical code. `cobraflex_teleop_gui` and
+`cobraflex_launch_gui` are separate packages to keep PyQt5 out of the Jetson
+dependencies.
 
 ---
 

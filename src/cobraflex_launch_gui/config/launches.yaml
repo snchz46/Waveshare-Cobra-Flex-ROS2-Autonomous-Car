@@ -1,0 +1,157 @@
+# Curated metadata of the launch manager (cobraflex_launch_gui).
+#
+# Keys are "<package>/<launch file name without extension>". Launch files
+# without an entry are listed as well: the description is then the first
+# sentence of the module docstring (Python) or of the first comment (XML),
+# and the tag is "Other".
+#
+# Fields:
+#   description  one line on the card
+#   tags         filter chips: Sim, Hardware, RL, Lab, Tools
+#   starred      pinned at the top, until the user changes it
+#   args         refinements of declared arguments only: options (turns the
+#                editor into a drop-down list) and help. Arguments that the
+#                launch file does not declare are ignored.
+#   presets      named argument sets; undeclared keys are dropped
+#
+# "packages" sets defaults for every launch file of a package.
+#
+# Per-user additions: ~/.config/cobraflex_launch_gui/launches.yaml, same
+# format, merged over this file.
+
+packages:
+  cobraflex_lab:
+    tags: [Lab]
+
+launches:
+  # --- Simulation ---------------------------------------------------------
+  cobraflex/gazebo:
+    starred: true
+    tags: [Sim]
+    description: "Gazebo with obstacles.world, bridge, EKF and RViz; base of the SLAM and Nav2 exercises"
+    presets:
+      - {name: no RViz, args: {rviz: "false"}}
+      - {name: no depth cloud, args: {depth_cloud: "false"}}
+
+  cobraflex/gazebo_mesh:
+    tags: [Sim]
+    description: "Gazebo with the mesh URDF on a lane-following circuit"
+    args:
+      world:
+        # Short map names, resolved by the launch file to
+        # worlds/lane_following_<name>.world.
+        options: [oval_complex, oval_simple, oval, complex_b_flipH, complex_b_flipV,
+                  complex_b_gaps, complex_b_particles, complex_b_worn_25,
+                  complex_b_worn_50, complex_b_worn_75]
+    presets:
+      - {name: headless, args: {gui: "false", rviz: "false"}}
+
+  cobraflex/lane_keeper_gazebo:
+    starred: true
+    tags: [Sim]
+    description: "Lane keeping in Gazebo: CV lane estimator and pure pursuit on its own circuit"
+    presets:
+      - {name: headless, args: {gui: "false", use_rviz: "false"}}
+      - {name: debug windows, args: {show_debug_windows: "true"}}
+
+  cobraflex/mapping:
+    tags: [Sim]
+    description: "SLAM Toolbox and RViz in simulation; requires a running gazebo launch"
+
+  cobraflex/navigation:
+    tags: [Sim]
+    description: "Nav2 on a saved map, with RViz; requires a running gazebo launch"
+
+  cobraflex/zed_depth_cloud:
+    tags: [Sim]
+    description: "Point cloud from the simulated ZED Mini depth image; included by gazebo (depth_cloud:=true)"
+
+  safety_cage/lane_following:
+    tags: [Sim]
+    description: "PD baseline under the safety cage in Gazebo; requires the cage library of the thesis repository"
+    args:
+      cage_mode:
+        options: [enforcement, monitoring]
+
+  # --- Physical robot (run on the Jetson) ---------------------------------
+  cobraflex/cobraflex_bringup:
+    tags: [Hardware]
+    description: "Robot, layer 1: description and serial driver"
+    presets:
+      - {name: on the robot, args: {use_rviz: "false"}}
+      - {name: for Nav2, args: {use_rviz: "false", min_angular_in_place: "0.2"}}
+
+  cobraflex/cobraflex_sensors:
+    tags: [Hardware]
+    description: "Robot, layer 2: LiDAR, ZED Mini, lane camera and EKF"
+
+  cobraflex/cobraflex_automatic:
+    tags: [Hardware]
+    description: "Robot, layer 2 plus LiDAR obstacle avoidance; replaces cobraflex_sensors"
+
+  cobraflex/cobraflex_driver:
+    tags: [Hardware]
+    description: "Serial driver alone: /cmd_vel to JSON over USB serial"
+
+  cobraflex/cobraflex_description:
+    tags: [Hardware]
+    description: "Robot model of the Jetson (primitive URDF), joint states and optional RViz"
+
+  cobraflex/cobraflex_lane_keeper:
+    tags: [Hardware]
+    description: "Lane keeper on the CSI camera of the robot, optional RViz"
+
+  cobraflex/cobraflex_mapping:
+    tags: [Hardware]
+    description: "SLAM Toolbox on the scans of the real LiDAR"
+
+  # --- Reinforcement learning and evaluation ------------------------------
+  cobraflex_rl/train_lane:
+    tags: [RL, Sim]
+    description: "PPO training of the camera policy in headless Gazebo"
+    presets:
+      - {name: with Gazebo GUI, args: {gui: "true"}}
+
+  cobraflex_rl/eval_lane:
+    tags: [RL, Sim]
+    description: "Evaluation of a trained policy in Gazebo"
+    args:
+      mode:
+        options: [enforcement, monitoring]
+
+  cobraflex_rl/eval_cv_controller:
+    tags: [RL, Sim]
+    description: "Scored run of the CV lane-keeping baseline in the evaluation harness"
+    args:
+      mode:
+        options: [enforcement, monitoring]
+
+  cobraflex_rl/eval_scenario_batch:
+    tags: [RL, Sim]
+    description: "One run of the scenario-validation campaign; ends with the evaluation"
+    args:
+      mode:
+        options: [enforcement, monitoring]
+
+  cobraflex_rl/deploy_cobraflex:
+    tags: [RL, Hardware]
+    description: "Trained camera policy on the robot under the safety cage; requires checkpoint:="
+    args:
+      algorithm:
+        options: [ppo, sac]
+      mode:
+        options: [enforcement, monitoring]
+
+  # --- Tools --------------------------------------------------------------
+  cobraflex_teleop_gui/teleop_gui:
+    starred: true
+    tags: [Tools]
+    description: "Manual driving window: buttons, virtual joystick and sliders on /cmd_vel"
+
+  cobraflex/description:
+    tags: [Tools]
+    description: "Robot model in RViz with joint_state_publisher_gui"
+
+  cobraflex/rsp:
+    tags: [Tools]
+    description: "robot_state_publisher alone, with a selectable URDF"
