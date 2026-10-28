@@ -158,6 +158,7 @@ source ~/ros2_ws/install/setup.bash
 # 1. Package list
 ros2 pkg list | grep -E 'cobraflex|safety_cage'
 #    cobraflex
+#    cobraflex_launch_gui
 #    cobraflex_rl
 #    cobraflex_safety_msgs
 #    cobraflex_teleop_gui

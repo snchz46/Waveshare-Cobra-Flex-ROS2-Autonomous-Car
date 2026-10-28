@@ -211,6 +211,9 @@ ros2 topic echo /cmd_vel
 ros2 run tf2_ros tf2_echo map base_link
 ros2 run tf2_tools view_frames        # writes frames.pdf
 
+# Graphical view of nodes, topics and the TF tree, with diagnostics
+ros2 run cobraflex_launch_gui launch_gui
+
 # Session recording for offline analysis
 ros2 bag record -a -o navigation_data
 ```

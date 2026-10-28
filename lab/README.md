@@ -50,4 +50,25 @@ python3 emergency_brake_node.py --ros-args -p use_sim_time:=true   # Gazebo
 python3 emergency_brake_node.py                                    # physical robot
 ```
 
+## Launch manager
+
+The window of `cobraflex_launch_gui` starts and stops launch files, shows
+their output, and draws the ROS graph and the TF tree of the running system.
+With `~/lab_ws` sourced, the launch files of `cobraflex_lab` appear under the
+**Lab** filter.
+
+```bash
+source ~/lab_ws/install/setup.bash     # overlay on top of ~/ros2_ws
+ros2 run cobraflex_launch_gui launch_gui
+```
+
+| Tab | Use in the sessions |
+| --- | --- |
+| Launches | Arguments such as `use_sim_time` set in a form; the equivalent `ros2 launch` command is shown and can be copied |
+| ROS Graph | Publishers and subscribers of the own nodes; a topic in amber has no publisher or no subscriber |
+| TF Tree | Frames and publication rates; a frame in red has two parents, i.e. two nodes publish one transform |
+
+Each action of the window corresponds to a command of the workbook; the
+workbook commands remain the reference.
+
 Solutions are not included in this repository.
