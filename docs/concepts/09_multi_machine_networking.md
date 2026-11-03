@@ -1,8 +1,9 @@
 # 09 · Multi-machine networking
 
-> **Summary:** the robot and the lab PC form one ROS 2 graph over Wi-Fi when
-> they share a domain, discovery traffic is delivered, the clocks are
-> synchronised and raw images are not transmitted over the air.
+> **Summary:** the robot (Humble) and the lab PC (Jazzy) form one ROS 2 graph
+> over Wi-Fi when they share a domain and an RMW implementation, discovery
+> traffic is delivered, the clocks are synchronised and raw images are not
+> transmitted over the air.
 
 [← 08 Safety cage](08_safety_cage.md) · [Concepts](README.md)
 
@@ -20,9 +21,11 @@ so different domains remain isolated on the same network. On Linux the safe
 range is 0–101. Domain 0 is the default for any machine without an explicit
 setting.
 
-For work restricted to one machine (Gazebo exercises), `ROS_LOCALHOST_ONLY=1`
-(Humble) keeps all traffic local. Without it, a simulated `/cmd_vel` can reach
-a physical robot in the same domain.
+For work restricted to one machine (Gazebo exercises on the lab PC),
+`ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` restricts discovery to that machine.
+`ROS_LOCALHOST_ONLY=1` is the Humble form; Jazzy still honours it and logs a
+deprecation warning. Without either, a simulated `/cmd_vel` can reach a
+physical robot in the same domain.
 
 <img src="images/ROS Domains in the Lab.png"/>
 
@@ -92,8 +95,10 @@ several robots on one channel. Compressed RGB and lane images require about
 3. **Processing on the robot.** Raw images and point clouds remain on the
    Jetson; only compressed images and throttled or downsampled clouds are
    transmitted. Rosbags are recorded on the robot and copied by cable.
-4. **Uniform RMW and distribution.** One DDS implementation and one shared DDS
-   configuration on all machines.
+4. **Uniform RMW.** One DDS implementation and one shared DDS configuration on
+   all machines. The distributions differ, Jazzy on the PCs and Humble on the
+   robots; conditions for the communication across the two releases:
+   [1_INSTALLATION.md](../1_INSTALLATION.md#interoperability-of-humble-and-jazzy).
 5. **DDS bound to the lab interface** on PCs connected to another network as
    well (CycloneDDS `NetworkInterface`, Fast DDS interface allowlist); that
    interface has no default gateway.
@@ -121,7 +126,10 @@ sudo sysctl -w net.core.rmem_max=2147483647
   (IGMP snooping without a querier). Use unicast discovery instead (CycloneDDS
   peer list or Fast DDS discovery server).
 - **Gazebo session driving the physical robot.** Same domain without
-  `ROS_LOCALHOST_ONLY`.
+  `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` (Humble: `ROS_LOCALHOST_ONLY=1`).
+- **Robot nodes visible, Nav2 actions from the PC fail.** The interfaces of
+  `nav2_msgs` differ between Jazzy and Humble
+  ([1_INSTALLATION.md](../1_INSTALLATION.md#interoperability-of-humble-and-jazzy)).
 - **TF extrapolation errors on the PC only.** Clock offset between robot and
   PC.
 
@@ -157,5 +165,6 @@ computationally intensive processing on the robot.
 ## Further reading
 
 - ROS 2 domain ID: <https://docs.ros.org/en/humble/Concepts/Intermediate/About-Domain-ID.html>
+- Discovery range (Jazzy): <https://docs.ros.org/en/jazzy/Tutorials/Advanced/Improved-Dynamic-Discovery.html>
 - ROS 2 DDS tuning: <https://docs.ros.org/en/humble/How-To-Guides/DDS-tuning.html>
 - `image_transport`: <https://github.com/ros-perception/image_common>

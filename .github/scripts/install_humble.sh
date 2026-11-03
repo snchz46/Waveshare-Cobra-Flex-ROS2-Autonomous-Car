@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-# Reference installation of ROS 2 Humble + Gazebo Harmonic on Ubuntu 22.04.
+# Humble variant of the guide check: ROS 2 Humble + Gazebo Harmonic on Ubuntu
+# 22.04.
+#
+# The robot runs Humble without Gazebo; the lab PCs run Jazzy. This variant
+# runs the simulation smoke test under Humble and so covers the Humble code
+# paths of the robot, chiefly nav2_params.yaml, which navigation.launch.py
+# selects when ROS_DISTRO is humble.
 #
 # Follows the official Gazebo instructions for the Humble/Harmonic pairing:
 # Gazebo Harmonic from packages.osrfoundation.org and the ros_gz bridge from

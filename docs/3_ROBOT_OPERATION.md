@@ -80,11 +80,14 @@ on it; teleoperation, avoidance and lane keeping do not.
 
 | Item | State |
 | --- | --- |
-| Robot | Ubuntu 22.04 with ROS 2 Humble on the Jetson; this repository built in `~/ros2_ws` together with `sllidar_ros2` and `zed_wrapper` (ZED SDK installed); login in the `dialout` group. Reinstallation: [1_INSTALLATION.md](1_INSTALLATION.md#hardware-dependencies) |
+| Robot | JetPack 6 (Ubuntu 22.04) with ROS 2 Humble on the Jetson; this repository built in `~/ros2_ws` together with `sllidar_ros2` and `zed_wrapper` (ZED SDK installed); login in the `dialout` group. Reinstallation: [1_INSTALLATION.md](1_INSTALLATION.md#robot-jetson-orin-nano-and-ros-2-humble) |
 | Batteries | Motor battery (3S Li-ion pack in the chassis) and powerbank (Jetson) charged |
-| Lab PC | Ubuntu 22.04, ROS 2 Humble, this repository built in `~/ros2_ws` ([1_INSTALLATION.md](1_INSTALLATION.md)), on the lab network |
+| Lab PC | Ubuntu 24.04, ROS 2 Jazzy, this repository built in `~/ros2_ws` ([1_INSTALLATION.md](1_INSTALLATION.md#lab-pc-ubuntu-2404-and-ros-2-jazzy)), on the lab network |
 | Setup card | One per robot, with the access data ([§3](#3-conventions-and-setup-card)) |
 | Area | Floor free of people and cables; a box or stand that lifts the wheels off the ground for the first motion test |
+
+PC and robot run different ROS 2 releases. Conditions for their communication:
+[1_INSTALLATION.md](1_INSTALLATION.md#interoperability-of-humble-and-jazzy).
 
 ---
 
@@ -123,13 +126,14 @@ not in this repository, which is public. Fields of the card:
 [PC] and [C4]:
 
 ```bash
-printenv | grep -E '^ROS_(DISTRO|DOMAIN_ID|LOCALHOST_ONLY)='
+printenv | grep -E '^ROS_(DISTRO|DOMAIN_ID|LOCALHOST_ONLY|AUTOMATIC_DISCOVERY_RANGE)='
 ```
 
 | Variable | Required value | Consequence of a wrong value |
 | --- | --- | --- |
-| `ROS_DISTRO` | `humble` | Workspace not sourced: `ros2` or the packages are missing |
+| `ROS_DISTRO` | `jazzy` on the PC, `humble` on the robot | Workspace not sourced: `ros2` or the packages are missing |
 | `ROS_DOMAIN_ID` | `<id>`, identical on PC and robot | PC and robot do not see each other, or the PC sees another robot |
+| `ROS_AUTOMATIC_DISCOVERY_RANGE` | Unset or `SUBNET` | The PC terminal sees nothing of the robot |
 | `ROS_LOCALHOST_ONLY` | Unset or `0` | The PC terminal sees nothing of the robot |
 
 Permanent setting of the domain, on both machines:
@@ -464,12 +468,13 @@ The same applications run in Gazebo on the PC, without the robot. Every
 simulation terminal starts with:
 
 ```bash
-export ROS_LOCALHOST_ONLY=1
+export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 ros2 daemon stop
 ```
 
-Without `ROS_LOCALHOST_ONLY=1`, a simulated controller in the domain of a robot
-drives the physical robot.
+The variable restricts discovery to the PC. Without it, a simulated controller
+in the domain of a robot drives the physical robot. `ROS_LOCALHOST_ONLY=1`, the
+Humble form, has the same effect under Jazzy and logs a deprecation warning.
 
 | Application | Commands, one terminal each |
 | --- | --- |
@@ -515,8 +520,8 @@ themselves. Details and world selection: [2_USAGE.md](2_USAGE.md).
 - **Speeds.** Teleoperation 0.35 m/s by default, avoidance 0.2 m/s for first
   runs, Nav2 at most 0.35 m/s, lane keeper 0.12 m/s. The driver clamps every
   command to 0.53 m/s and 6.0 rad/s.
-- **Simulation isolated.** Simulation terminals set `ROS_LOCALHOST_ONLY=1`
-  ([§8](#8-simulation)).
+- **Simulation isolated.** Simulation terminals set
+  `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` ([§8](#8-simulation)).
 - **Battery.** The motor battery is recharged at about 10.5 V
   (`/cobraflex/battery`).
 
@@ -529,7 +534,7 @@ The search proceeds layer by layer: network, layer 1, layer 2, application.
 | Symptom | Cause | Remedy |
 | --- | --- | --- |
 | `ping <car>` without answer | Robot off, still booting, or not on the lab Wi-Fi | Wait for the boot; check the powerbank and the Wi-Fi |
-| [PC] `ros2 node list` without the robot's nodes | Different `ROS_DOMAIN_ID`, `ROS_LOCALHOST_ONLY=1`, or a stale CLI daemon | [§4.1](#41-environment-of-each-terminal); `ros2 daemon stop` |
+| [PC] `ros2 node list` without the robot's nodes | Different `ROS_DOMAIN_ID` or RMW, the localhost setting of a simulation terminal, or a stale CLI daemon | [§4.1](#41-environment-of-each-terminal); `ros2 daemon stop` |
 | `Failed to open serial port /dev/ttyACM1` | Driver board on another device, no permission, or chassis off | `ls /dev/ttyACM*`; `serial_port:=`; login in `dialout`; switch on the chassis |
 | Indicator lights stay off after layer 1 starts | Driver not connected to the board | As above |
 | Robot does not move, `/cmd_vel` is published | Layer 1 not running, motor battery off or empty | Check C1; `/cobraflex/battery` |
@@ -547,6 +552,7 @@ The search proceeds layer by layer: network, layer 1, layer 2, application.
 | TF errors *extrapolation into the future* on the PC only | Clock offset between PC and robot | `chronyc tracking` on both; clock synchronisation in [09](concepts/09_multi_machine_networking.md) |
 | Nav2 does not start: map not found | Wrong path, or `~` in `map:=` | Absolute path with `$HOME` |
 | AMCL pose wrong, robot drives into walls | Inaccurate initial pose | Set *2D Pose Estimate* again until scan and map walls coincide |
+| [PC] A Nav2 action client fails against Nav2 on the robot | `nav2_msgs` differs between Jazzy (PC) and Humble (robot) | *2D Goal Pose* in RViz; action clients run on the robot ([1_INSTALLATION.md](1_INSTALLATION.md#interoperability-of-humble-and-jazzy)) |
 | `No module named 'cage'` | Component that requires the thesis repository | [§7.7](#77-components-not-operable-from-this-repository-alone) |
 
 ---
@@ -555,7 +561,7 @@ The search proceeds layer by layer: network, layer 1, layer 2, application.
 
 | Task | Where | Command |
 | --- | --- | --- |
-| Check the environment | PC, robot | `printenv \| grep -E '^ROS_(DISTRO\|DOMAIN_ID\|LOCALHOST_ONLY)='` |
+| Check the environment | PC, robot | `printenv \| grep -E '^ROS_(DISTRO\|DOMAIN_ID\|LOCALHOST_ONLY\|AUTOMATIC_DISCOVERY_RANGE)='` |
 | Connect | PC | `ssh <user>@<car>` |
 | Layer 1 | Robot | `ros2 launch cobraflex cobraflex_bringup.launch.xml use_rviz:=false` |
 | Layer 1 for Nav2 | Robot | `ros2 launch cobraflex cobraflex_bringup.launch.xml use_rviz:=false min_angular_in_place:=0.2` |

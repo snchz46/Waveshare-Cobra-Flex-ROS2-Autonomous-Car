@@ -1,7 +1,7 @@
 <h1 align="center">Waveshare Cobra Flex — ROS 2 Autonomous Driving Lab</h1>
 
 <p align="center">
-  <i>ROS 2 Humble software stack for a 1:14 four-wheel skid-steer robot: digital twin,<br>
+  <i>ROS 2 software stack for a 1:14 four-wheel skid-steer robot: digital twin,<br>
   SLAM, Nav2, lane keeping, reinforcement learning and a runtime safety cage.<br>
   Laboratory platform of the autonomous-driving module at Hochschule Esslingen.</i>
 </p>
@@ -16,10 +16,10 @@
 
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white">
-  <img alt="Ubuntu" src="https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white">
-  <img alt="ROS 2" src="https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros&logoColor=white">
+  <img alt="Ubuntu" src="https://img.shields.io/badge/Ubuntu-24.04%20PC%20%C2%B7%2022.04%20robot-E95420?logo=ubuntu&logoColor=white">
+  <img alt="ROS 2" src="https://img.shields.io/badge/ROS%202-Jazzy%20PC%20%C2%B7%20Humble%20robot-22314E?logo=ros&logoColor=white">
   <img alt="Gazebo" src="https://img.shields.io/badge/Gazebo-Harmonic-FB6C2C">
-  <img alt="Nav2" src="https://img.shields.io/badge/Nav2-Humble-00599C">
+  <img alt="Nav2" src="https://img.shields.io/badge/Nav2-Jazzy%20%C2%B7%20Humble-00599C">
   <img alt="SLAM" src="https://img.shields.io/badge/SLAM-Toolbox-2da44e">
   <img alt="RL" src="https://img.shields.io/badge/RL-PPO%20%C2%B7%20SB3-0b7285">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-2da44e">
@@ -131,12 +131,16 @@ it, known pitfalls and test commands. Index: **[docs/concepts](docs/concepts/REA
 
 ## Quick start
 
+Lab PC with Ubuntu 24.04, ROS 2 Jazzy and Gazebo Harmonic. The robot runs
+ROS 2 Humble on the Jetson; both setups:
+[docs/1_INSTALLATION.md](docs/1_INSTALLATION.md).
+
 ```bash
 # 1. Clone as the workspace root (the repository contains src/)
 git clone https://github.com/snchz46/Waveshare-Cobra-Flex-ROS2-Autonomous-Car.git ~/ros2_ws
-cd ~/ros2_ws && source /opt/ros/humble/setup.bash
+cd ~/ros2_ws && source /opt/ros/jazzy/setup.bash
 rosdep install --from-paths src --ignore-src -r -y \
-  --skip-keys "ros_gz_sim ros_gz_bridge sllidar_ros2 zed_wrapper"
+  --skip-keys "sllidar_ros2 zed_wrapper"
 
 # 2. Build
 colcon build --symlink-install && source install/setup.bash
@@ -188,7 +192,7 @@ Setup: **[docs/1_INSTALLATION.md](docs/1_INSTALLATION.md)** · Simulation:
 | **Hardware driver** | `/cmd_vel` → JSON over USB serial to the ESP32-S3; velocity clamps, 0.5 s deadman, 20 Hz keep-alive | [02](docs/concepts/02_system_architecture.md) |
 | **Teleoperation** | Qt GUI (buttons, virtual joystick, sliders) and `teleop_twist_keyboard` | [`cobraflex_teleop_gui`](src/cobraflex_teleop_gui/README.md) |
 | **Launch manager** | Qt window: launch files of all sourced workspaces with argument editor, presets and per-launch logs; live ROS graph and TF tree with diagnostics | [`cobraflex_launch_gui`](src/cobraflex_launch_gui/README.md) |
-| **Multi-machine operation** | Robot and PC on one ROS 2 graph over Wi-Fi; network rules for several robots | [09](docs/concepts/09_multi_machine_networking.md) |
+| **Multi-machine operation** | Robot (Humble) and PC (Jazzy) on one ROS 2 graph over Wi-Fi; network rules for several robots | [09](docs/concepts/09_multi_machine_networking.md) |
 
 Every value in the documentation references its source file and is marked as
 measured, assumed or open where applicable.
@@ -213,7 +217,7 @@ measured, assumed or open where applicable.
 
 | Component | Part | ROS interface |
 | --- | --- | --- |
-| Compute | NVIDIA Jetson Orin Nano Developer Kit | All on-board nodes |
+| Compute | NVIDIA Jetson Orin Nano Developer Kit; JetPack 6, ROS 2 Humble | All on-board nodes |
 | Chassis controller | ESP32-S3 driver board, JSON over USB serial at 115200 baud | `cobraflex_ros_driver` |
 | LiDAR | Slamtec RPLIDAR A2M8, 360°, 0.15–8 m, 10 Hz | `sllidar_ros2` |
 | Stereo camera | Stereolabs ZED Mini, visual odometry and depth | `zed_wrapper` |
@@ -389,7 +393,7 @@ list: [`src/cobraflex/worlds/README.md`](src/cobraflex/worlds/README.md).
 | --- | --- |
 | **[Lab](lab/README.md)** | Lab session code completed by the students |
 | **[Concepts](docs/concepts/README.md)** | Theory of each subsystem and its implementation, mapped to the lectures |
-| **[Installation](docs/1_INSTALLATION.md)** | Machine setup, hardware dependencies, troubleshooting |
+| **[Installation](docs/1_INSTALLATION.md)** | Lab PC (Jazzy) and robot (Humble) setup, hardware dependencies, troubleshooting |
 | **[Usage](docs/2_USAGE.md)** | SLAM, navigation, lane keeping, hardware bring-up, debugging |
 | **[Robot operation](docs/3_ROBOT_OPERATION.md)** | Physical robot step by step: switching on, bring-up, teleoperation, LiDAR avoidance, SLAM, Nav2, lane keeping, shutdown, troubleshooting |
 | **[Mathematical Model](assets/Mathematical%20Model/README.md)** | Kinematics, control architecture, parameter reference |

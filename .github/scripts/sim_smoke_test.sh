@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Smoke test of the simulation procedures of docs/2_USAGE.md and lab/README.md
-# on a headless machine (Xvfb, software OpenGL, no GPU).
+# on a headless machine (Xvfb, software OpenGL, no GPU), under ROS 2 Jazzy (lab
+# PC) or Humble (robot release), whichever is installed.
 #
 # Each check prints PASS, FAIL or WARN. FAIL marks the job as failed; WARN marks
 # checks whose outcome depends on the CI machine (for example Nav2 reaching a
@@ -112,19 +113,31 @@ trap finish EXIT
 { echo "## Smoke test ($GUIDE_VARIANT)"; echo; echo "| Result | Check |"; echo "| --- | --- |"; } >>"$SUMMARY"
 
 # ---- environment -------------------------------------------------------------
-# shellcheck disable=SC1091
-source /opt/ros/humble/setup.bash 2>/dev/null || { fail "ROS 2 Humble not installed (/opt/ros/humble)"; exit 1; }
+# One ROS 2 release per CI variant: Jazzy (lab PC) or Humble (robot).
+ros_setup=""
+for distro in jazzy humble; do
+  [ -f "/opt/ros/$distro/setup.bash" ] && { ros_setup=/opt/ros/$distro/setup.bash; break; }
+done
+# shellcheck disable=SC1090
+source "$ros_setup" 2>/dev/null || { fail "ROS 2 Jazzy or Humble not installed (/opt/ros)"; exit 1; }
 # shellcheck disable=SC1091
 source "$WS/install/setup.bash" 2>/dev/null || { fail "workspace not built ($WS/install/setup.bash)"; exit 1; }
-export ROS_LOCALHOST_ONLY=1 ROS_DOMAIN_ID=42 GZ_IP=127.0.0.1
+# Isolation of the simulation, as in docs/3_ROBOT_OPERATION.md §8. Jazzy also
+# honours ROS_LOCALHOST_ONLY, but logs a deprecation warning for every node.
+if [ "$ROS_DISTRO" = humble ]; then
+  export ROS_LOCALHOST_ONLY=1
+else
+  export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
+fi
+export ROS_DOMAIN_ID=42 GZ_IP=127.0.0.1
 export LIBGL_ALWAYS_SOFTWARE=1 QT_X11_NO_MITSHM=1
 Xvfb :99 -screen 0 1280x1024x24 >"$LOG_DIR/xvfb.log" 2>&1 &
 export DISPLAY=:99
 sleep 2
 
-echo "INFO  gz: $(command -v gz || echo missing); ros_gz_sim: $(ros2 pkg prefix ros_gz_sim 2>/dev/null || echo missing)"
-check "package list contains all five packages" bash -c \
-  'for p in cobraflex cobraflex_rl cobraflex_safety_msgs cobraflex_teleop_gui safety_cage; do ros2 pkg list | grep -qx "$p" || { echo "missing $p"; exit 1; }; done'
+echo "INFO  ROS 2: $ROS_DISTRO; gz: $(command -v gz || echo missing); ros_gz_sim: $(ros2 pkg prefix ros_gz_sim 2>/dev/null || echo missing)"
+check "package list contains all six packages" bash -c \
+  'for p in cobraflex cobraflex_launch_gui cobraflex_rl cobraflex_safety_msgs cobraflex_teleop_gui safety_cage; do ros2 pkg list | grep -qx "$p" || { echo "missing $p"; exit 1; }; done'
 
 # ---- static checks (docs/2_USAGE.md §7) ---------------------------------------
 for urdf in "$WS"/src/cobraflex/urdf/my_robot_*.urdf; do

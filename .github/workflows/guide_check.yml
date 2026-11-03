@@ -1,16 +1,22 @@
-# Guide check: installs the workspace on a clean Ubuntu 22.04 container and runs
-# the simulation procedures of the documentation.
+# Guide check: installs the workspace on clean Ubuntu containers and runs the
+# simulation procedures of the documentation.
 #
-#   install: guide      Steps 1-5 of docs/1_INSTALLATION.md, executed as written
-#                       (extracted from the Markdown by .github/scripts/run_guide.py).
-#   install: reference  Official Humble + Gazebo Harmonic installation
-#                       (.github/scripts/install_reference.sh).
+#   install: guide      Lab PC part of docs/1_INSTALLATION.md (Ubuntu 24.04,
+#                       ROS 2 Jazzy), executed as written (extracted from the
+#                       Markdown by .github/scripts/run_guide.py).
+#   install: reference  Official Jazzy + Gazebo Harmonic installation on
+#                       Ubuntu 24.04 (.github/scripts/install_reference.sh).
+#   install: humble     Humble + Gazebo Harmonic on Ubuntu 22.04
+#                       (.github/scripts/install_humble.sh). The robot runs
+#                       Humble without Gazebo; this variant covers its code
+#                       paths in simulation, chiefly nav2_params.yaml.
 #
-# Both variants then run .github/scripts/sim_smoke_test.sh: xacro and SDF
+# All variants then run .github/scripts/sim_smoke_test.sh: xacro and SDF
 # validation, gazebo.launch.py topics and TF, SLAM and map saving, Nav2, driving
 # by /cmd_vel, LiDAR avoidance, lane keeping, teleoperation GUI, lab session code
-# and colcon test. The physical-robot procedures (docs/3_ROBOT_OPERATION.md)
-# require the hardware and are not covered.
+# and colcon test. The robot part of docs/1_INSTALLATION.md (JetPack, ZED SDK)
+# and the physical-robot procedures (docs/3_ROBOT_OPERATION.md) require the
+# hardware and are not covered.
 #
 # Manual trigger only: Actions tab > Guide check > Run workflow.
 name: Guide check
@@ -25,13 +31,19 @@ concurrency:
 jobs:
   guide-check:
     name: install=${{ matrix.install }}
-    runs-on: ubuntu-22.04
-    container: ubuntu:22.04
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
     timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
-        install: [guide, reference]
+        include:
+          - install: guide
+            image: ubuntu:24.04
+          - install: reference
+            image: ubuntu:24.04
+          - install: humble
+            image: ubuntu:22.04
     env:
       DEBIAN_FRONTEND: noninteractive
       TZ: Etc/UTC
@@ -52,18 +64,23 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Workspace at ~/ros2_ws (replaces the git clone of step 4)
+      - name: Workspace at ~/ros2_ws (replaces the git clone of the guide)
         run: ln -sfn "$GITHUB_WORKSPACE" "$HOME/ros2_ws"
 
-      - name: Installation as written in docs/1_INSTALLATION.md
+      - name: Installation as written in docs/1_INSTALLATION.md (lab PC)
         if: matrix.install == 'guide'
         timeout-minutes: 60
-        run: python3 .github/scripts/run_guide.py docs/1_INSTALLATION.md < /dev/null
+        run: python3 .github/scripts/run_guide.py docs/1_INSTALLATION.md "Lab PC" < /dev/null
 
-      - name: Reference installation (Humble + Gazebo Harmonic)
+      - name: Reference installation (Jazzy + Gazebo Harmonic)
         if: matrix.install == 'reference'
         timeout-minutes: 60
         run: bash .github/scripts/install_reference.sh < /dev/null
+
+      - name: Humble installation (Humble + Gazebo Harmonic)
+        if: matrix.install == 'humble'
+        timeout-minutes: 60
+        run: bash .github/scripts/install_humble.sh < /dev/null
 
       - name: Headless display (not part of the guide)
         if: always()
