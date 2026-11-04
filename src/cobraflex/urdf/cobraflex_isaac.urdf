@@ -66,21 +66,21 @@
       </geometry>
     </collision>
     <collision>
-      <origin rpy="0 0 0" xyz="-0.01525 0 0.07125" />
+      <origin rpy="0 0 0" xyz="-0.01525 0 0.07237" />
       <geometry>
-        <box size="0.188 0.1145 0.0225" />
+        <box size="0.188 0.1145 0.0248" />
       </geometry>
     </collision>
     <collision>
-      <origin rpy="0 0 0" xyz="-0.01575 0 0.09525" />
+      <origin rpy="0 0 0" xyz="-0.01575 0 0.09863" />
       <geometry>
-        <box size="0.18 0.0995 0.0255" />
+        <box size="0.18 0.0995 0.0278" />
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="0.006 -0.00012 0.05981" />
+      <origin rpy="0 0 0" xyz="0.00586 -0.00014 0.0613" />
       <mass value="0.8928" />
-      <inertia ixx="0.00236116" ixy="0.00000439" ixz="0.00062746" iyy="0.00432964" iyz="-0.00000211" izz="0.00423665" />
+      <inertia ixx="0.00241980" ixy="0.00000450" ixz="0.00064009" iyy="0.00438805" iyz="-0.00000185" izz="0.00423950" />
     </inertial>
   </link>
   <joint name="body_joint" type="fixed">

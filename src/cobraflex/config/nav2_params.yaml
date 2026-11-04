@@ -3,7 +3,7 @@
 # The nav2_bringup defaults are configured for a TurtleBot3 and differ from
 # this robot in three respects:
 #
-#   * robot_radius 0.22 m against a circumscribed radius of 0.145 m: the
+#   * robot_radius 0.22 m against a circumscribed radius of 0.152 m: the
 #     footprint would be about twice its real size, and the planner would
 #     reject gaps that the robot passes.
 #   * robot_base_frame base_link, whereas slam_toolbox and both EKF
@@ -11,13 +11,21 @@
 #     ground plane used by the rest of the stack.
 #   * velocity and acceleration limits of a different chassis.
 #
-# Geometry from urdf/my_robot_basic.urdf; kinematic limits from
-# assets/Mathematical Model/parameters.md. The three files are kept
-# consistent.
+# Footprint: top view of the robot with the V4.1 printed body, in
+# base_footprint. The body and chassis meshes of meshes/ (as the URDFs place
+# them), the wheels at their physical positions and the two 868 MHz antennas
+# of the CAD lie inside the polygon, with a margin of at least 0.4 mm.
+# Kinematic limits from assets/Mathematical Model/parameters.md.
 #
-#   chassis 0.228 x 0.130 m, +0.02 m wheel on each side -> 0.228 x 0.180 m
-#   footprint half-extents  x = 0.114 m, y = 0.090 m
-#   circumscribed radius    sqrt(0.114^2 + 0.090^2) = 0.145 m
+#   front    lane-camera pod x = 0.135 m; wheels plate x = 0.126 m, |y| <= 0.069 m
+#   sides    wheels plate |y| = 0.0935 m
+#   rear     antennas x = -0.131 m; rear wheels (-0.114, +-0.0895)
+#   polygon  (0.135, +-0.070) (0.115, +-0.094) (-0.115, +-0.094) (-0.131, +-0.060):
+#            0.266 x 0.188 m, symmetric about x
+#   circumscribed radius 0.152 m (front corners), inscribed radius 0.094 m
+#
+# The rectangle of the bare chassis (0.228 x 0.180 m) used before left out the
+# camera pod (20.6 mm), the antennas (16.5 mm) and the chassis bumper (7 mm).
 
 amcl:
   ros__parameters:
@@ -146,8 +154,8 @@ controller_server:
     general_goal_checker:
       stateful: true
       plugin: "nav2_controller::SimpleGoalChecker"
-      # Reduced from the 0.25 m default, which exceeds the body length of this
-      # 0.228 m robot.
+      # Reduced from the 0.25 m default, close to the length of this 0.266 m
+      # robot.
       xy_goal_tolerance: 0.05
       yaw_goal_tolerance: 0.10
 
@@ -216,7 +224,8 @@ local_costmap:
       width: 2
       height: 2
       resolution: 0.025
-      footprint: "[[0.114, 0.090], [0.114, -0.090], [-0.114, -0.090], [-0.114, 0.090]]"
+      # Robot with the V4.1 body and the antennas (see the header).
+      footprint: "[[0.135, 0.070], [0.135, -0.070], [0.115, -0.094], [-0.115, -0.094], [-0.131, -0.060], [-0.131, 0.060], [-0.115, 0.094], [0.115, 0.094]]"
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -235,8 +244,8 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        # Must exceed the circumscribed radius of 0.145 m. The 0.55 m default is
-        # almost four times the robot size and blocks doorways.
+        # Must exceed the circumscribed radius of 0.152 m. The 0.55 m default is
+        # more than three times the robot size and blocks doorways.
         inflation_radius: 0.30
       always_send_full_costmap: true
 
@@ -250,7 +259,8 @@ global_costmap:
       robot_base_frame: base_footprint
       resolution: 0.025
       track_unknown_space: true
-      footprint: "[[0.114, 0.090], [0.114, -0.090], [-0.114, -0.090], [-0.114, 0.090]]"
+      # Robot with the V4.1 body and the antennas (see the header).
+      footprint: "[[0.135, 0.070], [0.135, -0.070], [0.115, -0.094], [-0.115, -0.094], [-0.131, -0.060], [-0.131, 0.060], [-0.115, 0.094], [0.115, 0.094]]"
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"

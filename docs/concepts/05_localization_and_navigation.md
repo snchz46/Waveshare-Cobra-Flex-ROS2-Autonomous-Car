@@ -144,7 +144,9 @@ together with the map server, AMCL and RViz.
 | Critics (scale) | RotateToGoal, Oscillation, BaseObstacle (0.02), PathAlign (32), PathDist (32), GoalAlign (24), GoalDist (24) |
 | Goal tolerance | 0.05 m, 0.10 rad |
 
-**Costmaps**, resolution 0.025 m, footprint 0.228 × 0.180 m
+**Costmaps**, resolution 0.025 m, footprint 0.266 × 0.188 m: an octagon around
+the robot with the V4.1 body, from the lane-camera pod at the front to the
+antennas at the rear
 
 | | Local | Global |
 | --- | --- | --- |
@@ -155,8 +157,8 @@ together with the map server, AMCL and RViz.
 | `cost_scaling_factor` | 3.0 | 3.0 |
 | Obstacle range / ray trace | 6.0 m / 8.0 m | 6.0 m / 8.0 m |
 
-The footprint has an inscribed radius of 0.090 m and a circumscribed radius of
-0.145 m; the 0.30 m inflation therefore keeps a margin of about 0.2 m beyond
+The footprint has an inscribed radius of 0.094 m and a circumscribed radius of
+0.152 m; the 0.30 m inflation therefore keeps a margin of about 0.2 m beyond
 the side of the robot.
 
 **Behaviours:** spin, back up, drive on heading, assisted teleoperation, wait.

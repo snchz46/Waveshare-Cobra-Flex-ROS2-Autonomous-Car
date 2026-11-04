@@ -183,7 +183,7 @@ Setup: **[docs/1_INSTALLATION.md](docs/1_INSTALLATION.md)** · Simulation:
 | **Digital twin** | URDF/Xacro with inertias derived from the CAD assembly; Gazebo Harmonic with LiDAR, IMU, ZED Mini (stereo RGB, depth, point cloud) and CSI lane camera; USD asset for Isaac Sim | [`urdf/`](src/cobraflex/urdf/) · [`worlds/`](src/cobraflex/worlds/) |
 | **State estimation** | EKF (`robot_localization`) with ZED visual odometry on the robot; one publisher of `odom → base_footprint` per stack | [03](docs/concepts/03_state_estimation.md) |
 | **SLAM** | SLAM Toolbox, asynchronous mode, separate profiles for simulation and hardware | [04](docs/concepts/04_slam_and_mapping.md) |
-| **Navigation** | Nav2: AMCL, NavFn global planner, DWB local controller, costmaps for the 0.228 × 0.180 m footprint | [05](docs/concepts/05_localization_and_navigation.md) |
+| **Navigation** | Nav2: AMCL, NavFn global planner, DWB local controller, costmaps for the 0.266 × 0.188 m footprint | [05](docs/concepts/05_localization_and_navigation.md) |
 | **Obstacle avoidance** | Reactive `/scan` → `/cmd_vel` node with scan timeout | `lidar_avoidance_node` |
 | **Lane perception** | Calibrated CV lane estimator (lateral offset, heading error, curvature); histogram tracker on the CSI camera | [06](docs/concepts/06_lane_perception_and_control.md) |
 | **Lane control** | Pure-pursuit steering on the CV estimate, shared by the deployed controller and the evaluation; PD baseline | [`cobraflex_rl`](src/cobraflex_rl/) |
@@ -206,12 +206,13 @@ measured, assumed or open where applicable.
 | Parameter | Value |
 | --- | --- |
 | Total mass | 3.5 kg (measured) |
-| Footprint (L × W) | 0.228 × 0.180 m |
+| Footprint (L × W) | 0.266 × 0.188 m (V4.1 body, wheels and antennas) |
 | Wheel radius | 0.03725 m |
 | Track · wheelbase | 0.154 m · 0.120 m |
 | Max linear velocity | 0.35 m/s planned · 0.53 m/s clamp |
 | Max angular velocity | 2.0 rad/s planned · 6.0 rad/s clamp |
 | Max acceleration | ±2.5 m/s² · ±3.2 rad/s² |
+| Height | 0.220 m (V4.1 body, top of the cabin lid) |
 
 <br clear="right"/>
 
@@ -223,10 +224,30 @@ measured, assumed or open where applicable.
 | Stereo camera | Stereolabs ZED Mini, visual odometry and depth | `zed_wrapper` |
 | Lane camera | IMX219-160 on CSI, 90° HFOV, 640 × 360 at 20 Hz | `csi_camera_node` |
 | Power | 99 Wh powerbank (Jetson); 3S Li-ion pack (motors) | `/cobraflex/battery` |
+| Body | Printed PLA body V4.1: nine parts, about 0.30 kg, no supports | `body_link`, mesh `cobraflex_body.stl` |
 
 Velocity is limited at two levels: Nav2 plans within the planned limits, and
 the serial driver clamps to the platform limits before the firmware. Sources:
 [parameters.md](assets/Mathematical%20Model/parameters.md).
+
+### Printed body
+
+The front bay carries the RPLIDAR A2M8 on a 12 mm pedestal and the ZED Mini in
+a cradle pitched 15° nose down. The cabin holds the powerbank on two rails; its
+button and display are reached from outside through a push pin and a window.
+The wheels plate carries the lane camera at 0.30 rad nose down, the pose of
+`camera_joint_lane`. STL files oriented for printing, STEP files, print
+settings, fasteners and assembly order:
+**[assets/3d-models/body_v4](assets/3d-models/body_v4/README.md)**.
+
+<table>
+<tr>
+<td width="25%" align="center"><img src="assets/photos/body_v4_front_bay.jpg" width="100%"/><br><sub>Front bay: ZED Mini and RPLIDAR A2M8</sub></td>
+<td width="25%" align="center"><img src="assets/photos/body_v4_cabin.jpg" width="100%"/><br><sub>Powerbank cabin: rails, guides and window</sub></td>
+<td width="25%" align="center"><img src="assets/photos/body_v4_lane_camera.jpg" width="100%"/><br><sub>Lane-camera pod of the wheels plate</sub></td>
+<td width="25%" align="center"><img src="assets/photos/body_v4_rear_port.jpg" width="100%"/><br><sub>Rear port, magnetic cover removed</sub></td>
+</tr>
+</table>
 
 ---
 
@@ -421,7 +442,7 @@ The repository is the ROS 2 workspace root. It contains `src/`, and
 │   ├── 1_INSTALLATION.md · 2_USAGE.md · 3_ROBOT_OPERATION.md
 │   └── concepts/                    # 01-09: theory and implementation per lecture
 ├── assets/                          # Documentation media and CAD (not built)
-│   ├── 3d-models/                   # STL / STEP for chassis and sensor mounts
+│   ├── 3d-models/                   # STL / STEP: chassis, sensors, printed body (body_v4/)
 │   ├── Mathematical Model/          # Kinematics, control and parameter reference
 │   ├── Gazebo Simulation/           # Simulation notes
 │   ├── photos/

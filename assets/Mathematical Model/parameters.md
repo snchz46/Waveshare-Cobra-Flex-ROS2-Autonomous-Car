@@ -52,7 +52,7 @@ its mesh (`cobraflex_chassis.stl`); `my_robot_basic.urdf` and
 and the visual of the two box descriptions, is the envelope of the mesh:
 `chassis_length` × `chassis_width` × `chassis_box_height`, centred
 `chassis_box_z` = 0.030 m above `base_link`, from 0.030 m above the ground to
-the underside of Full Plate_wheels (0.104 m), where the body starts.
+the underside of the wheels plate (cam_plate_V4, 0.104 m), where the body starts.
 
 ### 1.3 Wheel positions
 
@@ -266,7 +266,7 @@ the URDFs:
 | Link | ixx | iyy | izz | Origin |
 |---|---|---|---|---|
 | `base_link` | 0.00344605 | 0.00934367 | 0.01157940 | `inertial_box` macro |
-| `body_link` | **0.00236116** | **0.00432964** | **0.00423665** | **Hand-written, from CAD (V4 body)** |
+| `body_link` | **0.00241980** | **0.00438805** | **0.00423950** | **Hand-written, from CAD (V4.1 body)** |
 | Wheel (each) | 3.802240e-05 | 3.802240e-05 | 6.937813e-05 | `inertial_cylinder` macro |
 | `lidar_link` | 9.213021e-05 | 9.213021e-05 | 1.335938e-04 | `inertial_cylinder` macro |
 
@@ -275,29 +275,30 @@ Comparison of the `body_link` tensor with the `inertial_box` values for a
 
 | | Macro | Declared | Difference |
 |---|---|---|---|
-| ixx | 0.00315456 | 0.00236116 | −25.2 % |
-| iyy | 0.00461161 | 0.00432964 | −6.1 % |
-| izz | 0.00627817 | 0.00423665 | −32.5 % |
+| ixx | 0.00315456 | 0.00241980 | −23.3 % |
+| iyy | 0.00461161 | 0.00438805 | −4.8 % |
+| izz | 0.00627817 | 0.00423950 | −32.5 % |
 
 `body_link` is the only link whose box model deviates significantly. The tensor
-is computed from the Inventor assembly of the V4 printed body (*Car HW
-Prototype V3*), integrated on the part meshes. cam_plate_V4, the wheels plate
+is computed from the Inventor assembly of the V4.1 printed body (*Car HW
+Prototype V3*; parts in [`3d-models/body_v4`](../3d-models/body_v4/README.md)),
+integrated on the part meshes. cam_plate_V4, the wheels plate
 with the lane-camera pod, takes the density of the plate and holder it replaces,
 weighed together at 91.3 g (0.790 g/cm³), since it is derived from that plate
 and has nearly its volume. bot_V3, the top_V3 powerbank cabin, its lid, the LiDAR
 pedestal, the ZED cradle and its cap, the rear port cover and the power-bank
 button pin are at 0.539 g/cm³, the density that reproduces the weighed PLA
 shells; the powerbank (0.550 kg), the ZED Mini (0.060 kg) and the lane camera
-(0.005 kg) at their positions. The CAD total is 938.3 g. The tensor refers to the link centre of gravity and is
+(0.005 kg) at their positions. The CAD total is 945.0 g. The tensor refers to the link centre of gravity and is
 scaled to the declared 0.8928 kg, which keeps the weighed budget until the
 printed shells are weighed. The same pipeline applied to the previous body
 reproduces its declared tensor within 3 % (ixx −0.4 %, iyy −2.8 %, izz −1.5 %).
 
-The centre of gravity lies at $(0.006, −0.00012, 0.16706)$ m in
+The centre of gravity lies at $(0.00586, −0.00014, 0.16855)$ m in
 `base_footprint`: the powerbank sits high, in the cabin, and the tapered rear
 box below it is an empty cable chamber. The products of inertia are declared:
-ixy = 4.394e−06, iyz = −2.106e−06 and ixz = 6.275e−04 kg·m²; the principal
-axes are pitched by 17° from the body axes. The +X axis of the CAD is
+ixy = 4.495e−06, iyz = −1.854e−06 and ixz = 6.401e−04 kg·m²; the principal
+axes are pitched by 18° from the body axes. The +X axis of the CAD is
 the vehicle forward axis (axle positions and sensor directions), and Inventor
 reports products of inertia as tensor elements with the sign convention of URDF
 (checked on the ZED cradle); the sign of `ixz` is therefore determined.
@@ -460,7 +461,7 @@ motor specification, which is not recorded here.
 `lidar_link` is the origin of the scan, both for the `sllidar` driver
 (`frame_id`) and for the `gpu_lidar` pose: the rotation axis of the A2 at the
 height of its laser plane, 30.8 mm above the base of the unit (Slamtec A2M8
-datasheet LD208, fig. 5-1; the A2 CAD model gives 31.0 mm). In the V3 printed body the unit stands on a 12 mm pedestal in a front
+datasheet LD208, fig. 5-1; the A2 CAD model gives 31.0 mm). In the V4 printed body the unit stands on a 12 mm pedestal in a front
 bay, 0.035 m ahead of the axle midpoint, with the optics 0.153 m above the
 ground (0.194 m in the previous body). The joint takes these values from the
 properties `lidar_scan_x` and `lidar_scan_z` and subtracts `body_link_z`, so
@@ -572,7 +573,7 @@ analysis, with references to the Gazebo sources, is in
 | `camera_joint_lane` | `camera_link_lane` | (0.130, 0, −0.030) from `body_link` | Pitch +0.30 rad, nose down |
 
 `zedm_camera_link` is the mounting point on the bottom face of the camera. In
-the V3 printed body the camera rests on a cradle at the nose, pitched 15° nose
+the V4 printed body the camera rests on a cradle at the nose, pitched 15° nose
 down so that the ground is visible from about 0.10 m ahead of the robot; the
 mounting point lies on the line of the two M2 threads of the camera. The
 joint takes its values from `zed_mount_x`, `zed_mount_z` and `zed_pitch`. On

@@ -268,8 +268,8 @@ def Xform "cobraflex_robot" (
                         uniform token purpose = "guide"
                         double size = 1
                         quatf xformOp:orient = (1, 0, 0, 0)
-                        float3 xformOp:scale = (0.188, 0.1145, 0.0225)
-                        double3 xformOp:translate = (-0.01525, 0, 0.07125)
+                        float3 xformOp:scale = (0.188, 0.1145, 0.0248)
+                        double3 xformOp:translate = (-0.01525, 0, 0.07237)
                         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                     }
                     def Cube "box_3" (
@@ -280,8 +280,8 @@ def Xform "cobraflex_robot" (
                         uniform token purpose = "guide"
                         double size = 1
                         quatf xformOp:orient = (1, 0, 0, 0)
-                        float3 xformOp:scale = (0.18, 0.0995, 0.0255)
-                        double3 xformOp:translate = (-0.01575, 0, 0.09525)
+                        float3 xformOp:scale = (0.18, 0.0995, 0.0278)
+                        double3 xformOp:translate = (-0.01575, 0, 0.09863)
                         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
                     }
 

@@ -41,7 +41,7 @@ def generate_launch_description():
     params_arg = DeclareLaunchArgument(
         "params_file",
         # Without this file, nav2_bringup uses its own defaults, which are
-        # configured for a TurtleBot3: robot_radius 0.22 m instead of 0.145 m,
+        # configured for a TurtleBot3: robot_radius 0.22 m instead of 0.152 m,
         # base_link instead of base_footprint, and different velocity limits.
         # See config/nav2_params.yaml. On ROS 2 Jazzy (lab PCs) Nav2 requires
         # different plugin names and two more nodes: config/nav2_params_jazzy.yaml.

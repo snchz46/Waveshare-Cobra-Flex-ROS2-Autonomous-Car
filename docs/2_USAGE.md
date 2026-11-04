@@ -90,8 +90,8 @@ ros2 launch cobraflex navigation.launch.py \
 ```
 
 Nav2 uses [`config/nav2_params.yaml`](../src/cobraflex/config/nav2_params.yaml),
-configured for the robot footprint (0.228 × 0.180 m, circumscribed radius
-0.145 m) and for `base_footprint`. The planning envelope is 0.35 m/s and
+configured for the robot footprint (0.266 × 0.188 m with the V4.1 body,
+circumscribed radius 0.152 m) and for `base_footprint`. The planning envelope is 0.35 m/s and
 2.0 rad/s, within the platform clamp of 0.53 m/s and 6.0 rad/s.
 
 ---

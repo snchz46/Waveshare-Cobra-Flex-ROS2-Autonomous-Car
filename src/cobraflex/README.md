@@ -121,7 +121,8 @@ un recorte cercano de 0.15 m ese sector se volveria transparente.
 
 La navegacion requiere un mapa guardado ([maps/README.md](maps/README.md)) y
 usa `config/nav2_params.yaml`, configurado con la geometria del robot
-(footprint 0.228 x 0.180 m, radio circunscrito 0.145 m, `base_footprint`).
+(footprint de 0.266 x 0.188 m con el cuerpo V4.1, radio circunscrito 0.152 m,
+`base_footprint`).
 Mapa o parametros alternativos:
 
 ```bash

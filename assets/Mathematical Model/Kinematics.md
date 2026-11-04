@@ -490,7 +490,7 @@ $$
 
 This is the tightest arc at full speed, not a lower bound; smaller radii are
 reachable at lower speed. It is close to the circumscribed radius of the robot
-(0.145 m), so a full-speed turn approximates a pivot.
+(0.152 m), so a full-speed turn approximates a pivot.
 
 ---
 

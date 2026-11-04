@@ -117,16 +117,16 @@
         </collision>
         <!-- powerbank cabin (top_V3), lower half -->
         <collision>
-            <origin xyz="-0.01525 0 ${0.17850 - body_link_z}" rpy="0 0 0"/>
+            <origin xyz="-0.01525 0 ${0.17962 - body_link_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="0.188 0.1145 0.0225"/>
+                <box size="0.188 0.1145 0.0248"/>
             </geometry>
         </collision>
         <!-- powerbank cabin, upper half and lid -->
         <collision>
-            <origin xyz="-0.01575 0 ${0.20250 - body_link_z}" rpy="0 0 0"/>
+            <origin xyz="-0.01575 0 ${0.20588 - body_link_z}" rpy="0 0 0"/>
             <geometry>
-                <box size="0.18 0.0995 0.0255"/>
+                <box size="0.18 0.0995 0.0278"/>
             </geometry>
         </collision>
 
@@ -136,29 +136,29 @@
              powerbank, which the V4 body carries high, in the cabin over the
              cable chamber, with the ZED Mini and the lane camera low at the nose.
 
-             Source: Inventor assembly "Car HW Prototype V3" (V4), integrated on
+             Source: Inventor assembly "Car HW Prototype V3" (V4.1), integrated on
              the part meshes. Masses: cam_plate_V4 (the wheels plate with the
              lane-camera pod) at the density of the plate and holder it replaces,
              weighed together at 91.3 g (0.790 g/cm3); bot_V3, the top_V3 cabin,
              its lid, the LiDAR pedestal, the ZED cradle and its cap, the rear
              port cover and the power-bank button pin at 0.539 g/cm3 (the density
              that reproduces the weighed PLA shells); powerbank 0.550, ZED Mini
-             0.060 and lane camera 0.005 kg at their positions. CAD total 938.3 g.
+             0.060 and lane camera 0.005 kg at their positions. CAD total 945.0 g.
              The tensor refers to the link CoG and is scaled to body_mass, which
              keeps the weighed budget until the printed shells are weighed. The
              same pipeline applied to the previous body reproduces its declared
              tensor within 3 %.
 
-             CoG in base_footprint: (0.006, -0.00012, 0.16706) m. The
+             CoG in base_footprint: (0.00586, -0.00014, 0.16855) m. The
              CAD +X axis is the vehicle forward axis (axle positions and sensor
              directions), so the products of inertia are declared. See
              assets/Mathematical Model/parameters.md 2.1. -->
         <inertial>
-            <origin xyz="0.006 -0.00012 ${0.16706 - body_link_z}" rpy="0 0 0"/>
+            <origin xyz="0.00586 -0.00014 ${0.16855 - body_link_z}" rpy="0 0 0"/>
             <mass value="${body_mass}" />
-            <inertia ixx="0.00236116" ixy="0.00000439" ixz="0.00062746"
-                     iyy="0.00432964" iyz="-0.00000211"
-                     izz="0.00423665" />
+            <inertia ixx="0.00241980" ixy="0.00000450" ixz="0.00064009"
+                     iyy="0.00438805" iyz="-0.00000185"
+                     izz="0.00423950" />
         </inertial>
     </link>
 
