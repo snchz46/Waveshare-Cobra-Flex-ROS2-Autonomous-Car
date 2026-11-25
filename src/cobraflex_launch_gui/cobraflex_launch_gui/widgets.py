@@ -18,7 +18,9 @@ from PyQt5.QtWidgets import (
     QListWidgetItem,
     QMenu,
     QPushButton,
+    QScroller,
     QSizePolicy,
+    QStyledItemDelegate,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -28,11 +30,9 @@ from cobraflex_launch_gui.constants import (
     LOG_LEVEL_COLORS,
     LOG_LEVELS,
     LOGS_MAX_PER_LAUNCH,
-    LOGS_PANEL_MAX_HEIGHT,
-    PALETTE_HEIGHT,
-    PALETTE_WIDTH,
     TOAST_DURATION_MS,
 )
+from cobraflex_launch_gui.density import current as active_density, margins, px, size
 from cobraflex_launch_gui.model import build_command, Launch, LogEntry, missing_required
 
 
@@ -43,14 +43,15 @@ def _dot(name: str, halo: Optional[str] = None) -> QFrame:
     """Return a status dot, optionally inside a halo frame."""
     dot = QFrame()
     dot.setObjectName(name)
-    dot.setFixedSize(8, 8)
+    dot.setFixedSize(px(8), px(8))
     if halo is None:
         return dot
     frame = QFrame()
     frame.setObjectName(halo)
-    frame.setFixedSize(14, 14)
+    frame.setFixedSize(px(14), px(14))
     dot.setParent(frame)
-    dot.move(3, 3)
+    offset = (px(14) - px(8)) // 2
+    dot.move(offset, offset)
     return frame
 
 
@@ -60,10 +61,32 @@ def make_green_dot() -> QFrame:
 
 
 def set_letter_spacing(widget: QWidget, value: float) -> None:
-    """Set absolute letter spacing on a widget's font."""
+    """Set absolute letter spacing, in dp, on a widget's font."""
     f = widget.font()
-    f.setLetterSpacing(QFont.AbsoluteSpacing, value)
+    f.setLetterSpacing(QFont.AbsoluteSpacing, value * active_density().factor)
     widget.setFont(f)
+
+
+def enable_kinetic_scroll(viewport: QWidget) -> None:
+    """Let a finger drag scroll a viewport, in the touch density only.
+
+    LeftMouseButtonGesture rather than TouchGesture: the touch panel of the
+    robot may reach X11 as a single-touch device that emits mouse events. On
+    the desktop a mouse drag keeps selecting text, so nothing is grabbed there.
+    """
+    if active_density().touch:
+        QScroller.grabGesture(viewport, QScroller.LeftMouseButtonGesture)
+
+
+def enable_touch_popup(combo: QComboBox) -> None:
+    """Give the drop-down list of a combo box finger-sized rows, in the touch density.
+
+    The item rules of the style sheet apply only to a QStyledItemDelegate;
+    the desktop keeps the default delegate and its look.
+    """
+    if active_density().touch:
+        combo.setItemDelegate(QStyledItemDelegate(combo))
+        enable_kinetic_scroll(combo.view().viewport())
 
 
 def restyle(widget: QWidget) -> None:
@@ -101,8 +124,8 @@ class SectionHeader(QFrame):
         """Build the header row."""
         super().__init__()
         h = QHBoxLayout(self)
-        h.setContentsMargins(0, 6, 0, 6)
-        h.setSpacing(8)
+        h.setContentsMargins(*margins(0, 6, 0, 6))
+        h.setSpacing(px(8))
         if glyph:
             h.addWidget(_label(glyph, "sectionGlyph"))
         lab = _label(label, "sectionLabel")
@@ -132,11 +155,14 @@ class ArgRow(QFrame):
         self._bool_buttons: Dict[str, QPushButton] = {}
         self.setObjectName("argRow")
 
-        h = QHBoxLayout(self)
-        h.setContentsMargins(8, 4, 8, 4)
-        h.setSpacing(10)
+        v = QVBoxLayout(self)
+        v.setContentsMargins(*margins(8, 4, 8, 4))
+        v.setSpacing(px(2))
+        h = QHBoxLayout()
+        h.setSpacing(px(10))
+        v.addLayout(h)
         key = _label(arg["key"], "argKey")
-        key.setMinimumWidth(170)
+        key.setMinimumWidth(size("arg_key_w"))
         h.addWidget(key)
 
         kind = arg.get("kind", "string")
@@ -151,10 +177,17 @@ class ArgRow(QFrame):
         if arg.get("required"):
             h.addWidget(_label("required", "argRequired"))
         self.mod_indicator = _label("", "argMod")
-        self.mod_indicator.setFixedWidth(14)
+        self.mod_indicator.setFixedWidth(px(14))
         self.mod_indicator.setAlignment(Qt.AlignCenter)
         self.mod_indicator.setToolTip("Differs from the default: passed as key:=value")
         h.addWidget(self.mod_indicator)
+
+        # Visible text rather than a tooltip only: a finger cannot hover, and a
+        # tooltip goes unnoticed by anyone who does not know it is there.
+        if arg.get("help"):
+            help_label = _label(arg["help"], "argHelp")
+            help_label.setWordWrap(True)
+            v.addWidget(help_label)
 
         tip = [arg["key"]]
         if arg.get("help"):
@@ -182,6 +215,7 @@ class ArgRow(QFrame):
     def _make_enum_editor(self) -> QComboBox:
         cb = QComboBox()
         cb.setObjectName("argEnum")
+        enable_touch_popup(cb)
         options = list(self.arg.get("options", []))
         if self.arg.get("default", "") == "" and "" not in options:
             # The file computes its default; an empty entry keeps it.
@@ -258,8 +292,8 @@ class ExpandableSection(QFrame):
         self.launch = launch
         self.setObjectName("expandable")
         v = QVBoxLayout(self)
-        v.setContentsMargins(14, 12, 14, 14)
-        v.setSpacing(10)
+        v.setContentsMargins(*margins(14, 12, 14, 14))
+        v.setSpacing(px(10))
 
         cmd_hd = QHBoxLayout()
         cmd_label = _label(">_  COMMAND", "expandLabel")
@@ -281,9 +315,7 @@ class ExpandableSection(QFrame):
 
         self.arg_rows: List[ArgRow] = []
         if not launch.args:
-            empty = QLabel("(no declared arguments)")
-            empty.setStyleSheet("color: #6e7681; font-size: 11px; font-style: italic;")
-            v.addWidget(empty)
+            v.addWidget(_label("(no declared arguments)", "argsEmpty"))
             return
 
         args_hd = QHBoxLayout()
@@ -305,7 +337,7 @@ class ExpandableSection(QFrame):
         set_letter_spacing(presets_label, 1.2)
         v.addWidget(presets_label)
         self.preset_row = QHBoxLayout()
-        self.preset_row.setSpacing(6)
+        self.preset_row.setSpacing(px(6))
         v.addLayout(self.preset_row)
         self._rebuild_presets()
 
@@ -348,7 +380,10 @@ class ExpandableSection(QFrame):
         self._on_arg_changed()
 
     def _save_preset(self) -> None:
-        name, ok = QInputDialog.getText(self, "Save preset", "Name of the new preset:")
+        # A proposed name lets the preset be saved without a keyboard.
+        own = sum(1 for p in self.launch.presets if p.get("user"))
+        name, ok = QInputDialog.getText(self, "Save preset", "Name of the new preset:",
+                                        QLineEdit.Normal, f"preset {own + 1}")
         name = name.strip()
         if not ok or not name:
             return
@@ -390,6 +425,7 @@ class LaunchCard(QFrame):
     run_signal = pyqtSignal(str)
     stop_signal = pyqtSignal(str)
     restart_signal = pyqtSignal(str)
+    logs_signal = pyqtSignal(str)
     star_signal = pyqtSignal(str)
     presets_changed = pyqtSignal(object)
 
@@ -406,15 +442,16 @@ class LaunchCard(QFrame):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
+        touch = active_density().touch
         top_widget = QWidget()
         top = QHBoxLayout(top_widget)
-        top.setContentsMargins(14, 14, 14, 12)
-        top.setSpacing(16)
+        top.setContentsMargins(*(margins(14, 8, 14, 8) if touch else margins(14, 14, 14, 12)))
+        top.setSpacing(px(16))
         col = QVBoxLayout()
-        col.setSpacing(3)
+        col.setSpacing(px(3))
 
         l1 = QHBoxLayout()
-        l1.setSpacing(8)
+        l1.setSpacing(px(8))
         self.expand_btn = _button("▸", "expandBtn", "Show command and arguments")
         self.expand_btn.setProperty("open", "false")
         self.expand_btn.setFlat(True)
@@ -432,9 +469,16 @@ class LaunchCard(QFrame):
         if launch.file_format != "py":
             l1.addWidget(_label(launch.file_format, "cardFmt"))
         if launch.args:
-            l1.addWidget(_label(f"{len(launch.args)} args", "cardArgsBadge"))
+            badge = _label(f"{len(launch.args)} args", "cardArgsBadge")
+            if touch:
+                # Centred: the touch-sized buttons make the row higher than the badge.
+                l1.addWidget(badge, 0, Qt.AlignVCenter)
+            else:
+                l1.addWidget(badge)
         l1.addStretch()
-        if launch.workspace:
+        # The workspace name repeats on every card; the touch screen needs the
+        # width for the name and the buttons.
+        if launch.workspace and not touch:
             ws = _label(launch.workspace, "cardWs")
             ws.setToolTip("Workspace of this launch file")
             l1.addWidget(ws)
@@ -450,22 +494,22 @@ class LaunchCard(QFrame):
         col.addWidget(self.err_snippet)
 
         self.status_row = QHBoxLayout()
-        self.status_row.setSpacing(6)
-        self.status_row.setContentsMargins(0, 3, 0, 0)
+        self.status_row.setSpacing(px(6))
+        self.status_row.setContentsMargins(*margins(0, 3, 0, 0))
         col.addLayout(self.status_row)
         top.addLayout(col, 1)
 
         btns_widget = QWidget()
         btns_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         btns = QHBoxLayout(btns_widget)
-        btns.setSpacing(6)
+        btns.setSpacing(px(6))
         btns.setContentsMargins(0, 0, 0, 0)
         self.run_btn = _button("▶  Run", "btnRun")
         self.run_btn.clicked.connect(self._on_run_click)
         self.stop_btn = _button("■  Stop", "btnStop")
         self.stop_btn.clicked.connect(lambda: self.stop_signal.emit(self.launch.uid))
         self.logs_btn = _button("☰  Logs", "btnLogs", "Show the output of this launch")
-        self.logs_btn.clicked.connect(lambda: self.selected_signal.emit(self.launch.uid))
+        self.logs_btn.clicked.connect(lambda: self.logs_signal.emit(self.launch.uid))
         for b in (self.run_btn, self.stop_btn, self.logs_btn):
             btns.addWidget(b)
         top.addWidget(btns_widget, 0, Qt.AlignTop)
@@ -500,9 +544,18 @@ class LaunchCard(QFrame):
             self.run_signal.emit(self.launch.uid)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:  # noqa: N802 - Qt API
-        """Select the card on click."""
-        self.selected_signal.emit(self.launch.uid)
-        super().mousePressEvent(e)
+        """Accept the press, so that its release reaches the card."""
+        e.accept()
+
+    def mouseReleaseEvent(self, e: QMouseEvent) -> None:  # noqa: N802 - Qt API
+        """Select the card when a press ends inside it.
+
+        Selecting on the release instead of the press keeps a scroll from
+        selecting: when a drag that starts on the card becomes a kinetic
+        scroll, QScroller ends it with a release far outside the card.
+        """
+        if self.rect().contains(e.pos()):
+            self.selected_signal.emit(self.launch.uid)
 
     def set_selected(self, selected: bool) -> None:
         """Mark the card as the subject of the log panel."""
@@ -589,12 +642,12 @@ class Toast(QFrame):
         self.setProperty("kind", kind)
         self.setCursor(Qt.PointingHandCursor)
         h = QHBoxLayout(self)
-        h.setContentsMargins(12, 10, 12, 10)
-        h.setSpacing(10)
+        h.setContentsMargins(*margins(12, 10, 12, 10))
+        h.setSpacing(px(10))
         h.addWidget(_label(self.GLYPHS.get(kind, "·"),
                            self._GLYPH_OBJ_NAME.get(kind, "toastGlyphInfo")))
         col = QVBoxLayout()
-        col.setSpacing(1)
+        col.setSpacing(px(1))
         t = _label(title, "toastTitle")
         t.setWordWrap(True)
         col.addWidget(t)
@@ -604,8 +657,8 @@ class Toast(QFrame):
             col.addWidget(s)
         h.addLayout(col, 1)
         h.addWidget(_label("×", "toastX"))
-        self.setMinimumWidth(280)
-        self.setMaximumWidth(380)
+        self.setMinimumWidth(px(280))
+        self.setMaximumWidth(px(380))
         QTimer.singleShot(duration_ms, self.dismiss)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:  # noqa: N802 - Qt API
@@ -640,11 +693,12 @@ class CommandPalette(QDialog):
         v = QVBoxLayout(self)
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(0)
+        touch = active_density().touch
         input_wrap = QFrame()
         input_wrap.setObjectName("paletteInputWrap")
         ih = QHBoxLayout(input_wrap)
-        ih.setContentsMargins(16, 14, 16, 14)
-        ih.setSpacing(12)
+        ih.setContentsMargins(*margins(16, 14, 16, 14))
+        ih.setSpacing(px(12))
         ih.addWidget(_label("⌕", "paletteIcon"))
         self.input = QLineEdit()
         self.input.setObjectName("paletteInput")
@@ -653,17 +707,25 @@ class CommandPalette(QDialog):
         self.input.returnPressed.connect(self._activate_current)
         self.input.installEventFilter(self)
         ih.addWidget(self.input, 1)
-        ih.addWidget(_label("esc", "paletteKbd"))
+        # A button, so that the dialog also closes without the Esc key.
+        close = _button("Close" if touch else "esc", "paletteClose", "Close (Esc)")
+        close.clicked.connect(self.close)
+        ih.addWidget(close)
         v.addWidget(input_wrap)
 
         self.list = QListWidget()
         self.list.setObjectName("paletteList")
         self.list.itemActivated.connect(lambda _i: self._activate_current())
+        if touch:
+            # One tap runs the entry; a double tap is unreliable with a finger.
+            self.list.itemClicked.connect(lambda _i: self._activate_current())
+        enable_kinetic_scroll(self.list.viewport())
         v.addWidget(self.list, 1)
         foot = _label("↑↓ navigate     ↵ select     esc close", "paletteFoot")
         foot.setAlignment(Qt.AlignCenter)
+        foot.setVisible(not touch)
         v.addWidget(foot)
-        self.resize(PALETTE_WIDTH, PALETTE_HEIGHT)
+        self.resize(size("palette_w"), size("palette_h"))
 
     def open_with(self, launches: List[Launch]) -> None:
         """Fill the list from the current launches and show the dialog."""
@@ -672,8 +734,12 @@ class CommandPalette(QDialog):
         self._refilter("")
         parent = self.parentWidget()
         if parent is not None:
+            # The dialog stays inside a small window: the touch screen is 600 px high.
             geo = parent.geometry()
-            self.move(geo.x() + (geo.width() - self.width()) // 2, geo.y() + 120)
+            height = min(size("palette_h"), max(px(200), geo.height() - px(32)))
+            self.resize(min(size("palette_w"), geo.width() - px(32)), height)
+            top = min(px(120), max(px(16), (geo.height() - height) // 2))
+            self.move(geo.x() + (geo.width() - self.width()) // 2, geo.y() + top)
         self.show()
         self.raise_()
         self.input.setFocus()
@@ -718,6 +784,9 @@ class CommandPalette(QDialog):
                 break
 
     def _activate_current(self) -> None:
+        # A tap emits both itemClicked and, on some styles, itemActivated.
+        if not self.isVisible():
+            return
         item = self.list.currentItem()
         if item is None or not item.flags() & Qt.ItemIsEnabled:
             return
@@ -747,21 +816,23 @@ class LogsPanel(QFrame):
 
     clear_requested = pyqtSignal()
 
-    def __init__(self):
-        """Build the panel with no launch selected."""
+    def __init__(self, collapsed: bool = False):
+        """Build the panel with no launch selected; collapsed shows the header row only."""
         super().__init__()
         self.setObjectName("logsPanel")
-        self.setMaximumHeight(LOGS_PANEL_MAX_HEIGHT)
+        self.setMaximumHeight(size("logs_max_h"))
         self._launch: Optional[Launch] = None
         self._level_filter = "ALL"
         self._search_query = ""
         self._follow = True
+        self._collapsed = False
+        touch = active_density().touch
 
         v = QVBoxLayout(self)
-        v.setContentsMargins(24, 12, 24, 16)
-        v.setSpacing(8)
+        v.setContentsMargins(*(margins(24, 6, 24, 6) if touch else margins(24, 12, 24, 16)))
+        v.setSpacing(px(8))
         head = QHBoxLayout()
-        head.setSpacing(8)
+        head.setSpacing(px(8))
         key = _label("LOGS", "logsKey")
         set_letter_spacing(key, 1.4)
         head.addWidget(key)
@@ -771,14 +842,18 @@ class LogsPanel(QFrame):
         self.live_pill = QFrame()
         self.live_pill.setObjectName("logsLive")
         lp = QHBoxLayout(self.live_pill)
-        lp.setContentsMargins(8, 2, 10, 2)
-        lp.setSpacing(5)
+        lp.setContentsMargins(*margins(8, 2, 10, 2))
+        lp.setSpacing(px(5))
         lp.addWidget(make_green_dot())
         live = _label("LIVE", "logsLiveText")
         set_letter_spacing(live, 1.0)
         lp.addWidget(live)
         self.live_pill.setVisible(False)
-        head.addWidget(self.live_pill)
+        if touch:
+            # Centred: the touch-sized buttons make the row higher than the pill.
+            head.addWidget(self.live_pill, 0, Qt.AlignVCenter)
+        else:
+            head.addWidget(self.live_pill)
         head.addStretch()
 
         self.level_buttons: Dict[str, QPushButton] = {}
@@ -809,6 +884,9 @@ class LogsPanel(QFrame):
         clear_btn = _button("Clear", "btnGhost", "Clear the output of this launch")
         clear_btn.clicked.connect(self.clear_requested.emit)
         head.addWidget(clear_btn)
+        self.toggle_btn = _button("Hide", "btnGhost", "Hide or show the output")
+        self.toggle_btn.clicked.connect(lambda: self.set_collapsed(not self._collapsed))
+        head.addWidget(self.toggle_btn)
         v.addLayout(head)
 
         self.body = QTextEdit()
@@ -816,7 +894,24 @@ class LogsPanel(QFrame):
         self.body.setReadOnly(True)
         self.body.setLineWrapMode(QTextEdit.WidgetWidth)
         self.body.document().setMaximumBlockCount(LOGS_MAX_PER_LAUNCH)
+        enable_kinetic_scroll(self.body.viewport())
         v.addWidget(self.body, 1)
+
+        self._tools: List[QWidget] = [*self.level_buttons.values(), self.search_input,
+                                      self.follow_btn, self.wrap_btn, clear_btn]
+        # The header row of the touch screen keeps only what fits in 1024 px;
+        # search needs a keyboard and wrapping stays on.
+        self._touch_hidden: List[QWidget] = \
+            [self.search_input, self.wrap_btn, clear_btn] if touch else []
+        self.set_collapsed(collapsed)
+
+    def set_collapsed(self, collapsed: bool) -> None:
+        """Show the header row only (collapsed) or the whole panel."""
+        self._collapsed = collapsed
+        self.body.setVisible(not collapsed)
+        for w in self._tools:
+            w.setVisible(not collapsed and w not in self._touch_hidden)
+        self.toggle_btn.setText("Show output" if collapsed else "Hide")
 
     def set_launch(self, launch: Optional[Launch]) -> None:
         """Show the output of another launch."""

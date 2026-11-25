@@ -17,7 +17,8 @@ PROCESS_START_TIMEOUT_MS = 3000
 #: Log buffer per launch; older entries are evicted first.
 LOGS_MAX_PER_LAUNCH = 2000
 
-#: Command palette size.
+#: Command palette size. This and the sizes below are those of the desktop
+#: density; density.py holds the touch values.
 PALETTE_WIDTH = 560
 PALETTE_HEIGHT = 420
 
@@ -62,6 +63,9 @@ FILTER_CHIPS = (
     ("Other", "Other"),
 )
 UNTAGGED = "Other"
+
+#: Chip labels of the touch density, whose filter bar has less room.
+FILTER_CHIPS_SHORT = {"Sim": "Sim", "RL": "RL"}
 
 #: Log levels offered by the log panel filter.
 LOG_LEVELS = ("ALL", "INFO", "WARN", "ERROR")

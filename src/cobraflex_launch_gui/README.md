@@ -14,13 +14,19 @@ ros2 run cobraflex_launch_gui launch_gui
 | `--all` | Incluye tambien los paquetes de `/opt/ros` |
 | `--workspace RUTA` | Busca en `RUTA/src` en lugar del indice de ament |
 | `--mock` | Simula ejecuciones, grafo y TF; no arranca ningun proceso |
+| `--density touch` | Modo tactil para la pantalla del coche (ver [Pantalla tactil](#pantalla-tactil)) |
+| `--scale F` | Factor de tamano de la densidad (tactil: 1.25; escritorio: 1.0) |
+| `--fullscreen` | Pantalla completa; F11 la alterna y el boton **Quit** cierra la ventana |
+
+`COBRAFLEX_GUI_DENSITY` y `COBRAFLEX_GUI_SCALE` dan el valor por defecto de
+`--density` y `--scale`, por ejemplo en un acceso directo de la Jetson.
 
 ## Pestanas
 
 | Pestana | Contenido |
 | --- | --- |
-| **Launches** | Una tarjeta por launch file: descripcion, estado, PID, tiempo en marcha. La flecha despliega el comando `ros2 launch` equivalente, los argumentos y los presets. El panel inferior muestra la salida del launch seleccionado, filtrable por nivel y texto |
-| **ROS Graph** | Nodos y topicos del grafo en vivo. Un clic sobre un elemento resalta sus conexiones y muestra publicadores, suscriptores, tipos y los comandos `ros2 node info`, `ros2 topic echo` y `ros2 topic hz` correspondientes |
+| **Launches** | Una tarjeta por launch file: descripcion, estado, PID, tiempo en marcha. La flecha despliega el comando `ros2 launch` equivalente, los argumentos y los presets. El panel inferior muestra la salida del launch seleccionado, filtrable por nivel y texto; **Hide** lo pliega y el boton **Logs** de una tarjeta lo vuelve a abrir |
+| **ROS Graph** | Nodos y topicos del grafo en vivo. Un clic sobre un elemento resalta sus conexiones y muestra publicadores, suscriptores, tipos y los comandos `ros2 node info`, `ros2 topic echo` y `ros2 topic hz` correspondientes. Los botones −, + y **Fit** de la esquina del dibujo ajustan el zoom, igual que la rueda y el doble clic |
 | **TF Tree** | Frames recibidos en `/tf` y `/tf_static`, con la frecuencia de cada transformada y un diagnostico al pie |
 
 Colores del grafo: un topico en ambar no tiene publicador o no tiene
@@ -48,6 +54,7 @@ Los argumentos se leen del propio launch file sin ejecutarlo: el AST de un
 fichero Python (`DeclareLaunchArgument`), los `<arg>` de primer nivel de un
 fichero XML y las entradas `arg` de un fichero YAML.
 
+- La ayuda declarada de cada argumento aparece bajo su campo.
 - Solo se pasan como `clave:=valor` los argumentos modificados (marca `~`).
 - Un argumento sin `default_value` es obligatorio; el launch no arranca
   mientras este vacio.
@@ -94,10 +101,47 @@ en la tarjeta ("1 process(es) died") junto con la ultima linea de error.
 
 | Tecla | Accion |
 | --- | --- |
-| `Ctrl+K` | Paleta de comandos: lanzar o detener por nombre |
+| `Ctrl+K` | Paleta de comandos: lanzar o detener por nombre (tambien el boton **Search**) |
 | `/` | Buscar en la lista de launches |
 | `Ctrl+R` / `Ctrl+E` | Lanzar / detener el launch seleccionado |
 | `Ctrl+1` .. `Ctrl+3` | Cambiar de pestana |
+| `F11` | Pantalla completa |
+
+## Pantalla tactil
+
+`--density touch` adapta la ventana a la pantalla tactil del coche, una
+Joy-IT RB-LCD7-2: 7", 1024x600 px sobre 154,21 x 85,92 mm, unos 0,15 mm por
+pixel. Los tamanos de `style.qss` estan en pixeles independientes de la
+densidad (dp) y `density.py` los convierte: la densidad tactil multiplica por
+1,25, de modo que un control de 50 dp mide unos 9 mm, el minimo habitual para
+un dedo, y una ventana de 820x480 dp ocupa la pantalla entera. El factor se
+aplica dentro de la ventana y no con `QT_SCALE_FACTOR`, que con valores
+fraccionarios dibuja lineas de un pixel desiguales en Qt 5.
+
+```bash
+ros2 run cobraflex_launch_gui launch_gui --density touch --fullscreen
+```
+
+Sin `--fullscreen`, la densidad tactil abre la ventana maximizada.
+
+| Cambio | Motivo |
+| --- | --- |
+| Controles de 44 a 50 dp y texto de 12 a 22 dp | Tamano tactil. `style_touch.qss` fija la altura de los controles cuya altura depende del contenido en `style.qss` |
+| Franja de entorno y cabecera dentro de la barra de pestanas | La pantalla tiene 600 px de alto. Del entorno queda el aviso de `ROS_DOMAIN_ID` cuando vale 0 o no esta definido |
+| Panel de logs plegado al arrancar | La lista necesita la altura; el boton **Logs** de una tarjeta lo abre |
+| Desplazamiento arrastrando con el dedo (`QScroller`) | Sin el, la lista solo se desplaza con la barra de scroll |
+| Seleccion de la tarjeta al soltar | Un arrastre que empieza sobre una tarjeta no la selecciona |
+| Barra del grafo sin busqueda ni botones de rqt_graph y RViz | Requieren teclado o una ventana propia |
+
+Segun el fabricante, el panel es multitactil de 5 puntos en PC y de un punto en
+Raspberry Pi; en la Jetson, `xinput list` muestra como llega. El
+desplazamiento usa el gesto de boton izquierdo de `QScroller`, valido en ambos
+casos, y el zoom del grafo tiene botones en lugar de depender del pellizco.
+
+Otra pantalla solo necesita otro factor, por ejemplo `--scale 1.0` para una
+pantalla de 10" a 1024x600. Para escribir sin teclado fisico, Qt Virtual
+Keyboard en modo escritorio no requiere cambios en la ventana: basta
+`QT_IM_MODULE=qtvirtualkeyboard` con su plugin para Qt 5 instalado.
 
 ## Limites
 
@@ -119,6 +163,7 @@ en la tarjeta ("1 process(es) died") junto con la ultima linea de error.
 pip install PyQt5 PyYAML
 cd src/cobraflex_launch_gui
 python3 -m cobraflex_launch_gui --mock --workspace ../..
+python3 -m cobraflex_launch_gui --mock --workspace ../.. --density touch   # como en el coche
 ```
 
 ## Paquete independiente

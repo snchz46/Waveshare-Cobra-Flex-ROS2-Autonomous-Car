@@ -1,6 +1,7 @@
 """Entry point: discover launch files, bring up ROS, then give the main thread to Qt."""
 
 import argparse
+import os
 from pathlib import Path
 import shutil
 import signal
@@ -9,6 +10,7 @@ import sys
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication
 
+from cobraflex_launch_gui import density
 from cobraflex_launch_gui.backend import MockBackend, RosBackend
 from cobraflex_launch_gui.discovery import (
     build_launches,
@@ -30,7 +32,14 @@ except ImportError:  # mock mode on a machine without ROS
         """Placeholder so that the except clause below is valid without rclpy."""
 
 
-_QSS = Path(__file__).resolve().parent / "style.qss"
+def _env_scale():
+    value = os.environ.get("COBRAFLEX_GUI_SCALE", "")
+    try:
+        return float(value) if value else None
+    except ValueError:
+        print(f"[launch_gui] ignoring COBRAFLEX_GUI_SCALE={value!r}: not a number",
+              file=sys.stderr)
+        return None
 
 
 def _parse_args(argv):
@@ -44,8 +53,21 @@ def _parse_args(argv):
                              "ament index of the sourced workspaces")
     parser.add_argument("--all", action="store_true",
                         help="also list the launch files of the packages under /opt/ros")
+    parser.add_argument("--density", choices=sorted(density.DENSITIES),
+                        default=os.environ.get("COBRAFLEX_GUI_DENSITY", "desktop"),
+                        help="desktop (mouse, large monitor) or touch (finger, the 7 inch "
+                             "screen of the robot); default: $COBRAFLEX_GUI_DENSITY or desktop")
+    parser.add_argument("--scale", type=float, default=_env_scale(),
+                        help="size factor of the density (touch: 1.25, desktop: 1.0); "
+                             "default: $COBRAFLEX_GUI_SCALE")
+    parser.add_argument("--fullscreen", action="store_true",
+                        help="start full screen; F11 toggles it")
     # --ros-args and its parameters belong to rclpy.
     args, _unknown = parser.parse_known_args(argv)
+    if args.density not in density.DENSITIES:
+        parser.error(f"unknown density {args.density!r} (from COBRAFLEX_GUI_DENSITY)")
+    if args.scale is not None and not 0.5 <= args.scale <= 4.0:
+        parser.error("--scale must lie between 0.5 and 4.0")
     return args
 
 
@@ -64,6 +86,9 @@ def main(args=None):
     """Run the launch manager window."""
     argv = sys.argv[1:] if args is None else list(args)
     options = _parse_args(argv)
+    # Every widget reads its sizes from the active density: set it first.
+    active = density.by_name(options.density, options.scale)
+    density.activate(active)
     mock = options.mock or rclpy is None or shutil.which("ros2") is None
     if mock and not options.mock:
         print("[launch_gui] ROS 2 is not sourced: starting in mock mode.", file=sys.stderr)
@@ -87,11 +112,18 @@ def main(args=None):
         app = QApplication([sys.argv[0]])
         app.setApplicationName("cobraflex_launch_gui")
         try:
-            app.setStyleSheet(_QSS.read_text(encoding="utf-8"))
+            app.setStyleSheet(density.load_style(active))
         except OSError:
             pass
         window = LaunchGui(backend, launches, ros, state, workspaces)
-        window.show()
+        if options.fullscreen:
+            window.showFullScreen()
+        elif active.touch:
+            # The touch layout is made for the whole 600 px of height; a
+            # maximised window fits beside the panels of the desktop.
+            window.showMaximized()
+        else:
+            window.show()
 
         # The launches run in sessions of their own and do not receive the
         # Ctrl-C of this terminal. SIGINT and SIGTERM therefore close the

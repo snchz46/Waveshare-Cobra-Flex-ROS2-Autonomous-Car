@@ -44,9 +44,11 @@ from cobraflex_launch_gui.constants import (
     TF_REFRESH_MS,
     TF_STALE_S,
 )
+from cobraflex_launch_gui.density import current as active_density, margins, px, size
 from cobraflex_launch_gui.graph_layout import EdgeRoute, layout_graph, LayoutEdge, LayoutNode
 from cobraflex_launch_gui.model import Launch
 from cobraflex_launch_gui.ros_interface import analyse_tf
+from cobraflex_launch_gui.widgets import enable_kinetic_scroll, enable_touch_popup
 
 _PAD_X = 12.0
 _PAD_Y = 6.0
@@ -239,17 +241,57 @@ class GraphCanvas(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setBackgroundBrush(QBrush(QColor(GRAPH_BACKGROUND)))
         self.setFrameShape(QFrame.NoFrame)
+        self._factor = active_density().factor
         self.item_font = QFont(self.font())
-        self.item_font.setPointSizeF(9.0)
+        self.item_font.setPointSizeF(9.0 * self._factor)
         self.label_font = QFont(self.font())
-        self.label_font.setPointSizeF(7.5)
+        self.label_font.setPointSizeF(7.5 * self._factor)
         self.user_zoomed = False
         self._press = None
+
+        # Zoom controls on the drawing: the wheel is the only other way to zoom,
+        # and the touch screen of the robot may report a single touch point,
+        # which rules out a pinch.
+        self.zoom_bar = QFrame(self)
+        self.zoom_bar.setObjectName("zoomBar")
+        zb = QHBoxLayout(self.zoom_bar)
+        zb.setContentsMargins(0, 0, 0, 0)
+        zb.setSpacing(px(6))
+        for text, tip, slot in (("−", "Zoom out", lambda: self.zoom_by(1 / 1.25)),
+                                ("+", "Zoom in", lambda: self.zoom_by(1.25)),
+                                ("Fit", "Fit the drawing in the view (also: double click)",
+                                 self.fit)):
+            b = QPushButton(text)
+            b.setObjectName("zoomBtn")
+            b.setCursor(Qt.PointingHandCursor)
+            b.setToolTip(tip)
+            b.clicked.connect(slot)
+            zb.addWidget(b)
 
     def item_size(self, label: str) -> Tuple[float, float]:
         """Return the box size that fits a label."""
         fm = QFontMetricsF(self.item_font)
-        return fm.horizontalAdvance(label) + 2 * _PAD_X, fm.height() + 2 * _PAD_Y
+        return (fm.horizontalAdvance(label) + 2 * _PAD_X * self._factor,
+                fm.height() + 2 * _PAD_Y * self._factor)
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 - Qt API
+        """Keep the zoom controls in the bottom right corner of the drawing."""
+        super().resizeEvent(event)
+        self.zoom_bar.adjustSize()
+        area = self.viewport().geometry()
+        self.zoom_bar.move(area.right() - self.zoom_bar.width() - px(12),
+                           area.bottom() - self.zoom_bar.height() - px(12))
+        self.zoom_bar.raise_()
+
+    def zoom_by(self, factor: float) -> None:
+        """Zoom around the centre of the view, within the limits of the wheel zoom."""
+        if not 0.08 <= self.transform().m11() * factor <= 5.0:
+            return
+        anchor = self.transformationAnchor()
+        self.setTransformationAnchor(QGraphicsView.AnchorViewCenter)
+        self.scale(factor, factor)
+        self.setTransformationAnchor(anchor)
+        self.user_zoomed = True
 
     def show_message(self, text: str) -> None:
         """Replace the drawing with a centred message."""
@@ -291,7 +333,8 @@ class GraphCanvas(QGraphicsView):
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802 - Qt API
         """Emit item_clicked for a release close to its press."""
         super().mouseReleaseEvent(event)
-        if self._press is None or (event.pos() - self._press).manhattanLength() > 4:
+        slop = size("tap_slop")
+        if self._press is None or (event.pos() - self._press).manhattanLength() > slop:
             return
         self._press = None
         item = self.itemAt(event.pos())
@@ -323,21 +366,24 @@ class _GraphPage(QWidget):
         self.toolbar = QFrame()
         self.toolbar.setObjectName("filterBar")
         self.toolbar_layout = QHBoxLayout(self.toolbar)
-        self.toolbar_layout.setContentsMargins(24, 10, 24, 10)
-        self.toolbar_layout.setSpacing(10)
+        self.toolbar_layout.setContentsMargins(*margins(24, 10, 24, 10))
+        self.toolbar_layout.setSpacing(px(10))
         self.status = QLabel("")
         self.status.setObjectName("countPill")
+        self._touch = active_density().touch
 
     def _finish_toolbar(self, external: List[QPushButton]) -> None:
         self.toolbar_layout.addStretch()
-        self.toolbar_layout.addWidget(self.status)
-        fit = QPushButton("Fit")
-        fit.setObjectName("btnGhost")
-        fit.setToolTip("Fit the drawing in the view (also: double click)")
-        fit.clicked.connect(self.canvas.fit)
-        self.toolbar_layout.addWidget(fit)
-        for b in external:
-            self.toolbar_layout.addWidget(b)
+        if self._touch:
+            # Centred: the touch-sized controls make the row higher than the pill.
+            self.toolbar_layout.addWidget(self.status, 0, Qt.AlignVCenter)
+        else:
+            self.toolbar_layout.addWidget(self.status)
+        # rqt_graph and RViz are windows of their own, out of place on the
+        # 7 inch screen of the robot; the room goes to the filters.
+        if not self._touch:
+            for b in external:
+                self.toolbar_layout.addWidget(b)
 
     @staticmethod
     def _external_button(label: str, pkg: str, argv: List[str], mock: bool) -> QPushButton:
@@ -417,15 +463,16 @@ class _GraphPage(QWidget):
 def _legend(entries: List[Tuple[str, str]]) -> QWidget:
     row = QWidget()
     h = QHBoxLayout(row)
-    h.setContentsMargins(24, 0, 24, 6)
-    h.setSpacing(14)
+    h.setContentsMargins(*margins(24, 0, 24, 6))
+    h.setSpacing(px(14))
     for state, text in entries:
         fill, border, _t = GRAPH_COLORS[state]
         swatch = QLabel()
-        swatch.setFixedSize(12, 12)
-        swatch.setStyleSheet(f"background:{fill}; border:1px solid {border}; border-radius:3px;")
+        swatch.setFixedSize(px(12), px(12))
+        swatch.setStyleSheet(f"background:{fill}; border:1px solid {border}; "
+                             f"border-radius:{px(3)}px;")
         label = QLabel(text)
-        label.setStyleSheet("color:#8b949e; font-size:11px;")
+        label.setObjectName("legendText")
         h.addWidget(swatch)
         h.addWidget(label)
     h.addStretch()
@@ -449,13 +496,17 @@ class RosGraphPage(_GraphPage):
         self.search = QLineEdit()
         self.search.setObjectName("graphSearch")
         self.search.setPlaceholderText("Filter nodes or topics…")
-        self.search.setMinimumWidth(220)
+        self.search.setMinimumWidth(px(220))
         self.search.textChanged.connect(lambda _t: self.refresh())
+        # Typing a filter needs a keyboard, and the touch toolbar has no room
+        # left for the field.
+        self.search.setVisible(not self._touch)
         self.toolbar_layout.addWidget(self.search)
 
         self.launch_combo = QComboBox()
         self.launch_combo.setObjectName("argEnum")
-        self.launch_combo.setMinimumWidth(200)
+        self.launch_combo.setMinimumWidth(px(200))
+        enable_touch_popup(self.launch_combo)
         self.launch_combo.setToolTip(
             "Show only the nodes of one launch. Nodes are attributed through the logger\n"
             "and process names in the launch output; a node that never logs and whose\n"
@@ -488,7 +539,8 @@ class RosGraphPage(_GraphPage):
         details_scroll.setObjectName("graphDetailsScroll")
         details_scroll.setWidgetResizable(True)
         details_scroll.setWidget(self.details)
-        details_scroll.setFixedWidth(320)
+        details_scroll.setFixedWidth(size("details_w"))
+        enable_kinetic_scroll(details_scroll.viewport())
         self.details_panel = details_scroll
         self.details_panel.setVisible(False)
 
@@ -543,9 +595,10 @@ class RosGraphPage(_GraphPage):
                 self.items[i].set_state(state, tip)
         self._apply_emphasis()
         self._show_details()
+        counts = f"{n_nodes} nodes · {n_topics} topics"
         engine = f" · layout: {self.engine}" if self.engine else ""
-        self.status.setText(f"{n_nodes} nodes · {n_topics} topics · "
-                            f"{time.strftime('%H:%M:%S')}{engine}")
+        self.status.setText(counts if self._touch
+                            else f"{counts} · {time.strftime('%H:%M:%S')}{engine}")
 
     def _filtered(self, snap):
         """Return (items, edges, states, topic count) after the toolbar filters."""
@@ -644,8 +697,9 @@ class RosGraphPage(_GraphPage):
             return
         body.append("<p class='k'>COMMAND LINE</p>")
         body += [f"<p><code>{esc(c)}</code></p>" for c in cli]
-        style = ("<style>p{margin:2px 0 6px 0;} .k{color:#8b949e;font-size:10px;"
-                 "letter-spacing:1px;margin-top:10px;} .t{color:#8b949e;font-size:11px;}"
+        style = (f"<style>p{{margin:2px 0 6px 0;}} .k{{color:#8b949e;"
+                 f"font-size:{size('fs_tiny')}px;letter-spacing:1px;margin-top:10px;}} "
+                 f".t{{color:#8b949e;font-size:{size('fs_small')}px;}}"
                  "code{color:#79c0ff;}</style>")
         self.details.setText(style + "".join(body))
         self.details_panel.setVisible(True)
@@ -748,9 +802,10 @@ class TfTreePage(_GraphPage):
         if changed and edges and not self.canvas.user_zoomed:
             # The diagnostics text changes the canvas height; fit once laid out.
             QTimer.singleShot(0, self.canvas.fit)
+        counts = f"{len(frames)} frames · {len(edges)} transforms"
         engine = f" · layout: {self.engine}" if self.engine else ""
-        self.status.setText(f"{len(frames)} frames · {len(edges)} transforms · "
-                            f"{time.strftime('%H:%M:%S')}{engine}")
+        self.status.setText(counts if self._touch
+                            else f"{counts} · {time.strftime('%H:%M:%S')}{engine}")
 
     def _apply_emphasis(self) -> None:
         # Edge colours carry the diagnostics here; selection only dims frames.

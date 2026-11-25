@@ -13,9 +13,9 @@ setup(
     name=package_name,
     version="0.3.0",
     packages=find_packages(exclude=["test"]),
-    # The style sheet is read from next to the modules, so that the same path
+    # The style sheets are read from next to the modules, so that the same path
     # resolves in the source tree (mock mode without ROS) and once installed.
-    package_data={package_name: ["style.qss"]},
+    package_data={package_name: ["style.qss", "style_touch.qss"]},
     data_files=[
         ("share/ament_index/resource_index/packages", [f"resource/{package_name}"]),
         (f"share/{package_name}", ["package.xml"]),
