@@ -107,9 +107,13 @@ class Launch:
     workspace: str = ""
     tags: List[str] = field(default_factory=list)
     starred: bool = False
+    #: The launch drives the robot by itself (moves_robot in launches.yaml):
+    #: the touch page starts it only after a press held for HOLD_TO_RUN_MS.
+    moves_robot: bool = False
     #: Each argument: {key, default, value, kind, options?, help?, required?,
-    #: hint?}. kind is one of bool, enum, number, string. An empty value means
-    #: that the argument is not passed and the launch file applies its default.
+    #: hint?, step?}. kind is one of bool, enum, number, string. An empty value
+    #: means that the argument is not passed and the launch file applies its
+    #: default.
     args: List[dict] = field(default_factory=list)
     #: Each preset: {name, args: {key: value}, user: bool}.
     presets: List[dict] = field(default_factory=list)
@@ -184,6 +188,35 @@ def build_command(launch: Launch) -> str:
     parts = ["ros2", "launch", launch.pkg, launch.file_path.name]
     parts.extend(shlex.quote(o) for o in args_to_overrides(launch.args))
     return " ".join(parts)
+
+
+def _decimals(text: str) -> int:
+    return len(text.split(".", 1)[1]) if "." in text else 0
+
+
+def step_value(value: str, default: str, direction: int, step: Optional[float] = None) -> str:
+    """Return a numeric argument value moved one step up (direction 1) or down (-1).
+
+    Without an explicit step, the step is one unit of the last decimal of the
+    default ("0.22" steps by 0.01, "10.0" by 0.1, "4" by 1), so that the value
+    keeps the precision the launch file declares. An empty or unparsable value
+    starts from the default.
+    """
+    decimals = _decimals(default)
+    if step is None:
+        step = 10.0 ** -decimals
+    else:
+        decimals = max(decimals, _decimals(f"{step:g}"))
+    try:
+        current = float(value) if value != "" else float(default or 0)
+    except ValueError:
+        try:
+            current = float(default or 0)
+        except ValueError:
+            current = 0.0
+    result = round(current + direction * step, decimals)
+    # round() can leave -0.0, which would print as "-0.00".
+    return f"{result + 0.0:.{decimals}f}"
 
 
 def instantiate_args(spec: List[dict]) -> List[dict]:

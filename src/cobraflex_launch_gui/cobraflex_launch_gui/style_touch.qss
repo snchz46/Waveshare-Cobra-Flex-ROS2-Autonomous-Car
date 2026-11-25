@@ -1,0 +1,24 @@
+/* Touch density only, appended to style.qss by density.load_style.
+   Minimum sizes of the controls whose height style.qss leaves to the content,
+   so that every target of a finger reaches the control tokens (about 9 mm on
+   the 7 inch screen of the robot). min-height excludes the padding, so the
+   vertical padding of these controls drops to 0: the token is their height. */
+QPushButton#tab { min-height: ${ctl_tab}; padding-top: 0; padding-bottom: 0; }
+QPushButton#chip, QPushButton#presetPill, QPushButton#presetSave {
+    min-height: ${ctl_chip}; padding-top: 0; padding-bottom: 0;
+}
+QPushButton#cardStar { min-height: ${ctl_s}; }
+QPushButton#btnStopAll, QPushButton#btnSearch {
+    min-height: ${ctl_l}; padding-top: 0; padding-bottom: 0;
+}
+QPushButton#paletteClose {
+    min-height: ${ctl_s}; min-width: ${ctl_s}; padding-top: 0; padding-bottom: 0;
+    font-size: ${fs_small};
+}
+QComboBox QAbstractItemView::item { min-height: ${ctl_item}; }
+QListWidget#paletteList::item { min-height: ${ctl_item}; }
+QMenu::item { min-height: ${ctl_item}; padding: 0 16px; }
+QDialog QPushButton { min-height: ${ctl_l}; min-width: 96px; padding: 0 16px; font-size: ${fs_body}; }
+QDialog QLineEdit { min-height: ${ctl_s}; font-size: ${fs_body}; }
+QScrollBar::handle:vertical { min-height: 40px; }
+QScrollBar::handle:horizontal { min-width: 40px; }

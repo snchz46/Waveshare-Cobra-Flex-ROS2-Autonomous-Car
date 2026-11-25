@@ -76,7 +76,7 @@ class LaunchMeta:
 
     @staticmethod
     def refine_args(declared: List[dict], refinements: Optional[dict]) -> List[dict]:
-        """Apply curated options and help texts to the declared arguments."""
+        """Apply curated options, help texts and stepper steps to the declared arguments."""
         if not refinements:
             return declared
         out = []
@@ -88,6 +88,11 @@ class LaunchMeta:
                 b["kind"] = "enum"
             if extra.get("help") and not b.get("help"):
                 b["help"] = str(extra["help"])
+            try:
+                if extra.get("step") is not None and float(extra["step"]) > 0:
+                    b["step"] = float(extra["step"])
+            except (TypeError, ValueError):
+                pass
             out.append(b)
         return out
 

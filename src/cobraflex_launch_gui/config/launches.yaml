@@ -9,9 +9,13 @@
 #   description  one line on the card
 #   tags         filter chips: Sim, Hardware, RL, Lab, Tools
 #   starred      pinned at the top, until the user changes it
+#   moves_robot  the launch drives the robot by itself (it publishes /cmd_vel);
+#                the touch density starts it only after a 1 s press
 #   args         refinements of declared arguments only: options (turns the
-#                editor into a drop-down list) and help. Arguments that the
-#                launch file does not declare are ignored.
+#                editor into a drop-down list), help, and step (increment of
+#                the - and + buttons of a number on the touch screen; default:
+#                one unit of the last decimal of the default value).
+#                Arguments that the launch file does not declare are ignored.
 #   presets      named argument sets; undeclared keys are dropped
 #
 # "packages" sets defaults for every launch file of a package.
@@ -87,6 +91,7 @@ launches:
 
   cobraflex/cobraflex_automatic:
     tags: [Hardware]
+    moves_robot: true
     description: "Robot, layer 2 plus LiDAR obstacle avoidance; replaces cobraflex_sensors"
 
   cobraflex/cobraflex_driver:
@@ -99,6 +104,7 @@ launches:
 
   cobraflex/cobraflex_lane_keeper:
     tags: [Hardware]
+    moves_robot: true
     description: "Lane keeper on the CSI camera of the robot, optional RViz"
 
   cobraflex/cobraflex_mapping:
@@ -135,6 +141,7 @@ launches:
 
   cobraflex_rl/deploy_cobraflex:
     tags: [RL, Hardware]
+    moves_robot: true
     description: "Trained camera policy on the robot under the safety cage; requires checkpoint:="
     args:
       algorithm:

@@ -17,7 +17,8 @@ PROCESS_START_TIMEOUT_MS = 3000
 #: Log buffer per launch; older entries are evicted first.
 LOGS_MAX_PER_LAUNCH = 2000
 
-#: Command palette size.
+#: Command palette size. This and the sizes below are those of the desktop
+#: density; density.py holds the touch values.
 PALETTE_WIDTH = 560
 PALETTE_HEIGHT = 420
 
@@ -63,23 +64,12 @@ FILTER_CHIPS = (
 )
 UNTAGGED = "Other"
 
-#: Log levels offered by the log panel filter.
-LOG_LEVELS = ("ALL", "INFO", "WARN", "ERROR")
-LOG_LEVEL_COLORS = {
-    "INFO": "#56d364",
-    "WARN": "#f0a040",
-    "ERROR": "#f85149",
-    "DEBUG": "#79c0ff",
-}
+#: Chip labels of the touch density, whose filter bar has less room.
+FILTER_CHIPS_SHORT = {"Sim": "Sim", "RL": "RL"}
 
-#: Graph colours: (fill, border, text) per item kind and state.
-GRAPH_COLORS = {
-    "node": ("#10233d", "#3b82c4", "#cfe3ff"),
-    "topic": ("#0f2a24", "#2f9e7a", "#c8f5e4"),
-    "frame": ("#1d1b33", "#7c6fd6", "#e0dcff"),
-    "warn": ("#2e2410", "#d29922", "#f5dfa8"),
-    "error": ("#3a1414", "#f85149", "#ffd2cf"),
-}
-GRAPH_EDGE_COLOR = "#4b5a6e"
-GRAPH_EDGE_HIGHLIGHT = "#79c0ff"
-GRAPH_BACKGROUND = "#0d1117"
+#: Press duration that starts a launch flagged moves_robot on the touch page.
+HOLD_TO_RUN_MS = 1000
+
+#: Log levels offered by the log panel filter. Their colours, and those of
+#: the graph, are in theme.py.
+LOG_LEVELS = ("ALL", "INFO", "WARN", "ERROR")

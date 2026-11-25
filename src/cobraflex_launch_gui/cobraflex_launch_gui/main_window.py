@@ -22,27 +22,28 @@ from PyQt5.QtWidgets import (
 )
 
 from cobraflex_launch_gui.backend import Backend
-from cobraflex_launch_gui.constants import (
-    DEFAULT_WINDOW_HEIGHT,
-    DEFAULT_WINDOW_WIDTH,
-    FILTER_CHIPS,
-    MIN_WINDOW_HEIGHT,
-    MIN_WINDOW_WIDTH,
-    UPTIME_TICK_MS,
-)
+from cobraflex_launch_gui.constants import FILTER_CHIPS, UPTIME_TICK_MS
+from cobraflex_launch_gui.density import current as active_density, margins, px, size
 from cobraflex_launch_gui.graph_view import RosGraphPage, TfTreePage
+from cobraflex_launch_gui.icons import pixmap
 from cobraflex_launch_gui.model import Launch, LogEntry, missing_required
 from cobraflex_launch_gui.state import UserState
+from cobraflex_launch_gui.theme import PALETTE
+from cobraflex_launch_gui.touch_page import TouchLaunchesPage
 from cobraflex_launch_gui.widgets import (
     CommandPalette,
+    enable_kinetic_scroll,
     LaunchCard,
     LogsPanel,
-    make_green_dot,
+    make_running_mark,
     restyle,
     SectionHeader,
+    set_icon,
     set_letter_spacing,
     Toast,
 )
+
+_DOMAIN_RULE = "Lab rule: each robot and its PC use their own ROS_DOMAIN_ID (1-N), never 0."
 
 
 class LaunchGui(QMainWindow):
@@ -53,8 +54,9 @@ class LaunchGui(QMainWindow):
         """Build the window around a backend, the discovered launches and a ROS interface."""
         super().__init__()
         self.setWindowTitle("CobraFlex · Launch Manager")
-        self.setMinimumSize(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
-        self.resize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)
+        self._density = active_density()
+        self.setMinimumSize(*self._density.minimum_size)
+        self.resize(*self._density.window_size)
 
         self.backend = backend
         self.backend.on_state_changed = self._on_backend_state
@@ -77,20 +79,26 @@ class LaunchGui(QMainWindow):
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-        outer.addWidget(self._build_env_strip())
-        outer.addWidget(self._build_header())
+        # The touch screen has 600 px of height: the environment strip and the
+        # header give way, and the tab bar carries their status widgets.
+        if not self._density.touch:
+            outer.addWidget(self._build_env_strip())
+            outer.addWidget(self._build_header())
         outer.addWidget(self._build_tab_bar())
 
-        launches_page = QWidget()
-        launches_page.setObjectName("root")
-        lp = QVBoxLayout(launches_page)
-        lp.setContentsMargins(0, 0, 0, 0)
-        lp.setSpacing(0)
-        lp.addWidget(self._build_filter())
-        lp.addWidget(self._build_list(), 1)
-        self.logs_panel = LogsPanel()
-        self.logs_panel.clear_requested.connect(self._clear_logs)
-        lp.addWidget(self.logs_panel)
+        if self._density.touch:
+            launches_page = self._build_touch_page()
+        else:
+            launches_page = QWidget()
+            launches_page.setObjectName("root")
+            lp = QVBoxLayout(launches_page)
+            lp.setContentsMargins(0, 0, 0, 0)
+            lp.setSpacing(0)
+            lp.addWidget(self._build_filter())
+            lp.addWidget(self._build_list(), 1)
+            self.logs_panel = LogsPanel()
+            self.logs_panel.clear_requested.connect(self._clear_logs)
+            lp.addWidget(self.logs_panel)
 
         self.graph_page = RosGraphPage(ros, lambda: self.launches)
         self.tf_page = TfTreePage(ros)
@@ -136,20 +144,32 @@ class LaunchGui(QMainWindow):
         super().resizeEvent(event)
         self._layout_toasts()
 
+    def changeEvent(self, event) -> None:  # noqa: N802 - Qt API
+        """Show the Quit button while the window is full screen, without a title bar."""
+        super().changeEvent(event)
+        quit_btn = getattr(self, "quit_btn", None)
+        if event.type() == QEvent.WindowStateChange and quit_btn is not None:
+            quit_btn.setVisible(self.isFullScreen())
+
+    def _toggle_fullscreen(self) -> None:
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
+
     # Environment strip and header ------------------------------------------
 
     def _build_env_strip(self) -> QWidget:
         f = QFrame()
         f.setObjectName("envStrip")
         h = QHBoxLayout(f)
-        h.setContentsMargins(24, 4, 24, 4)
-        h.setSpacing(8)
+        h.setContentsMargins(*margins(24, 4, 24, 4))
+        h.setSpacing(px(8))
         domain = os.environ.get("ROS_DOMAIN_ID", "")
         entries = [
             ("ROS_DISTRO", os.environ.get("ROS_DISTRO", "not sourced"), None),
             ("ROS_DOMAIN_ID", domain or "0 (unset)",
-             None if domain not in ("", "0") else
-             "Lab rule: each robot and its PC use their own ROS_DOMAIN_ID (1-N), never 0."),
+             None if domain not in ("", "0") else _DOMAIN_RULE),
             ("RMW", os.environ.get("RMW_IMPLEMENTATION", "default"), None),
             ("HOST", socket.gethostname(), None),
         ]
@@ -176,10 +196,10 @@ class LaunchGui(QMainWindow):
         f = QFrame()
         f.setObjectName("hdr")
         h = QHBoxLayout(f)
-        h.setContentsMargins(24, 14, 24, 12)
-        h.setSpacing(14)
+        h.setContentsMargins(*margins(24, 14, 24, 12))
+        h.setSpacing(px(14))
         left = QVBoxLayout()
-        left.setSpacing(2)
+        left.setSpacing(px(2))
         distro = os.environ.get("ROS_DISTRO", "")
         eye = self._env_label("COBRAFLEX · ROS 2 " + distro.upper(), "hdrEyebrow")
         set_letter_spacing(eye, 1.6)
@@ -187,27 +207,44 @@ class LaunchGui(QMainWindow):
         left.addWidget(self._env_label("Launch Manager", "hdrTitle"))
         h.addLayout(left)
         h.addStretch()
+        for w in self._build_status_widgets():
+            # Centred, so that the badge and the pill keep their own height.
+            h.addWidget(w, 0, Qt.AlignVCenter)
+        return f
+
+    def _build_status_widgets(self) -> List[QWidget]:
+        """Return the mode badge (mock runs only) and the running pill."""
+        widgets: List[QWidget] = []
         if self.backend.mode_label:
             badge = self._env_label(self.backend.mode_label, "modeBadge")
             badge.setToolTip("Simulated runs: no process is started")
-            h.addWidget(badge)
+            widgets.append(badge)
         self.running_pill = QFrame()
         self.running_pill.setObjectName("hdrRunning")
         rp = QHBoxLayout(self.running_pill)
-        rp.setContentsMargins(10, 4, 12, 4)
-        rp.setSpacing(6)
-        rp.addWidget(make_green_dot())
+        rp.setContentsMargins(*margins(10, 4, 12, 4))
+        rp.setSpacing(px(6))
+        rp.addWidget(make_running_mark(), 0, Qt.AlignVCenter)
         self.running_text = self._env_label("0 running", "hdrRunningText")
         rp.addWidget(self.running_text)
-        h.addWidget(self.running_pill)
-        return f
+        widgets.append(self.running_pill)
+        return widgets
+
+    def _domain_warning(self) -> Optional[QLabel]:
+        """Return a warning chip when ROS_DOMAIN_ID is 0 or unset, else None."""
+        domain = os.environ.get("ROS_DOMAIN_ID", "")
+        if domain not in ("", "0"):
+            return None
+        chip = self._env_label("ROS_DOMAIN_ID " + (domain or "unset"), "domainWarn")
+        chip.setToolTip(_DOMAIN_RULE)
+        return chip
 
     def _build_tab_bar(self) -> QWidget:
         f = QFrame()
         f.setObjectName("tabBar")
         h = QHBoxLayout(f)
-        h.setContentsMargins(20, 0, 20, 0)
-        h.setSpacing(2)
+        h.setContentsMargins(*margins(20, 0, 20, 0))
+        h.setSpacing(px(2))
         self.tab_buttons: List[QPushButton] = []
         for i, label in enumerate(["Launches", "ROS Graph", "TF Tree"]):
             b = QPushButton(label)
@@ -219,6 +256,36 @@ class LaunchGui(QMainWindow):
             self.tab_buttons.append(b)
             h.addWidget(b)
         h.addStretch()
+        touch = self._density.touch
+        extras: List[QWidget] = []
+        if touch:
+            warning = self._domain_warning()
+            if warning is not None:
+                extras.append(warning)
+            extras += self._build_status_widgets()
+            # The touch page has no filter bar: Stop all stays in reach here.
+            extras.append(self._build_stop_all())
+        # The command palette also opens from a button: without a keyboard,
+        # Ctrl+K is out of reach.
+        self.search_btn = QPushButton("Search" if touch else "Search   Ctrl+K")
+        self.search_btn.setObjectName("btnSearch")
+        set_icon(self.search_btn, "search", PALETTE["c_tyre"])
+        self.search_btn.setCursor(Qt.PointingHandCursor)
+        self.search_btn.setToolTip("Run or stop a launch by name (Ctrl+K)")
+        self.search_btn.clicked.connect(self._open_palette)
+        extras.append(self.search_btn)
+        self.quit_btn = QPushButton("Quit")
+        self.quit_btn.setObjectName("btnGhost")
+        self.quit_btn.setCursor(Qt.PointingHandCursor)
+        self.quit_btn.setToolTip("Close the window and stop every launch (full screen has no "
+                                 "title bar; F11 leaves full screen)")
+        self.quit_btn.clicked.connect(self.close)
+        self.quit_btn.setVisible(False)
+        extras.append(self.quit_btn)
+        for w in extras:
+            h.addSpacing(px(8))
+            # Centred, so that badges and pills keep their own height.
+            h.addWidget(w, 0, Qt.AlignVCenter)
         return f
 
     def _on_tab_changed(self, idx: int) -> None:
@@ -234,18 +301,20 @@ class LaunchGui(QMainWindow):
         f = QFrame()
         f.setObjectName("filterBar")
         h = QHBoxLayout(f)
-        h.setContentsMargins(24, 10, 24, 10)
-        h.setSpacing(12)
+        h.setContentsMargins(*margins(24, 10, 24, 10))
+        h.setSpacing(px(12))
 
         self.search_wrap = QFrame()
         self.search_wrap.setObjectName("searchWrap")
         self.search_wrap.setProperty("focused", "false")
-        self.search_wrap.setFixedHeight(32)
-        self.search_wrap.setMaximumWidth(320)
+        self.search_wrap.setFixedHeight(size("search_h"))
+        self.search_wrap.setMaximumWidth(size("search_w"))
         sw = QHBoxLayout(self.search_wrap)
-        sw.setContentsMargins(10, 0, 10, 0)
-        sw.setSpacing(8)
-        sw.addWidget(self._env_label("⌕", "searchIcon"))
+        sw.setContentsMargins(*margins(10, 0, 10, 0))
+        sw.setSpacing(px(8))
+        search_mark = self._env_label("", "searchIcon")
+        search_mark.setPixmap(pixmap("search", PALETTE["c_muted"], px(14)))
+        sw.addWidget(search_mark)
         self.search_input = QLineEdit()
         self.search_input.setObjectName("searchInput")
         self.search_input.setPlaceholderText("Filter launches…  ( / )")
@@ -268,19 +337,39 @@ class LaunchGui(QMainWindow):
             h.addWidget(b)
         h.addStretch()
 
-        self.stop_all_btn = QPushButton("■  Stop all")
-        self.stop_all_btn.setObjectName("btnStopAll")
-        self.stop_all_btn.setCursor(Qt.PointingHandCursor)
-        self.stop_all_btn.clicked.connect(self._on_stop_all)
-        self.stop_all_btn.setVisible(False)
-        h.addWidget(self.stop_all_btn)
+        h.addWidget(self._build_stop_all())
         self.count_pill = self._env_label("", "countPill")
         h.addWidget(self.count_pill)
         return f
 
+    def _build_stop_all(self) -> QPushButton:
+        self.stop_all_btn = QPushButton("Stop all")
+        self.stop_all_btn.setObjectName("btnStopAll")
+        set_icon(self.stop_all_btn, "stop", PALETTE["c_signal"], 12)
+        self.stop_all_btn.setCursor(Qt.PointingHandCursor)
+        self.stop_all_btn.clicked.connect(self._on_stop_all)
+        self.stop_all_btn.setVisible(False)
+        return self.stop_all_btn
+
+    def _build_touch_page(self) -> QWidget:
+        # The log panel becomes the Output tab of the detail pane.
+        self.logs_panel = LogsPanel(embedded=True)
+        self.logs_panel.clear_requested.connect(self._clear_logs)
+        self.touch_page = TouchLaunchesPage(self.logs_panel)
+        tp = self.touch_page
+        tp.selected_signal.connect(self._on_select)
+        tp.run_signal.connect(self._on_run)
+        tp.stop_signal.connect(self._on_stop)
+        tp.restart_signal.connect(self._on_restart)
+        tp.star_signal.connect(self._on_star)
+        tp.presets_changed.connect(self._on_presets_changed)
+        tp.hold_hint.connect(lambda text: self.show_toast("info", text))
+        return tp
+
     def eventFilter(self, obj, ev) -> bool:  # noqa: N802 - Qt API
         """Highlight the search field frame while it has the focus."""
-        if obj is self.search_input and ev.type() in (QEvent.FocusIn, QEvent.FocusOut):
+        search = getattr(self, "search_input", None)
+        if obj is search and ev.type() in (QEvent.FocusIn, QEvent.FocusOut):
             self.search_wrap.setProperty("focused",
                                          "true" if ev.type() == QEvent.FocusIn else "false")
             restyle(self.search_wrap)
@@ -292,12 +381,17 @@ class LaunchGui(QMainWindow):
         self.list_container = QWidget()
         self.list_container.setObjectName("root")
         self.list_layout = QVBoxLayout(self.list_container)
-        self.list_layout.setContentsMargins(24, 16, 24, 12)
-        self.list_layout.setSpacing(8)
+        self.list_layout.setContentsMargins(*margins(24, 16, 24, 12))
+        self.list_layout.setSpacing(px(8))
         self.scroll.setWidget(self.list_container)
+        enable_kinetic_scroll(self.scroll.viewport())
         return self.scroll
 
     def _rebuild_list(self) -> None:
+        if self._density.touch:
+            self.touch_page.rebuild(self.launches, self.selected_id)
+            self._refresh_running_pill()
+            return
         while self.list_layout.count():
             w = self.list_layout.takeAt(0).widget()
             if w is not None:
@@ -313,17 +407,17 @@ class LaunchGui(QMainWindow):
             self._add_empty("No launches match the current filters.")
         else:
             if starred:
-                self.list_layout.addWidget(SectionHeader("PINNED", len(starred), "★"))
+                self.list_layout.addWidget(SectionHeader("PINNED", len(starred), "star_filled"))
                 for la in starred:
                     self._add_card(la)
-                self.list_layout.addSpacing(10)
+                self.list_layout.addSpacing(px(10))
             for pkg in sorted({la.pkg for la in rest}):
                 group = [la for la in rest if la.pkg == pkg]
                 self.list_layout.addWidget(SectionHeader(pkg.upper(), len(group)))
                 for la in group:
                     self._add_card(la)
         self.list_layout.addStretch()
-        self.count_pill.setText(f"✓  {len(filtered)} of {len(self.launches)} launches")
+        self.count_pill.setText(f"{len(filtered)} of {len(self.launches)} launches")
         self._refresh_running_pill()
 
     def _add_empty(self, text: str) -> None:
@@ -339,6 +433,7 @@ class LaunchGui(QMainWindow):
         card.run_signal.connect(self._on_run)
         card.stop_signal.connect(self._on_stop)
         card.restart_signal.connect(self._on_restart)
+        card.logs_signal.connect(self._on_logs)
         card.star_signal.connect(self._on_star)
         card.presets_changed.connect(self._on_presets_changed)
         self.card_widgets[launch.uid] = card
@@ -354,7 +449,7 @@ class LaunchGui(QMainWindow):
         n = sum(1 for la in self.launches if la.state == "running")
         self.running_text.setText(f"{n} running")
         self.stop_all_btn.setVisible(n > 0)
-        self.stop_all_btn.setText(f"■  Stop all ({n})")
+        self.stop_all_btn.setText(f"Stop all ({n})")
 
     # Logs -------------------------------------------------------------------
 
@@ -373,9 +468,12 @@ class LaunchGui(QMainWindow):
     # Backend callbacks ------------------------------------------------------
 
     def _on_backend_state(self, launch: Launch) -> None:
-        card = self.card_widgets.get(launch.uid)
-        if card is not None:
-            card.refresh()
+        if self._density.touch:
+            self.touch_page.refresh_launch(launch)
+        else:
+            card = self.card_widgets.get(launch.uid)
+            if card is not None:
+                card.refresh()
         self._refresh_running_pill()
         if launch.uid == self.selected_id:
             self.logs_panel.refresh_live_pill()
@@ -413,6 +511,13 @@ class LaunchGui(QMainWindow):
     def _on_select(self, launch_id: str) -> None:
         if self.selected_id == launch_id:
             return
+        if self._density.touch:
+            launch = self._launch(launch_id)
+            if launch is not None:
+                self.selected_id = launch_id
+                self.touch_page.select(launch)
+                self._refresh_logs_subject()
+            return
         previous = self.card_widgets.get(self.selected_id)
         if previous is not None:
             previous.set_selected(False)
@@ -422,6 +527,10 @@ class LaunchGui(QMainWindow):
             card.set_selected(True)
         self._refresh_logs_subject()
 
+    def _on_logs(self, launch_id: str) -> None:
+        self._on_select(launch_id)
+        self.logs_panel.set_collapsed(False)
+
     def _on_run(self, launch_id: str) -> None:
         launch = self._launch(launch_id)
         if launch is None:
@@ -430,7 +539,9 @@ class LaunchGui(QMainWindow):
         missing = missing_required(launch.args)
         if missing:
             card = self.card_widgets.get(launch_id)
-            if card is not None:
+            if self._density.touch:
+                self.touch_page.show_missing()
+            elif card is not None:
                 card.toggle_expand(force_open=True)
                 card.expandable_section.mark_missing()
             self.show_toast("err", f"{launch.pkg} / {launch.name} not started",
@@ -483,12 +594,12 @@ class LaunchGui(QMainWindow):
         self._layout_toasts()
 
     def _layout_toasts(self) -> None:
-        y = self.height() - 16
+        y = self.height() - px(16)
         for toast in reversed(self._toasts):
             toast.adjustSize()
             y -= toast.height()
-            toast.move(self.width() - toast.width() - 16, y)
-            y -= 8
+            toast.move(self.width() - toast.width() - px(16), y)
+            y -= px(8)
             toast.raise_()
 
     # Command palette and shortcuts -----------------------------------------
@@ -506,7 +617,14 @@ class LaunchGui(QMainWindow):
         elif kind == "action" and data.get("action_id") == "clear-logs":
             self._clear_logs()
         elif kind == "run":
-            self._on_run(data.get("launch_id", ""))
+            launch = self._launch(data.get("launch_id", ""))
+            if launch is not None and launch.moves_robot and self._density.touch:
+                # A tap in the palette must not bypass the hold of the detail pane.
+                self._on_select(launch.uid)
+                self.show_toast("info", f"{launch.name} drives the robot",
+                                "Hold its Run button for 1 s to start it")
+            elif launch is not None:
+                self._on_run(launch.uid)
         elif kind == "stop":
             self._on_stop(data.get("launch_id", ""))
 
@@ -517,12 +635,16 @@ class LaunchGui(QMainWindow):
         QShortcut(QKeySequence("/"), self, activated=self._focus_search)
         QShortcut(QKeySequence("Ctrl+R"), self, activated=self._run_selected)
         QShortcut(QKeySequence("Ctrl+E"), self, activated=self._stop_selected)
+        QShortcut(QKeySequence("F11"), self, activated=self._toggle_fullscreen)
         for i in range(3):
             QShortcut(QKeySequence(f"Ctrl+{i + 1}"), self,
                       activated=lambda idx=i: self._on_tab_changed(idx))
 
     def _focus_search(self) -> None:
-        if self.stack.currentIndex() == 0:
+        if self._density.touch:
+            # The touch page has no search field; the palette searches by name.
+            self._open_palette()
+        elif self.stack.currentIndex() == 0:
             self.search_input.setFocus()
             self.search_input.selectAll()
 
@@ -540,6 +662,9 @@ class LaunchGui(QMainWindow):
         for la in self.launches:
             if la.state in ("running", "stopping"):
                 la.uptime += 1
+                if self._density.touch:
+                    self.touch_page.refresh_launch(la)
+                    continue
                 card = self.card_widgets.get(la.uid)
                 if card is not None:
                     card.refresh()

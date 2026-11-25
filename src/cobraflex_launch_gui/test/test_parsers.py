@@ -25,6 +25,7 @@ from cobraflex_launch_gui.model import (
     LogEntry,
     logger_node_candidates,
     missing_required,
+    step_value,
 )
 from cobraflex_launch_gui.ros_interface import analyse_tf, build_snapshot, TfEdge, TfStore
 
@@ -137,6 +138,25 @@ def test_metadata_cannot_add_arguments():
                                                 "ghost": {"options": ["x"]}})
     assert [a["key"] for a in refined] == [a["key"] for a in declared]
     assert next(a for a in refined if a["key"] == "rate")["kind"] == "enum"
+
+
+def test_metadata_step_must_be_positive():
+    """A step refinement is kept when it is a positive number, dropped otherwise."""
+    declared = [{"key": "rate", "kind": "number", "default": "10"}]
+    assert LaunchMeta.refine_args(declared, {"rate": {"step": 5}})[0]["step"] == 5.0
+    assert "step" not in LaunchMeta.refine_args(declared, {"rate": {"step": "fast"}})[0]
+    assert "step" not in LaunchMeta.refine_args(declared, {"rate": {"step": 0}})[0]
+
+
+def test_step_value_follows_the_precision_of_the_default():
+    """The - and + buttons step by one unit of the last decimal of the default."""
+    assert step_value("0.22", "0.22", 1) == "0.23"
+    assert step_value("10.0", "10.0", -1) == "9.9"
+    assert step_value("4", "4", 1) == "5"
+    assert step_value("", "0.0", 1) == "0.1"
+    assert step_value("abc", "1.5", 1) == "1.6"
+    assert step_value("0.01", "0.00", -1) == "0.00"
+    assert step_value("0.2", "0.2", 1, step=0.05) == "0.25"
 
 
 def test_overrides_and_command():
