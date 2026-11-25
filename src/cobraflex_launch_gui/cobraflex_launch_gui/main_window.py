@@ -22,11 +22,12 @@ from PyQt5.QtWidgets import (
 )
 
 from cobraflex_launch_gui.backend import Backend
-from cobraflex_launch_gui.constants import FILTER_CHIPS, FILTER_CHIPS_SHORT, UPTIME_TICK_MS
+from cobraflex_launch_gui.constants import FILTER_CHIPS, UPTIME_TICK_MS
 from cobraflex_launch_gui.density import current as active_density, margins, px, size
 from cobraflex_launch_gui.graph_view import RosGraphPage, TfTreePage
 from cobraflex_launch_gui.model import Launch, LogEntry, missing_required
 from cobraflex_launch_gui.state import UserState
+from cobraflex_launch_gui.touch_page import TouchLaunchesPage
 from cobraflex_launch_gui.widgets import (
     CommandPalette,
     enable_kinetic_scroll,
@@ -82,18 +83,19 @@ class LaunchGui(QMainWindow):
             outer.addWidget(self._build_header())
         outer.addWidget(self._build_tab_bar())
 
-        launches_page = QWidget()
-        launches_page.setObjectName("root")
-        lp = QVBoxLayout(launches_page)
-        lp.setContentsMargins(0, 0, 0, 0)
-        lp.setSpacing(0)
-        lp.addWidget(self._build_filter())
-        lp.addWidget(self._build_list(), 1)
-        # Collapsed on the touch screen, where the list needs the height; the
-        # Logs button of a card opens it.
-        self.logs_panel = LogsPanel(collapsed=self._density.touch)
-        self.logs_panel.clear_requested.connect(self._clear_logs)
-        lp.addWidget(self.logs_panel)
+        if self._density.touch:
+            launches_page = self._build_touch_page()
+        else:
+            launches_page = QWidget()
+            launches_page.setObjectName("root")
+            lp = QVBoxLayout(launches_page)
+            lp.setContentsMargins(0, 0, 0, 0)
+            lp.setSpacing(0)
+            lp.addWidget(self._build_filter())
+            lp.addWidget(self._build_list(), 1)
+            self.logs_panel = LogsPanel()
+            self.logs_panel.clear_requested.connect(self._clear_logs)
+            lp.addWidget(self.logs_panel)
 
         self.graph_page = RosGraphPage(ros, lambda: self.launches)
         self.tf_page = TfTreePage(ros)
@@ -257,6 +259,8 @@ class LaunchGui(QMainWindow):
             if warning is not None:
                 extras.append(warning)
             extras += self._build_status_widgets()
+            # The touch page has no filter bar: Stop all stays in reach here.
+            extras.append(self._build_stop_all())
         # The command palette also opens from a button: without a keyboard,
         # Ctrl+K is out of reach.
         self.search_btn = QPushButton("Search" if touch else "⌕  Search   Ctrl+K")
@@ -292,8 +296,7 @@ class LaunchGui(QMainWindow):
         f = QFrame()
         f.setObjectName("filterBar")
         h = QHBoxLayout(f)
-        h.setContentsMargins(*(margins(24, 6, 24, 6) if self._density.touch
-                               else margins(24, 10, 24, 10)))
+        h.setContentsMargins(*margins(24, 10, 24, 10))
         h.setSpacing(px(12))
 
         self.search_wrap = QFrame()
@@ -315,8 +318,6 @@ class LaunchGui(QMainWindow):
 
         self.chip_buttons: Dict[str, QPushButton] = {}
         for tag, label in FILTER_CHIPS:
-            if self._density.touch:
-                label = FILTER_CHIPS_SHORT.get(tag, label)
             count = sum(1 for la in self.launches if tag in la.tags)
             b = QPushButton(f"{label} {count}")
             b.setObjectName("chip")
@@ -329,21 +330,38 @@ class LaunchGui(QMainWindow):
             h.addWidget(b)
         h.addStretch()
 
+        h.addWidget(self._build_stop_all())
+        self.count_pill = self._env_label("", "countPill")
+        h.addWidget(self.count_pill)
+        return f
+
+    def _build_stop_all(self) -> QPushButton:
         self.stop_all_btn = QPushButton("■  Stop all")
         self.stop_all_btn.setObjectName("btnStopAll")
         self.stop_all_btn.setCursor(Qt.PointingHandCursor)
         self.stop_all_btn.clicked.connect(self._on_stop_all)
         self.stop_all_btn.setVisible(False)
-        h.addWidget(self.stop_all_btn)
-        self.count_pill = self._env_label("", "countPill")
-        # The filter bar of the touch screen has no room left for the count.
-        self.count_pill.setVisible(not self._density.touch)
-        h.addWidget(self.count_pill)
-        return f
+        return self.stop_all_btn
+
+    def _build_touch_page(self) -> QWidget:
+        # The log panel becomes the Output tab of the detail pane.
+        self.logs_panel = LogsPanel(embedded=True)
+        self.logs_panel.clear_requested.connect(self._clear_logs)
+        self.touch_page = TouchLaunchesPage(self.logs_panel)
+        tp = self.touch_page
+        tp.selected_signal.connect(self._on_select)
+        tp.run_signal.connect(self._on_run)
+        tp.stop_signal.connect(self._on_stop)
+        tp.restart_signal.connect(self._on_restart)
+        tp.star_signal.connect(self._on_star)
+        tp.presets_changed.connect(self._on_presets_changed)
+        tp.hold_hint.connect(lambda text: self.show_toast("info", text))
+        return tp
 
     def eventFilter(self, obj, ev) -> bool:  # noqa: N802 - Qt API
         """Highlight the search field frame while it has the focus."""
-        if obj is self.search_input and ev.type() in (QEvent.FocusIn, QEvent.FocusOut):
+        search = getattr(self, "search_input", None)
+        if obj is search and ev.type() in (QEvent.FocusIn, QEvent.FocusOut):
             self.search_wrap.setProperty("focused",
                                          "true" if ev.type() == QEvent.FocusIn else "false")
             restyle(self.search_wrap)
@@ -362,6 +380,10 @@ class LaunchGui(QMainWindow):
         return self.scroll
 
     def _rebuild_list(self) -> None:
+        if self._density.touch:
+            self.touch_page.rebuild(self.launches, self.selected_id)
+            self._refresh_running_pill()
+            return
         while self.list_layout.count():
             w = self.list_layout.takeAt(0).widget()
             if w is not None:
@@ -438,9 +460,12 @@ class LaunchGui(QMainWindow):
     # Backend callbacks ------------------------------------------------------
 
     def _on_backend_state(self, launch: Launch) -> None:
-        card = self.card_widgets.get(launch.uid)
-        if card is not None:
-            card.refresh()
+        if self._density.touch:
+            self.touch_page.refresh_launch(launch)
+        else:
+            card = self.card_widgets.get(launch.uid)
+            if card is not None:
+                card.refresh()
         self._refresh_running_pill()
         if launch.uid == self.selected_id:
             self.logs_panel.refresh_live_pill()
@@ -478,6 +503,13 @@ class LaunchGui(QMainWindow):
     def _on_select(self, launch_id: str) -> None:
         if self.selected_id == launch_id:
             return
+        if self._density.touch:
+            launch = self._launch(launch_id)
+            if launch is not None:
+                self.selected_id = launch_id
+                self.touch_page.select(launch)
+                self._refresh_logs_subject()
+            return
         previous = self.card_widgets.get(self.selected_id)
         if previous is not None:
             previous.set_selected(False)
@@ -499,7 +531,9 @@ class LaunchGui(QMainWindow):
         missing = missing_required(launch.args)
         if missing:
             card = self.card_widgets.get(launch_id)
-            if card is not None:
+            if self._density.touch:
+                self.touch_page.show_missing()
+            elif card is not None:
                 card.toggle_expand(force_open=True)
                 card.expandable_section.mark_missing()
             self.show_toast("err", f"{launch.pkg} / {launch.name} not started",
@@ -575,7 +609,14 @@ class LaunchGui(QMainWindow):
         elif kind == "action" and data.get("action_id") == "clear-logs":
             self._clear_logs()
         elif kind == "run":
-            self._on_run(data.get("launch_id", ""))
+            launch = self._launch(data.get("launch_id", ""))
+            if launch is not None and launch.moves_robot and self._density.touch:
+                # A tap in the palette must not bypass the hold of the detail pane.
+                self._on_select(launch.uid)
+                self.show_toast("info", f"{launch.name} drives the robot",
+                                "Hold its Run button for 1 s to start it")
+            elif launch is not None:
+                self._on_run(launch.uid)
         elif kind == "stop":
             self._on_stop(data.get("launch_id", ""))
 
@@ -592,7 +633,10 @@ class LaunchGui(QMainWindow):
                       activated=lambda idx=i: self._on_tab_changed(idx))
 
     def _focus_search(self) -> None:
-        if self.stack.currentIndex() == 0:
+        if self._density.touch:
+            # The touch page has no search field; the palette searches by name.
+            self._open_palette()
+        elif self.stack.currentIndex() == 0:
             self.search_input.setFocus()
             self.search_input.selectAll()
 
@@ -610,6 +654,9 @@ class LaunchGui(QMainWindow):
         for la in self.launches:
             if la.state in ("running", "stopping"):
                 la.uptime += 1
+                if self._density.touch:
+                    self.touch_page.refresh_launch(la)
+                    continue
                 card = self.card_widgets.get(la.uid)
                 if card is not None:
                     card.refresh()

@@ -66,10 +66,12 @@ fichero XML y las entradas `arg` de un fichero YAML.
 
 [`config/launches.yaml`](config/launches.yaml) aporta descripcion, etiquetas
 de filtro (`Sim`, `Hardware`, `RL`, `Lab`, `Tools`), favoritos y presets de
-los launch files del repositorio. Sin entrada, la descripcion es la primera
-frase del docstring o del primer comentario, y la etiqueta `Other`. Los
-metadatos solo refinan argumentos declarados (opciones y ayuda); una entrada
-desfasada no puede anadir un argumento que el fichero no declara.
+los launch files del repositorio, y `moves_robot` para los que mueven el coche
+por si solos (`cobraflex_automatic`, `cobraflex_lane_keeper`,
+`deploy_cobraflex`). Sin entrada, la descripcion es la primera frase del
+docstring o del primer comentario, y la etiqueta `Other`. Los metadatos solo
+refinan argumentos declarados (opciones, ayuda y `step` de los botones − y +);
+una entrada desfasada no puede anadir un argumento que el fichero no declara.
 
 Los paquetes `cobraflex_lab` reciben la etiqueta `Lab`.
 
@@ -127,11 +129,18 @@ Sin `--fullscreen`, la densidad tactil abre la ventana maximizada.
 | Cambio | Motivo |
 | --- | --- |
 | Controles de 44 a 50 dp y texto de 12 a 22 dp | Tamano tactil. `style_touch.qss` fija la altura de los controles cuya altura depende del contenido en `style.qss` |
-| Franja de entorno y cabecera dentro de la barra de pestanas | La pantalla tiene 600 px de alto. Del entorno queda el aviso de `ROS_DOMAIN_ID` cuando vale 0 o no esta definido |
-| Panel de logs plegado al arrancar | La lista necesita la altura; el boton **Logs** de una tarjeta lo abre |
+| Lista de launches a la izquierda y detalle del seleccionado a la derecha (`touch_page.py`) | Las tarjetas dejaban sitio para dos o tres launches y abrian los argumentos dentro de la tarjeta. Una fila solo selecciona; el boton de accion esta junto al nombre, y argumentos, salida y comando son pestanas del detalle |
+| Filtro de seleccion unica: All, Sim, Robot, RL, Tools | Un toque muestra los launches del coche; con los chips de seleccion multiple eran cuatro |
+| Argumentos: botones para un enum de hasta tres opciones y − / + para un numero | Cambiar un valor sin teclado. El paso es una unidad del ultimo decimal del valor por defecto, o `step` en `launches.yaml`; un numero de cuatro cifras o mas (baudios, puertos) sigue siendo un campo de texto |
+| Presets antes que los argumentos | Fijan varios valores de un toque |
+| Mantener pulsado 1 s para lanzar un launch con `moves_robot` | Un toque accidental no pone el coche en marcha. Detener sigue siendo un toque, y la paleta de comandos abre el detalle de estos launch en lugar de lanzarlos |
+| Franja de entorno, cabecera y Stop all dentro de la barra de pestanas | La pantalla tiene 600 px de alto. Del entorno queda el aviso de `ROS_DOMAIN_ID` cuando vale 0 o no esta definido |
 | Desplazamiento arrastrando con el dedo (`QScroller`) | Sin el, la lista solo se desplaza con la barra de scroll |
-| Seleccion de la tarjeta al soltar | Un arrastre que empieza sobre una tarjeta no la selecciona |
+| Seleccion de una fila al soltar | Un arrastre que empieza sobre una fila no la selecciona |
 | Barra del grafo sin busqueda ni botones de rqt_graph y RViz | Requieren teclado o una ventana propia |
+
+El escritorio conserva las tarjetas: en un monitor grande muestran mas a la
+vez, y los logs quedan visibles mientras se editan argumentos.
 
 Segun el fabricante, el panel es multitactil de 5 puntos en PC y de un punto en
 Raspberry Pi; en la Jetson, `xinput list` muestra como llega. El

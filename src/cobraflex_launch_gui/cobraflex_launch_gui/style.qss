@@ -457,3 +457,31 @@ QPushButton#zoomBtn {
     font-size: ${fs_body}; font-weight: 600;
 }
 QPushButton#zoomBtn:hover { background: #1c232c; border-color: #484f58; }
+
+/* Touch launches page (touch_page.py): list beside the detail of the selected launch */
+QFrame#listPane { background: #0d1117; border-right: 1px solid #21262d; }
+QFrame#filterSegWrap { background: #0d1117; border-bottom: 1px solid #161b22; }
+QPushButton#filterSeg {
+    background: #161b22; color: #8b949e; border: 1px solid #21262d;
+    padding: 0 4px; min-height: ${ctl_s}; font-size: ${fs_meta}; font-weight: 600;
+}
+QPushButton#filterSeg:checked { background: #0f2a4f; color: #79b8ff; border-color: #1f4f8f; }
+QFrame#launchRow { background: transparent; border-bottom: 1px solid #161b22; }
+QFrame#launchRow[selected="true"] { background: #121a26; border-left: 3px solid #2dd4bf; }
+QLabel#rowName { color: #e6edf3; font-size: ${fs_large}; font-weight: 600; }
+QLabel#rowSub { color: #8b949e; font-size: ${fs_small}; }
+QLabel#rowSub[state="running"] { color: #56d364; }
+QLabel#rowSub[state="failed"] { color: #f85149; }
+QLabel#rowSub[state="stopping"] { color: #d29922; }
+QFrame#detail { background: #0d1117; }
+QLabel#detailName { color: #f0f6fc; font-size: ${fs_title}; font-weight: 600; }
+QLabel#detailMeta { color: #8b949e; font-size: ${fs_small}; }
+QFrame#detailArgs { background: transparent; }
+QPushButton#stepBtn {
+    background: #161b22; color: #c9d1d9;
+    border: 1px solid #30363d; border-radius: 5px;
+    min-width: ${ctl_s}; min-height: ${ctl_s}; padding: 0;
+    font-size: ${fs_body}; font-weight: 700;
+}
+QPushButton#stepBtn:hover { background: #1c232c; border-color: #484f58; }
+QPushButton#stepBtn:pressed { background: #0f2a4f; border-color: #1f4f8f; }

@@ -317,6 +317,7 @@ def build_launches(files: List[LaunchFile], meta: LaunchMeta,
             or "(no description)",
             tags=[str(t) for t in m.get("tags") or []] or [UNTAGGED],
             starred=bool(m.get("starred", False)),
+            moves_robot=bool(m.get("moves_robot", False)),
         )
         declared = LaunchMeta.refine_args(parse_launch_args(f.path, f.fmt), m.get("args"))
         launch.args = instantiate_args(declared)

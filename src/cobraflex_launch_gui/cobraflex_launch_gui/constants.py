@@ -67,6 +67,9 @@ UNTAGGED = "Other"
 #: Chip labels of the touch density, whose filter bar has less room.
 FILTER_CHIPS_SHORT = {"Sim": "Sim", "RL": "RL"}
 
+#: Press duration that starts a launch flagged moves_robot on the touch page.
+HOLD_TO_RUN_MS = 1000
+
 #: Log levels offered by the log panel filter.
 LOG_LEVELS = ("ALL", "INFO", "WARN", "ERROR")
 LOG_LEVEL_COLORS = {

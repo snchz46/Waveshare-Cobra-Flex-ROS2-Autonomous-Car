@@ -75,6 +75,9 @@ TOKENS: Dict[str, Tuple[float, float]] = {
     "palette_h": (PALETTE_HEIGHT, 380),
     # Distance under which a press and its release count as a tap.
     "tap_slop": (4, 10),
+    # List of the touch launches page (touch_page.py); the desktop has cards.
+    "list_w": (0, 296),
+    "row_h": (0, 68),
 }
 
 
