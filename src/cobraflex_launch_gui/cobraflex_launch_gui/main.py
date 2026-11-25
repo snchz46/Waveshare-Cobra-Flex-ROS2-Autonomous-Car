@@ -8,6 +8,7 @@ import signal
 import sys
 
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtWidgets import QApplication
 
 from cobraflex_launch_gui import density
@@ -30,6 +31,26 @@ except ImportError:  # mock mode on a machine without ROS
 
     class ExternalShutdownException(Exception):
         """Placeholder so that the except clause below is valid without rclpy."""
+
+
+#: Optional font files of the package (TrueType or OpenType).
+FONT_DIR = Path(__file__).resolve().parent / "fonts"
+
+
+def _load_fonts():
+    """Register the font files in FONT_DIR, before the style sheet names their families.
+
+    theme.FONT_UI names Atkinson Hyperlegible first. Its files are not part of
+    the repository; without them, or without the font installed on the
+    system, Qt takes the next family of the list that is installed (Ubuntu).
+    """
+    if not FONT_DIR.is_dir():
+        return
+    for path in sorted(FONT_DIR.iterdir()):
+        if path.suffix.lower() not in (".ttf", ".otf"):
+            continue
+        if QFontDatabase.addApplicationFont(str(path)) < 0:
+            print(f"[launch_gui] could not load the font {path.name}", file=sys.stderr)
 
 
 def _env_scale():
@@ -111,6 +132,7 @@ def main(args=None):
         QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
         app = QApplication([sys.argv[0]])
         app.setApplicationName("cobraflex_launch_gui")
+        _load_fonts()
         try:
             app.setStyleSheet(density.load_style(active))
         except OSError:

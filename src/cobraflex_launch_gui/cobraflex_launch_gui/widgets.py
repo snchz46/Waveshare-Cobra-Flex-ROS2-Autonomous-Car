@@ -3,7 +3,7 @@
 import html
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import pyqtSignal, QEvent, Qt, QTimer
+from PyQt5.QtCore import pyqtSignal, QEvent, QSize, Qt, QTimer
 from PyQt5.QtGui import QFont, QMouseEvent
 from PyQt5.QtWidgets import (
     QApplication,
@@ -26,13 +26,9 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from cobraflex_launch_gui.constants import (
-    LOG_LEVEL_COLORS,
-    LOG_LEVELS,
-    LOGS_MAX_PER_LAUNCH,
-    TOAST_DURATION_MS,
-)
+from cobraflex_launch_gui.constants import LOG_LEVELS, LOGS_MAX_PER_LAUNCH, TOAST_DURATION_MS
 from cobraflex_launch_gui.density import current as active_density, margins, px, size
+from cobraflex_launch_gui.icons import icon, pixmap, TrackGlyph
 from cobraflex_launch_gui.model import (
     build_command,
     Launch,
@@ -40,6 +36,11 @@ from cobraflex_launch_gui.model import (
     missing_required,
     step_value,
 )
+from cobraflex_launch_gui.theme import LOG_LEVEL_COLORS, PALETTE
+
+#: Icon colours: on the coloured action buttons, and on the light surfaces.
+_ON_COLOR = PALETTE["c_on_dark"]
+_INK = PALETTE["c_tyre"]
 
 
 # --- Helpers ----------------------------------------------------------------
@@ -61,20 +62,34 @@ def _dot(name: str, halo: Optional[str] = None) -> QFrame:
     return frame
 
 
-def make_green_dot() -> QFrame:
-    """Return the green dot of a running launch."""
-    return _dot("dotGreen", "dotHalo")
+def make_running_mark() -> QWidget:
+    """Return the mark of a running launch: the moving lane line of icons.TrackGlyph."""
+    return TrackGlyph()
 
 
-def make_state_dot(state: str) -> QFrame:
-    """Return the dot of a launch state: running, stopping, failed or stopped."""
+def make_state_dot(state: str) -> QWidget:
+    """Return the mark of a launch state: running, stopping, failed or stopped."""
     if state == "running":
-        return make_green_dot()
+        return make_running_mark()
     if state == "stopping":
-        return _dot("dotAmber")
+        return TrackGlyph(moving=False)
     if state == "failed":
         return _dot("dotRed", "dotRedHalo")
     return _dot("dotGrey")
+
+
+def set_icon(button: QPushButton, name: str, color: str, size_dp: int = 14) -> None:
+    """Give a button a painted icon, size_dp density-independent pixels high."""
+    button.setIcon(icon(name, color, size_dp))
+    button.setIconSize(QSize(px(size_dp), px(size_dp)))
+
+
+def set_star(button: QPushButton, starred: bool) -> None:
+    """Show a pin button as pinned (black star) or not (outline)."""
+    set_icon(button, "star_filled" if starred else "star",
+             _INK if starred else PALETTE["c_muted"], 16)
+    button.setProperty("starred", "true" if starred else "false")
+    restyle(button)
 
 
 def fill_status_row(row: QHBoxLayout, la: Launch) -> None:
@@ -163,14 +178,16 @@ def _clear_layout(layout) -> None:
 class SectionHeader(QFrame):
     """Small caps section title with a count and a rule."""
 
-    def __init__(self, label: str, count: int, glyph: str = ""):
-        """Build the header row."""
+    def __init__(self, label: str, count: int, icon_name: str = ""):
+        """Build the header row; icon_name is an icon of icons.py shown before the label."""
         super().__init__()
         h = QHBoxLayout(self)
         h.setContentsMargins(*margins(0, 6, 0, 6))
         h.setSpacing(px(8))
-        if glyph:
-            h.addWidget(_label(glyph, "sectionGlyph"))
+        if icon_name:
+            glyph = _label("", "sectionGlyph")
+            glyph.setPixmap(pixmap(icon_name, _INK, px(12)))
+            h.addWidget(glyph)
         lab = _label(label, "sectionLabel")
         set_letter_spacing(lab, 1.4)
         h.addWidget(lab)
@@ -422,7 +439,7 @@ class ExpandableSection(QFrame):
         self.cmd_box: Optional[QLabel] = None
         if not embedded:
             cmd_hd = QHBoxLayout()
-            cmd_label = _label(">_  COMMAND", "expandLabel")
+            cmd_label = _label("COMMAND", "expandLabel")
             set_letter_spacing(cmd_label, 1.2)
             cmd_hd.addWidget(cmd_label)
             cmd_hd.addStretch()
@@ -447,7 +464,7 @@ class ExpandableSection(QFrame):
         if embedded:
             self._add_presets(v)
         args_hd = QHBoxLayout()
-        args_label = _label("◆  ARGUMENTS", "expandLabel")
+        args_label = _label("ARGUMENTS", "expandLabel")
         set_letter_spacing(args_label, 1.2)
         args_hd.addWidget(args_label)
         args_hd.addStretch()
@@ -464,7 +481,7 @@ class ExpandableSection(QFrame):
             self._add_presets(v)
 
     def _add_presets(self, v: QVBoxLayout) -> None:
-        presets_label = _label("⚡  PRESETS", "expandLabel")
+        presets_label = _label("PRESETS", "expandLabel")
         set_letter_spacing(presets_label, 1.2)
         v.addWidget(presets_label)
         self.preset_row = QHBoxLayout()
@@ -586,9 +603,10 @@ class LaunchCard(QFrame):
 
         l1 = QHBoxLayout()
         l1.setSpacing(px(8))
-        self.expand_btn = _button("▸", "expandBtn", "Show command and arguments")
+        self.expand_btn = _button("", "expandBtn", "Show command and arguments")
         self.expand_btn.setProperty("open", "false")
         self.expand_btn.setFlat(True)
+        set_icon(self.expand_btn, "chevron_right", PALETTE["c_chassis"])
         self.expand_btn.clicked.connect(self.toggle_expand)
         l1.addWidget(self.expand_btn)
         self.star_btn = _button("", "cardStar", "Pin / unpin")
@@ -638,11 +656,13 @@ class LaunchCard(QFrame):
         btns = QHBoxLayout(btns_widget)
         btns.setSpacing(px(6))
         btns.setContentsMargins(0, 0, 0, 0)
-        self.run_btn = _button("▶  Run", "btnRun")
+        self.run_btn = _button("Run", "btnRun")
         self.run_btn.clicked.connect(self._on_run_click)
-        self.stop_btn = _button("■  Stop", "btnStop")
+        self.stop_btn = _button("Stop", "btnStop")
+        set_icon(self.stop_btn, "stop", _ON_COLOR)
         self.stop_btn.clicked.connect(lambda: self.stop_signal.emit(self.launch.uid))
-        self.logs_btn = _button("☰  Logs", "btnLogs", "Show the output of this launch")
+        self.logs_btn = _button("Logs", "btnLogs", "Show the output of this launch")
+        set_icon(self.logs_btn, "logs", _INK)
         self.logs_btn.clicked.connect(lambda: self.logs_signal.emit(self.launch.uid))
         for b in (self.run_btn, self.stop_btn, self.logs_btn):
             btns.addWidget(b)
@@ -665,7 +685,9 @@ class LaunchCard(QFrame):
         """Show or hide the command and argument editor."""
         new_open = True if force_open is True else not self.expand_container.isVisible()
         self.expand_container.setVisible(new_open)
-        self.expand_btn.setText("▾" if new_open else "▸")
+        # Open, the button turns black: the chevron turns white with it.
+        set_icon(self.expand_btn, "chevron_down" if new_open else "chevron_right",
+                 _ON_COLOR if new_open else PALETTE["c_chassis"])
         self.expand_btn.setProperty("open", "true" if new_open else "false")
         restyle(self.expand_btn)
         self.setProperty("expanded", "true" if new_open else "false")
@@ -699,9 +721,7 @@ class LaunchCard(QFrame):
     def refresh(self) -> None:
         """Redraw state-dependent parts: dot, status text, buttons, error."""
         la = self.launch
-        self.star_btn.setText("★" if la.starred else "☆")
-        self.star_btn.setProperty("starred", "true" if la.starred else "false")
-        restyle(self.star_btn)
+        set_star(self.star_btn, la.starred)
 
         show_err = la.last_error and (la.state == "failed" or la.died)
         self.err_snippet.setText(la.last_error or "")
@@ -710,20 +730,23 @@ class LaunchCard(QFrame):
         fill_status_row(self.status_row, la)
         if la.state in ("running", "stopping"):
             stopping = la.state == "stopping"
-            self.run_btn.setText("↻  Restart")
+            self.run_btn.setText("Restart")
             self.run_btn.setObjectName("btnRestart")
+            set_icon(self.run_btn, "restart", _INK)
             self.run_btn.setEnabled(not stopping)
             self.stop_btn.setEnabled(not stopping)
             running, failed = "true", "false"
         elif la.state == "failed":
-            self.run_btn.setText("▶  Retry")
+            self.run_btn.setText("Retry")
             self.run_btn.setObjectName("btnRetry")
+            set_icon(self.run_btn, "play", _ON_COLOR)
             self.run_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             running, failed = "false", "true"
         else:
-            self.run_btn.setText("▶  Run")
+            self.run_btn.setText("Run")
             self.run_btn.setObjectName("btnRun")
+            set_icon(self.run_btn, "play", _ON_COLOR)
             self.run_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             running, failed = "false", "false"
@@ -741,9 +764,9 @@ class Toast(QFrame):
 
     dismissed = pyqtSignal()
 
-    GLYPHS = {"ok": "▶", "err": "✕", "stop": "■", "info": "·"}
-    _GLYPH_OBJ_NAME = {"ok": "toastGlyphOk", "err": "toastGlyphErr",
-                       "stop": "toastGlyphStop", "info": "toastGlyphInfo"}
+    #: Icon and colour per kind, drawn on the black toast.
+    ICONS = {"ok": ("check", PALETTE["c_log_ok"]), "err": ("close", PALETTE["c_log_error"]),
+             "stop": ("stop", PALETTE["c_faint"]), "info": ("dot", PALETTE["c_faint"])}
 
     def __init__(self, kind: str, title: str, subtitle: Optional[str] = None,
                  duration_ms: int = TOAST_DURATION_MS, parent=None):
@@ -755,8 +778,10 @@ class Toast(QFrame):
         h = QHBoxLayout(self)
         h.setContentsMargins(*margins(12, 10, 12, 10))
         h.setSpacing(px(10))
-        h.addWidget(_label(self.GLYPHS.get(kind, "·"),
-                           self._GLYPH_OBJ_NAME.get(kind, "toastGlyphInfo")))
+        name, color = self.ICONS.get(kind, self.ICONS["info"])
+        mark = _label("", "toastGlyph")
+        mark.setPixmap(pixmap(name, color, px(16)))
+        h.addWidget(mark, 0, Qt.AlignTop)
         col = QVBoxLayout()
         col.setSpacing(px(1))
         t = _label(title, "toastTitle")
@@ -767,7 +792,9 @@ class Toast(QFrame):
             s.setWordWrap(True)
             col.addWidget(s)
         h.addLayout(col, 1)
-        h.addWidget(_label("×", "toastX"))
+        close = _label("", "toastX")
+        close.setPixmap(pixmap("close", PALETTE["c_faint"], px(12)))
+        h.addWidget(close, 0, Qt.AlignTop)
         self.setMinimumWidth(px(280))
         self.setMaximumWidth(px(380))
         QTimer.singleShot(duration_ms, self.dismiss)
@@ -810,7 +837,9 @@ class CommandPalette(QDialog):
         ih = QHBoxLayout(input_wrap)
         ih.setContentsMargins(*margins(16, 14, 16, 14))
         ih.setSpacing(px(12))
-        ih.addWidget(_label("⌕", "paletteIcon"))
+        search_mark = _label("", "paletteIcon")
+        search_mark.setPixmap(pixmap("search", PALETTE["c_muted"], px(18)))
+        ih.addWidget(search_mark)
         self.input = QLineEdit()
         self.input.setObjectName("paletteInput")
         self.input.setPlaceholderText("Run a launch, search…")
@@ -826,13 +855,14 @@ class CommandPalette(QDialog):
 
         self.list = QListWidget()
         self.list.setObjectName("paletteList")
+        self.list.setIconSize(QSize(px(18), px(18)))
         self.list.itemActivated.connect(lambda _i: self._activate_current())
         if touch:
             # One tap runs the entry; a double tap is unreliable with a finger.
             self.list.itemClicked.connect(lambda _i: self._activate_current())
         enable_kinetic_scroll(self.list.viewport())
         v.addWidget(self.list, 1)
-        foot = _label("↑↓ navigate     ↵ select     esc close", "paletteFoot")
+        foot = _label("Up / Down  navigate      Enter  select      Esc  close", "paletteFoot")
         foot.setAlignment(Qt.AlignCenter)
         foot.setVisible(not touch)
         v.addWidget(foot)
@@ -855,22 +885,27 @@ class CommandPalette(QDialog):
         self.raise_()
         self.input.setFocus()
 
+    #: Icon and colour of each kind of entry: green runs, red stops.
+    _ICONS = {"run": ("play", PALETTE["c_go"]), "stop": ("stop", PALETTE["c_signal"]),
+              "stop-all": ("stop", PALETTE["c_signal"]),
+              "clear-logs": ("close", PALETTE["c_chassis"])}
+
     @staticmethod
     def _build_items(launches: List[Launch]) -> List[dict]:
         items: List[dict] = []
         running = [la for la in launches if la.state == "running"]
         if running:
-            items.append({"kind": "action", "action_id": "stop-all", "glyph": "■",
+            items.append({"kind": "action", "action_id": "stop-all", "icon": "stop-all",
                           "title": f"Stop all running ({len(running)})", "subtitle": ""})
-        items.append({"kind": "action", "action_id": "clear-logs", "glyph": "✕",
+        items.append({"kind": "action", "action_id": "clear-logs", "icon": "clear-logs",
                       "title": "Clear logs", "subtitle": ""})
         for la in launches:
             verb = "Retry" if la.state == "failed" else "Run"
-            items.append({"kind": "run", "launch_id": la.uid, "glyph": "▶",
+            items.append({"kind": "run", "launch_id": la.uid, "icon": "run",
                           "title": f"{verb}  {la.pkg} / {la.name}", "subtitle": la.desc,
                           "disabled": la.state in ("running", "stopping")})
             if la.state == "running":
-                items.append({"kind": "stop", "launch_id": la.uid, "glyph": "■",
+                items.append({"kind": "stop", "launch_id": la.uid, "icon": "stop",
                               "title": f"Stop  {la.pkg} / {la.name}",
                               "subtitle": f"PID {la.pid}"})
         return items
@@ -878,13 +913,14 @@ class CommandPalette(QDialog):
     def _refilter(self, query: str) -> None:
         query = (query or "").strip().lower()
         self.list.clear()
+        icons = {key: icon(name, color, 18) for key, (name, color) in self._ICONS.items()}
         for it in self._items:
             if query and query not in f"{it['title']} {it.get('subtitle', '')}".lower():
                 continue
-            text = f"{it['glyph']}   {it['title']}"
+            text = it["title"]
             if it.get("subtitle"):
                 text += f"   ·   {it['subtitle']}"
-            row = QListWidgetItem(text)
+            row = QListWidgetItem(icons[it["icon"]], text)
             row.setData(Qt.UserRole, it)
             if it.get("disabled"):
                 row.setFlags(row.flags() & ~Qt.ItemIsEnabled)
@@ -967,7 +1003,7 @@ class LogsPanel(QFrame):
         lp = QHBoxLayout(self.live_pill)
         lp.setContentsMargins(*margins(8, 2, 10, 2))
         lp.setSpacing(px(5))
-        lp.addWidget(make_green_dot())
+        lp.addWidget(make_running_mark(), 0, Qt.AlignVCenter)
         live = _label("LIVE", "logsLiveText")
         set_letter_spacing(live, 1.0)
         lp.addWidget(live)
@@ -994,12 +1030,13 @@ class LogsPanel(QFrame):
         self.search_input.setPlaceholderText("Search…")
         self.search_input.textChanged.connect(self._on_search_changed)
         head.addWidget(self.search_input)
-        self.follow_btn = _button("✓ Follow", "btnGhost", "Keep the newest line in view")
+        # Checked, a toggle turns black (btnGhost:checked); its text stays the same.
+        self.follow_btn = _button("Follow", "btnGhost", "Keep the newest line in view")
         self.follow_btn.setCheckable(True)
         self.follow_btn.setChecked(True)
         self.follow_btn.clicked.connect(self._toggle_follow)
         head.addWidget(self.follow_btn)
-        self.wrap_btn = _button("✓ Wrap", "btnGhost", "Wrap long lines")
+        self.wrap_btn = _button("Wrap", "btnGhost", "Wrap long lines")
         self.wrap_btn.setCheckable(True)
         self.wrap_btn.setChecked(True)
         self.wrap_btn.clicked.connect(self._toggle_wrap)
@@ -1091,12 +1128,12 @@ class LogsPanel(QFrame):
 
     @staticmethod
     def _entry_html(entry: LogEntry) -> str:
-        color = LOG_LEVEL_COLORS.get(entry.level, "#56d364")
-        node = f'<span style="color:#79c0ff;">[{html.escape(entry.node)}]</span> ' \
-            if entry.node else ""
-        return (f'<span style="color:#6e7681;">{entry.fmt_time()}</span> '
+        color = LOG_LEVEL_COLORS.get(entry.level, PALETTE["c_log_info"])
+        node = (f'<span style="color:{PALETTE["c_log_info"]};">'
+                f'[{html.escape(entry.node)}]</span> ' if entry.node else "")
+        return (f'<span style="color:{PALETTE["c_code_dim"]};">{entry.fmt_time()}</span> '
                 f'<span style="color:{color};">[{entry.level}]</span> {node}'
-                f'<span style="color:#c9d1d9;">{html.escape(entry.msg)}</span>')
+                f'<span style="color:{PALETTE["c_code_fg"]};">{html.escape(entry.msg)}</span>')
 
     def _set_level(self, lvl: str) -> None:
         self._level_filter = lvl
@@ -1110,9 +1147,7 @@ class LogsPanel(QFrame):
 
     def _toggle_follow(self) -> None:
         self._follow = self.follow_btn.isChecked()
-        self.follow_btn.setText(("✓ " if self._follow else "") + "Follow")
 
     def _toggle_wrap(self) -> None:
         wrap = self.wrap_btn.isChecked()
         self.body.setLineWrapMode(QTextEdit.WidgetWidth if wrap else QTextEdit.NoWrap)
-        self.wrap_btn.setText(("✓ " if wrap else "") + "Wrap")

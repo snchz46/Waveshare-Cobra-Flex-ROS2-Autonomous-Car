@@ -35,10 +35,6 @@ from PyQt5.QtWidgets import (
 
 from cobraflex_launch_gui.constants import (
     GRAPH_ALWAYS_HIDDEN_TOPICS,
-    GRAPH_BACKGROUND,
-    GRAPH_COLORS,
-    GRAPH_EDGE_COLOR,
-    GRAPH_EDGE_HIGHLIGHT,
     GRAPH_INFRASTRUCTURE_TOPICS,
     GRAPH_REFRESH_MS,
     TF_REFRESH_MS,
@@ -48,12 +44,23 @@ from cobraflex_launch_gui.density import current as active_density, margins, px,
 from cobraflex_launch_gui.graph_layout import EdgeRoute, layout_graph, LayoutEdge, LayoutNode
 from cobraflex_launch_gui.model import Launch
 from cobraflex_launch_gui.ros_interface import analyse_tf
+from cobraflex_launch_gui.theme import (
+    GRAPH_BACKGROUND,
+    GRAPH_COLORS,
+    GRAPH_EDGE_COLOR,
+    GRAPH_EDGE_HIGHLIGHT,
+    GRAPH_LABEL_COLOR,
+    PALETTE,
+)
 from cobraflex_launch_gui.widgets import enable_kinetic_scroll, enable_touch_popup
 
 _PAD_X = 12.0
 _PAD_Y = 6.0
 _ARROW = 7.0
 _MAX_FIT_SCALE = 1.4
+#: Gap between a selected box and its selection ring, and the width of the ring.
+_RING_GAP = 3.0
+_RING_W = 2.0
 
 
 def ros_package_available(pkg: str) -> bool:
@@ -102,17 +109,25 @@ class GraphItem(QGraphicsItem):
         self.update()
 
     def boundingRect(self) -> QRectF:  # noqa: N802 - Qt API
-        """Return the box with room for the highlight border."""
-        return QRectF(-self._w / 2 - 2, -self._h / 2 - 2, self._w + 4, self._h + 4)
+        """Return the box with room for the selection ring."""
+        m = _RING_GAP + _RING_W + 1.0
+        return QRectF(-self._w / 2 - m, -self._h / 2 - m, self._w + 2 * m, self._h + 2 * m)
 
     def paint(self, painter: QPainter, _option, _widget=None) -> None:
-        """Draw the box and its label."""
+        """Draw the box, its label and, when selected, a ring around it."""
         fill, border, text = GRAPH_COLORS[self.state if self.state != "normal" else self.kind]
         rect = QRectF(-self._w / 2, -self._h / 2, self._w, self._h)
         radius = 4.0 if self.kind == "topic" else self._h / 2
-        border_color = QColor(GRAPH_EDGE_HIGHLIGHT if self._highlight else border)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QPen(border_color, 2.2 if self._highlight else 1.2))
+        if self._highlight:
+            # A ring outside the box rather than a heavier border: the nodes are
+            # black, and a black border would not show on them.
+            off = _RING_GAP + _RING_W / 2
+            painter.setPen(QPen(QColor(GRAPH_EDGE_HIGHLIGHT), _RING_W))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRoundedRect(rect.adjusted(-off, -off, off, off),
+                                    radius + off, radius + off)
+        painter.setPen(QPen(QColor(border), 1.2))
         painter.setBrush(QBrush(QColor(fill)))
         painter.drawRoundedRect(rect, radius, radius)
         painter.setPen(QColor(text))
@@ -157,7 +172,7 @@ class _LabelItem(QGraphicsItem):
         self._text = text
         self._font = font
         self._fm = QFontMetricsF(font)
-        self._color = QColor("#8b949e")
+        self._color = QColor(GRAPH_LABEL_COLOR)
         self.setZValue(2)
 
     def set_text(self, text: str) -> None:
@@ -223,7 +238,7 @@ class EdgeItem(QGraphicsPathItem):
         self._arrow.setPen(QPen(QColor(color), 1.0))
         self._arrow.setBrush(QBrush(QColor(color)))
         if self._label is not None:
-            self._label.set_color("#8b949e" if color == GRAPH_EDGE_COLOR else color)
+            self._label.set_color(GRAPH_LABEL_COLOR if color == GRAPH_EDGE_COLOR else color)
         self.setOpacity(opacity)
 
 
@@ -297,7 +312,7 @@ class GraphCanvas(QGraphicsView):
         """Replace the drawing with a centred message."""
         self.scene().clear()
         item = self.scene().addSimpleText(text, self.item_font)
-        item.setBrush(QBrush(QColor("#8b949e")))
+        item.setBrush(QBrush(QColor(PALETTE["c_muted"])))
         rect = item.boundingRect()
         item.setPos(-rect.width() / 2, -rect.height() / 2)
         self.scene().setSceneRect(QRectF(-400, -200, 800, 400))
@@ -697,10 +712,10 @@ class RosGraphPage(_GraphPage):
             return
         body.append("<p class='k'>COMMAND LINE</p>")
         body += [f"<p><code>{esc(c)}</code></p>" for c in cli]
-        style = (f"<style>p{{margin:2px 0 6px 0;}} .k{{color:#8b949e;"
+        style = (f"<style>p{{margin:2px 0 6px 0;}} .k{{color:{PALETTE['c_chassis']};"
                  f"font-size:{size('fs_tiny')}px;letter-spacing:1px;margin-top:10px;}} "
-                 f".t{{color:#8b949e;font-size:{size('fs_small')}px;}}"
-                 "code{color:#79c0ff;}</style>")
+                 f".t{{color:{PALETTE['c_muted']};font-size:{size('fs_small')}px;}}"
+                 f"code{{color:{PALETTE['c_tyre']};}}</style>")
         self.details.setText(style + "".join(body))
         self.details_panel.setVisible(True)
 
@@ -820,24 +835,28 @@ class TfTreePage(_GraphPage):
 
     def _update_diagnostics(self, edges, conflicts, stale, roots, frames) -> None:
         esc = html.escape
+
+        def bullet(token: str) -> str:
+            return f"<span style='color:{PALETTE[token]}'>●</span>"
+
         lines = []
         for child, parents in sorted(conflicts.items()):
             lines.append(
-                f"<span style='color:#f85149'>●</span> <b>{esc(child)}</b> has "
+                f"{bullet('c_signal')} <b>{esc(child)}</b> has "
                 f"{len(parents)} parents ({esc(', '.join(sorted(parents)))}). Each frame has "
                 "exactly one parent; more than one node publishes a transform to this frame.")
         for parent, child in sorted(stale):
             age = next(e.age_s for e in edges if (e.parent, e.child) == (parent, child))
-            lines.append(f"<span style='color:#d29922'>●</span> {esc(parent)} → "
+            lines.append(f"{bullet('c_amber')} {esc(parent)} → "
                          f"{esc(child)}: no update for {age:.1f} s.")
         if len(roots) > 1:
             lines.append(
-                f"<span style='color:#d29922'>●</span> {len(roots)} separate trees "
+                f"{bullet('c_amber')} {len(roots)} separate trees "
                 f"(roots: {esc(', '.join(roots))}). No transform exists between frames of "
                 "different trees.")
         if not lines:
-            lines.append(f"<span style='color:#56d364'>●</span> One tree, {len(frames)} "
-                         "frames, no conflicts." if edges else
-                         "<span style='color:#8b949e'>●</span> Waiting for transforms "
-                         "on /tf and /tf_static.")
+            # A sound tree is the normal state: black, like any other text.
+            lines.append(f"{bullet('c_tyre')} One tree, {len(frames)} frames, no conflicts."
+                         if edges else
+                         f"{bullet('c_muted')} Waiting for transforms on /tf and /tf_static.")
         self.diagnostics.setText("<br>".join(lines))

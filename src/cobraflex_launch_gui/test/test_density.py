@@ -7,6 +7,7 @@ from cobraflex_launch_gui.density import by_name, DESKTOP, load_style, render_st
 
 def _rule(qss: str, selector: str) -> str:
     """Return the body of the first rule whose selector is exactly selector."""
+    qss = re.sub(r"/\*.*?\*/", "", qss, flags=re.S)
     m = re.search(r"(?:^|\})\s*" + re.escape(selector) + r"\s*\{([^}]*)\}", qss)
     assert m, f"no rule {selector!r}"
     return m.group(1)

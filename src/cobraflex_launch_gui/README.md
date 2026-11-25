@@ -109,6 +109,42 @@ en la tarjeta ("1 process(es) died") junto con la ultima linea de error.
 | `Ctrl+1` .. `Ctrl+3` | Cambiar de pestana |
 | `F11` | Pantalla completa |
 
+## Aspecto
+
+Colores y fuentes estan en [`theme.py`](cobraflex_launch_gui/theme.py) y son
+los mismos en ambas densidades. La paleta procede de los materiales del coche
+con la carroceria V4.1: el gris de la tapa de PLA es el fondo, el blanco de la
+carcasa los paneles, el negro de ruedas y sensores el texto y la seleccion, y
+el gris del chasis de aluminio el texto secundario. `style.qss` es una
+plantilla que lee los colores como `${c_*}` y las fuentes como `${font_ui}` y
+`${font_mono}`; el grafo, el panel de logs y el HTML de los widgets leen los
+mismos valores.
+
+| Color | Uso |
+| --- | --- |
+| Rojo senal (`c_signal`) | Acento unico: pestana activa, **Stop**, **Stop all**, fallos |
+| Verde (`c_go`) | **Run** y **Retry** |
+| Negro (`c_tyre`) | Texto, seleccion, filtros activos, paneles de comando y de logs |
+| Ambar (`c_amber`) | Avisos: modo simulado, `ROS_DOMAIN_ID`, parada en curso, topicos sin publicador o sin suscriptor, transformadas sin actualizar |
+
+Ningun otro elemento lleva color, y cada estado lleva ademas una palabra
+(`running`, `stopping…`, `failed`), de modo que la ventana se lee sin vision
+del color. El texto mantiene un contraste minimo de 4,5:1 sobre el fondo y
+sobre los paneles.
+
+Los iconos (Run, Stop, Restart, Logs, busqueda, favoritos) se dibujan con
+QPainter en [`icons.py`](cobraflex_launch_gui/icons.py). Los simbolos Unicode
+que sustituyen cambian de forma con las fuentes instaladas y difieren entre el
+PC y la Jetson. Un launch en marcha se indica con un tramo de pista negra cuya
+linea discontinua avanza; durante la parada la linea queda fija y en ambar.
+
+La fuente de la interfaz es Atkinson Hyperlegible (Braille Institute, licencia
+OFL), disenada para baja vision, que distingue I, l y 1. Sus ficheros no forman
+parte del repositorio: los `.ttf` u `.otf` copiados en
+`cobraflex_launch_gui/fonts/` se registran al arrancar la ventana, con el mismo
+efecto que la fuente instalada en el sistema. En su ausencia se usa Ubuntu,
+presente en el escritorio de los PC del laboratorio y de la Jetson.
+
 ## Pantalla tactil
 
 `--density touch` adapta la ventana a la pantalla tactil del coche, una

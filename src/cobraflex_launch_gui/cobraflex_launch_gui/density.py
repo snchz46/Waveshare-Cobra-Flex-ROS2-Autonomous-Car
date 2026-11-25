@@ -21,6 +21,7 @@ import re
 from string import Template
 from typing import Dict, Optional, Tuple
 
+from cobraflex_launch_gui import theme
 from cobraflex_launch_gui.constants import (
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_WINDOW_WIDTH,
@@ -149,14 +150,18 @@ def margins(left: float, top: float, right: float, bottom: float) -> Tuple[int, 
     return px(left), px(top), px(right), px(bottom)
 
 
-def render_style(density: Density, base: str, touch_extra: str = "") -> str:
-    """Fill the size tokens of a style sheet and convert its lengths to pixels.
+def render_style(density: Density, base: str, touch_extra: str = "",
+                 tokens: Optional[Dict[str, str]] = None) -> str:
+    """Fill the size, colour and font tokens of a style sheet and convert its lengths to pixels.
 
-    touch_extra is appended for the touch density only. At factor 1 the
-    lengths stay as written.
+    touch_extra is appended for the touch density only; tokens are the colour
+    and font tokens, by default those of theme.py. At factor 1 the lengths
+    stay as written.
     """
     text = base + ("\n" + touch_extra if density.touch and touch_extra else "")
-    text = Template(text).substitute({key: f"{density.dp(key):g}px" for key in TOKENS})
+    values = dict(theme.qss_tokens() if tokens is None else tokens)
+    values.update({key: f"{density.dp(key):g}px" for key in TOKENS})
+    text = Template(text).substitute(values)
     if density.factor != 1.0:
         text = _PX_RE.sub(lambda m: f"{density.px(float(m.group(1)))}px", text)
     return text

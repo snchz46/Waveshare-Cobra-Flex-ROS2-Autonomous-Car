@@ -25,17 +25,20 @@ from cobraflex_launch_gui.backend import Backend
 from cobraflex_launch_gui.constants import FILTER_CHIPS, UPTIME_TICK_MS
 from cobraflex_launch_gui.density import current as active_density, margins, px, size
 from cobraflex_launch_gui.graph_view import RosGraphPage, TfTreePage
+from cobraflex_launch_gui.icons import pixmap
 from cobraflex_launch_gui.model import Launch, LogEntry, missing_required
 from cobraflex_launch_gui.state import UserState
+from cobraflex_launch_gui.theme import PALETTE
 from cobraflex_launch_gui.touch_page import TouchLaunchesPage
 from cobraflex_launch_gui.widgets import (
     CommandPalette,
     enable_kinetic_scroll,
     LaunchCard,
     LogsPanel,
-    make_green_dot,
+    make_running_mark,
     restyle,
     SectionHeader,
+    set_icon,
     set_letter_spacing,
     Toast,
 )
@@ -205,7 +208,8 @@ class LaunchGui(QMainWindow):
         h.addLayout(left)
         h.addStretch()
         for w in self._build_status_widgets():
-            h.addWidget(w)
+            # Centred, so that the badge and the pill keep their own height.
+            h.addWidget(w, 0, Qt.AlignVCenter)
         return f
 
     def _build_status_widgets(self) -> List[QWidget]:
@@ -220,7 +224,7 @@ class LaunchGui(QMainWindow):
         rp = QHBoxLayout(self.running_pill)
         rp.setContentsMargins(*margins(10, 4, 12, 4))
         rp.setSpacing(px(6))
-        rp.addWidget(make_green_dot())
+        rp.addWidget(make_running_mark(), 0, Qt.AlignVCenter)
         self.running_text = self._env_label("0 running", "hdrRunningText")
         rp.addWidget(self.running_text)
         widgets.append(self.running_pill)
@@ -263,8 +267,9 @@ class LaunchGui(QMainWindow):
             extras.append(self._build_stop_all())
         # The command palette also opens from a button: without a keyboard,
         # Ctrl+K is out of reach.
-        self.search_btn = QPushButton("Search" if touch else "⌕  Search   Ctrl+K")
+        self.search_btn = QPushButton("Search" if touch else "Search   Ctrl+K")
         self.search_btn.setObjectName("btnSearch")
+        set_icon(self.search_btn, "search", PALETTE["c_tyre"])
         self.search_btn.setCursor(Qt.PointingHandCursor)
         self.search_btn.setToolTip("Run or stop a launch by name (Ctrl+K)")
         self.search_btn.clicked.connect(self._open_palette)
@@ -307,7 +312,9 @@ class LaunchGui(QMainWindow):
         sw = QHBoxLayout(self.search_wrap)
         sw.setContentsMargins(*margins(10, 0, 10, 0))
         sw.setSpacing(px(8))
-        sw.addWidget(self._env_label("⌕", "searchIcon"))
+        search_mark = self._env_label("", "searchIcon")
+        search_mark.setPixmap(pixmap("search", PALETTE["c_muted"], px(14)))
+        sw.addWidget(search_mark)
         self.search_input = QLineEdit()
         self.search_input.setObjectName("searchInput")
         self.search_input.setPlaceholderText("Filter launches…  ( / )")
@@ -336,8 +343,9 @@ class LaunchGui(QMainWindow):
         return f
 
     def _build_stop_all(self) -> QPushButton:
-        self.stop_all_btn = QPushButton("■  Stop all")
+        self.stop_all_btn = QPushButton("Stop all")
         self.stop_all_btn.setObjectName("btnStopAll")
+        set_icon(self.stop_all_btn, "stop", PALETTE["c_signal"], 12)
         self.stop_all_btn.setCursor(Qt.PointingHandCursor)
         self.stop_all_btn.clicked.connect(self._on_stop_all)
         self.stop_all_btn.setVisible(False)
@@ -399,7 +407,7 @@ class LaunchGui(QMainWindow):
             self._add_empty("No launches match the current filters.")
         else:
             if starred:
-                self.list_layout.addWidget(SectionHeader("PINNED", len(starred), "★"))
+                self.list_layout.addWidget(SectionHeader("PINNED", len(starred), "star_filled"))
                 for la in starred:
                     self._add_card(la)
                 self.list_layout.addSpacing(px(10))
@@ -409,7 +417,7 @@ class LaunchGui(QMainWindow):
                 for la in group:
                     self._add_card(la)
         self.list_layout.addStretch()
-        self.count_pill.setText(f"✓  {len(filtered)} of {len(self.launches)} launches")
+        self.count_pill.setText(f"{len(filtered)} of {len(self.launches)} launches")
         self._refresh_running_pill()
 
     def _add_empty(self, text: str) -> None:
@@ -441,7 +449,7 @@ class LaunchGui(QMainWindow):
         n = sum(1 for la in self.launches if la.state == "running")
         self.running_text.setText(f"{n} running")
         self.stop_all_btn.setVisible(n > 0)
-        self.stop_all_btn.setText(f"■  Stop all ({n})")
+        self.stop_all_btn.setText(f"Stop all ({n})")
 
     # Logs -------------------------------------------------------------------
 

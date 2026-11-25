@@ -10,8 +10,8 @@ detail pane.
 import time
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import pyqtSignal, QEvent, Qt, QTimer
-from PyQt5.QtGui import QColor, QMouseEvent, QPainter
+from PyQt5.QtCore import pyqtSignal, QEvent, QRectF, Qt, QTimer
+from PyQt5.QtGui import QColor, QMouseEvent, QPainter, QPainterPath
 from PyQt5.QtWidgets import (
     QApplication,
     QFrame,
@@ -21,6 +21,9 @@ from PyQt5.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QStackedWidget,
+    QStyle,
+    QStyleOptionButton,
+    QStylePainter,
     QVBoxLayout,
     QWidget,
 )
@@ -28,6 +31,7 @@ from PyQt5.QtWidgets import (
 from cobraflex_launch_gui.constants import FILTER_CHIPS, FILTER_CHIPS_SHORT, HOLD_TO_RUN_MS
 from cobraflex_launch_gui.density import margins, px, size
 from cobraflex_launch_gui.model import build_command, Launch
+from cobraflex_launch_gui.theme import PALETTE
 from cobraflex_launch_gui.widgets import (
     enable_kinetic_scroll,
     ExpandableSection,
@@ -36,7 +40,9 @@ from cobraflex_launch_gui.widgets import (
     make_state_dot,
     restyle,
     SectionHeader,
+    set_icon,
     set_letter_spacing,
+    set_star,
 )
 
 
@@ -240,7 +246,7 @@ class LaunchList(QFrame):
             empty.setWordWrap(True)
             self._body.addWidget(empty)
         if pinned:
-            self._add_header("PINNED", len(pinned), "★")
+            self._add_header("PINNED", len(pinned), "star_filled")
             for la in pinned:
                 self._add_row(la)
         for pkg in sorted({la.pkg for la in rest}):
@@ -250,11 +256,11 @@ class LaunchList(QFrame):
                 self._add_row(la)
         self._body.addStretch()
 
-    def _add_header(self, label: str, count: int, glyph: str = "") -> None:
+    def _add_header(self, label: str, count: int, icon_name: str = "") -> None:
         holder = QWidget()
         h = QHBoxLayout(holder)
         h.setContentsMargins(*margins(14, 10, 12, 0))
-        h.addWidget(SectionHeader(label, count, glyph))
+        h.addWidget(SectionHeader(label, count, icon_name))
         self._body.addWidget(holder)
 
     def _add_row(self, la: Launch) -> None:
@@ -341,17 +347,27 @@ class HoldButton(QPushButton):
             self.held.emit()
 
     def paintEvent(self, event) -> None:  # noqa: N802 - Qt API
-        """Draw the button, then the fill of the hold."""
+        """Draw the button and the fill of the hold, then the label again over the fill."""
         super().paintEvent(event)
         if self._progress <= 0.0:
             return
-        painter = QPainter(self)
+        whole = QRectF(self.rect())
+        fill = QRectF(whole)
+        fill.setWidth(whole.width() * self._progress)
+        painter = QStylePainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor(0, 0, 0, 90))
-        rect = self.rect()
-        rect.setWidth(int(rect.width() * self._progress))
-        painter.drawRoundedRect(rect, px(5), px(5))
+        outline = QPainterPath()
+        outline.addRoundedRect(whole, px(6), px(6))
+        painter.setClipPath(outline)
+        # A darkening rather than a colour of its own: while the finger rests
+        # on the button it is hovered, and the hover colour is the dark green.
+        painter.fillRect(fill, QColor(0, 0, 0, 100))
+        # The fill covers the label: draw the label again, over the fill only.
+        painter.setClipRect(fill, Qt.IntersectClip)
+        option = QStyleOptionButton()
+        self.initStyleOption(option)
+        option.rect = self.style().subElementRect(QStyle.SE_PushButtonContents, option, self)
+        painter.drawControl(QStyle.CE_PushButtonLabel, option)
         painter.end()
 
 
@@ -391,19 +407,24 @@ class LaunchDetail(QFrame):
         titles.addLayout(self.status_row)
         top.addLayout(titles, 1)
 
-        self.run_btn = self._action_button("▶  Run", "btnRun", "Start the launch")
+        on_dark = PALETTE["c_on_dark"]
+        self.run_btn = self._action_button("Run", "btnRun", "Start the launch")
+        set_icon(self.run_btn, "play", on_dark, 16)
         self.run_btn.clicked.connect(lambda: self._emit(self.run_signal))
-        self.hold_btn = HoldButton("▶  Hold to run")
+        self.hold_btn = HoldButton("Hold to run")
         self.hold_btn.setObjectName("btnRun")
         self.hold_btn.setCursor(Qt.PointingHandCursor)
         self.hold_btn.setMinimumWidth(px(150))
         self.hold_btn.setToolTip("This launch drives the robot: hold the button for 1 s")
+        set_icon(self.hold_btn, "play", on_dark, 16)
         self.hold_btn.held.connect(lambda: self._emit(self.run_signal))
         self.hold_btn.released_early.connect(lambda: self.hold_hint.emit(
             "Hold the button for 1 s: this launch drives the robot"))
-        self.stop_btn = self._action_button("■  Stop", "btnStop", "Stop the launch (SIGINT)")
+        self.stop_btn = self._action_button("Stop", "btnStop", "Stop the launch (SIGINT)")
+        set_icon(self.stop_btn, "stop", on_dark, 16)
         self.stop_btn.clicked.connect(lambda: self._emit(self.stop_signal))
-        self.restart_btn = self._action_button("↻", "btnRestart", "Restart the launch")
+        self.restart_btn = self._action_button("", "btnRestart", "Restart the launch")
+        set_icon(self.restart_btn, "restart", PALETTE["c_tyre"], 20)
         # Square: an icon-only button still needs a finger-wide target.
         self.restart_btn.setMinimumWidth(px(56))
         self.restart_btn.clicked.connect(lambda: self._emit(self.restart_signal))
@@ -464,12 +485,12 @@ class LaunchDetail(QFrame):
 
     def _build_command_page(self) -> QWidget:
         page = QWidget()
-        page.setObjectName("root")
+        page.setObjectName("detailPage")
         v = QVBoxLayout(page)
         v.setContentsMargins(*margins(0, 12, 8, 12))
         v.setSpacing(px(10))
         head = QHBoxLayout()
-        label = QLabel(">_  COMMAND")
+        label = QLabel("COMMAND")
         label.setObjectName("expandLabel")
         set_letter_spacing(label, 1.2)
         head.addWidget(label)
@@ -528,7 +549,7 @@ class LaunchDetail(QFrame):
                 b.setVisible(False)
             return
         page = QWidget()
-        page.setObjectName("root")
+        page.setObjectName("detailPage")
         pv = QVBoxLayout(page)
         pv.setContentsMargins(*margins(0, 10, 8, 0))
         pv.setSpacing(px(6))
@@ -561,20 +582,18 @@ class LaunchDetail(QFrame):
         active = la.state in ("running", "stopping")
         stopping = la.state == "stopping"
         verb = "Retry" if la.state == "failed" else "Run"
-        self.run_btn.setText(f"▶  {verb}")
+        self.run_btn.setText(verb)
         self.run_btn.setObjectName("btnRetry" if la.state == "failed" else "btnRun")
         restyle(self.run_btn)
-        self.hold_btn.setText(f"▶  Hold to {verb.lower()}")
+        self.hold_btn.setText(f"Hold to {verb.lower()}")
         self.run_btn.setVisible(not active and not la.moves_robot)
         self.hold_btn.setVisible(not active and la.moves_robot)
-        self.stop_btn.setText("Stopping…" if stopping else "■  Stop")
+        self.stop_btn.setText("Stopping…" if stopping else "Stop")
         self.stop_btn.setEnabled(not stopping)
         self.stop_btn.setVisible(active)
         self.restart_btn.setEnabled(not stopping)
         self.restart_btn.setVisible(active)
-        self.star_btn.setText("★" if la.starred else "☆")
-        self.star_btn.setProperty("starred", "true" if la.starred else "false")
-        restyle(self.star_btn)
+        set_star(self.star_btn, la.starred)
 
     def show_missing(self) -> None:
         """Open the Arguments tab on the first required argument without a value."""
