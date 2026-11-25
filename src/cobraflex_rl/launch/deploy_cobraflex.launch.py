@@ -17,7 +17,7 @@ This is a **Layer-3 controller launch**, matching the platform's own layering:
 
     Layer 1  cobraflex_bringup.launch.xml   description (robot_state_publisher +
              joint_state_publisher + rviz) + cobraflex_ros_driver (ROS→JSON serial)
-    Layer 2  cobraflex_sensors.launch.xml   SLLIDAR A2M8 + ZED Mini + the Jetson
+    Layer 2  cobraflex_sensors.launch.xml   SLLIDAR A2M8/A2M12 + ZED Mini + the Jetson
              CSI LANE CAMERA + the ekf (→ /odometry/filtered)  [REQUIRED, see below]
     Layer 3  a controller: cobraflex_lane_keeper.launch.py (classical CV),
              cobraflex_automatic.launch.xml (lidar avoidance), or THIS launch (RL)

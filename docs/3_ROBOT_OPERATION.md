@@ -80,7 +80,7 @@ on it; teleoperation, avoidance and lane keeping do not.
 
 | Item | State |
 | --- | --- |
-| Robot | JetPack 6 (Ubuntu 22.04) with ROS 2 Humble on the Jetson; this repository built in `~/ros2_ws` together with `sllidar_ros2` and `zed_wrapper` (ZED SDK installed); login in the `dialout` group. Reinstallation: [1_INSTALLATION.md](1_INSTALLATION.md#robot-jetson-orin-nano-and-ros-2-humble) |
+| Robot | JetPack 6 (Ubuntu 22.04) with ROS 2 Humble on the Jetson; this repository built in `~/ros2_ws` together with `sllidar_ros2` and `zed_wrapper` (ZED SDK installed); login in the `dialout` group; LiDAR model declared in `COBRAFLEX_LIDAR_MODEL` on cars with an A2M12. Reinstallation: [1_INSTALLATION.md](1_INSTALLATION.md#robot-jetson-orin-nano-and-ros-2-humble) |
 | Batteries | Motor battery (3S Li-ion pack in the chassis) and powerbank (Jetson) charged |
 | Lab PC | Ubuntu 24.04, ROS 2 Jazzy, this repository built in `~/ros2_ws` ([1_INSTALLATION.md](1_INSTALLATION.md#lab-pc-ubuntu-2404-and-ros-2-jazzy)), on the lab network |
 | Setup card | One per robot, with the access data ([§3](#3-conventions-and-setup-card)) |
@@ -114,6 +114,7 @@ not in this repository, which is public. Fields of the card:
 | Login | `<user>` and password |
 | Domain | `ROS_DOMAIN_ID` (`<id>`), 1 to 101, never 0, different for every robot |
 | Chassis port | Serial device of the driver board, default `/dev/ttyACM1` |
+| LiDAR | Model, A2M8 or A2M12; with an A2M12, `export COBRAFLEX_LIDAR_MODEL=a2m12` in `~/.bashrc` of the robot ([1_INSTALLATION.md](1_INSTALLATION.md#lidar-setup)) |
 | Lab PC | PC paired with the robot |
 | Network | Lab Wi-Fi name |
 
@@ -184,7 +185,8 @@ ros2 launch cobraflex cobraflex_bringup.launch.xml use_rviz:=false
 
 - `use_rviz:=false`: the robot has no display; RViz runs on the PC
   ([§6.3](#63-rviz-on-the-pc)).
-- The driver board appears as `/dev/ttyACM*`, the LiDAR as `/dev/ttyUSB0`.
+- The driver board appears as `/dev/ttyACM*`, the LiDAR as `/dev/ttyUSB0`
+  (with the udev rule of `sllidar_ros2` also as `/dev/rplidar`).
   The launch file uses `/dev/ttyACM1`; another device is passed as
   `serial_port:=/dev/ttyACM0`. Comparing `ls /dev/ttyACM*` with the USB cable
   of the driver board plugged in and unplugged identifies the device.
@@ -203,7 +205,13 @@ ros2 launch cobraflex cobraflex_bringup.launch.xml use_rviz:=false
 ros2 launch cobraflex cobraflex_sensors.launch.xml
 ```
 
-The LiDAR starts spinning. The ZED Mini needs several seconds to open; after an
+The launch file takes the LiDAR model from `COBRAFLEX_LIDAR_MODEL` (unset:
+A2M8) and sets the baud rate from it: 115200 for the A2M8, 256000 for the
+A2M12. `lidar_model:=a2m12`, `lidar_baudrate:=` and
+`lidar_serial_port:=/dev/rplidar` override the defaults for one start.
+
+The LiDAR starts spinning; the motor of the A2M12 is still until this moment.
+The ZED Mini needs several seconds to open; after an
 update of the ZED SDK, the first start can take several minutes while the SDK
 optimises its depth model.
 
@@ -541,7 +549,8 @@ The search proceeds layer by layer: network, layer 1, layer 2, application.
 | Robot jerks or alternates between two motions | Two publishers on `/cmd_vel` | `ros2 topic info /cmd_vel`; stop one of them |
 | C1 reports `No /cmd_vel for 0.50 s, stopping the robot` | The commanding program ended or its link dropped | Expected after every stop; otherwise check the controller and the Wi-Fi |
 | Pure rotations do not turn the robot; Nav2 stalls at the goal | Static friction of the motors | Layer 1 with `min_angular_in_place:=0.2` ([§7.4](#74-navigation-with-nav2)) |
-| No `/scan`, LiDAR does not spin | USB cable, or LiDAR not on `/dev/ttyUSB0` | Check the cable and `ls /dev/ttyUSB*`; restart layer 2 |
+| No `/scan`, LiDAR does not spin, no `/dev/ttyUSB0` | LiDAR connected with the 5 V power cable or a charge-only cable, or unplugged | Micro-USB data cable; `lsusb \| grep 10c4:ea60`, `ls /dev/ttyUSB*`; restart layer 2 |
+| `sllidar_node` exits with `SL_RESULT_OPERATION_TIMEOUT` | Baud rate of the other LiDAR model, or LiDAR not answering (power, flat cable to the adapter) | `echo $COBRAFLEX_LIDAR_MODEL`, or `lidar_model:=`; with layer 2 stopped, `python3 ~/ros2_ws/tools/lidar_check.py` separates hardware from configuration |
 | ZED reports that no camera is detected | USB 3 connection | Reconnect the ZED cable; restart layer 2 |
 | `csi_camera_node` or `lane_keeper_node` cannot open the camera | Camera already opened by another node, or Argus daemon stuck | One reader only ([§7.5](#75-lane-keeping)); `sudo systemctl restart nvargus-daemon` |
 | SLAM or Nav2 report a missing transform `odom → base_footprint` | No ZED odometry, so the EKF publishes nothing | `ros2 topic hz /zed/zed_node/odom`; restart layer 2 |

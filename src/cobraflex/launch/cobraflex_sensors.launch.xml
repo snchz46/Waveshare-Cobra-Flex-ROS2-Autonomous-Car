@@ -24,10 +24,41 @@
     <arg name="lane_camera_flip_method" default="0"/>
     <arg name="lane_camera_topic" default="camera/image_raw_lane"/>
 
-    <!-- ================= Lidar SLLIDAR A2M8 ================= -->
-    <include file="$(find-pkg-share sllidar_ros2)/launch/sllidar_a2m8_launch.py">
-        <arg name="frame_id" value="lidar_link"/>
-    </include>
+    <!-- LiDAR: the fleet mixes A2M8 and A2M12 units.
+
+         * lidar_model: default comes from the environment variable
+           COBRAFLEX_LIDAR_MODEL, so each car declares its own model once in
+           ~/.bashrc (export COBRAFLEX_LIDAR_MODEL=a2m12); unset -> a2m8.
+         * lidar_baudrate follows the model (A2M8: 115200, A2M12: 256000).
+           Unknown models fall back to 115200.
+           A wrong baud rate does not fail loudly: the node only reports
+           SL_RESULT_OPERATION_TIMEOUT and exits.
+         * lidar_serial_port: /dev/rplidar is created by the sllidar_ros2 udev
+           rule (scripts/create_udev_rules.sh); without it use /dev/ttyUSB0. -->
+    <arg name="lidar_model" default="$(env COBRAFLEX_LIDAR_MODEL a2m8)"
+         description="RPLIDAR model on this car: a2m8 | a2m12"/>
+    <arg name="lidar_baudrate"
+         default="$(eval '256000 if \'$(var lidar_model)\' == \'a2m12\' else 115200')"
+         description="LiDAR serial baud rate; derived from lidar_model unless overridden"/>
+    <arg name="lidar_serial_port" default="/dev/ttyUSB0"
+         description="LiDAR serial device (/dev/rplidar with the udev rule installed)"/>
+
+    <!-- ================= Lidar SLLIDAR A2M8 / A2M12 =================
+         The node is started directly instead of including the vendor launch
+         files. sllidar_a2m8_launch.py and its A2M12 counterpart differ only in
+         the default baud rate, and upstream ships the A2M12 one as
+         "sllidar_a2m12_launch .py" (space before .py), so it cannot be
+         included by name. Parameters are the same ones the vendor files set;
+         scan_mode is not passed (the vendor files declare it but never hand it
+         to the node), so the driver uses the typical mode of the device. -->
+    <node pkg="sllidar_ros2" exec="sllidar_node" name="sllidar_node" output="screen">
+        <param name="channel_type" value="serial"/>
+        <param name="serial_port" value="$(var lidar_serial_port)"/>
+        <param name="serial_baudrate" value="$(var lidar_baudrate)"/>
+        <param name="frame_id" value="lidar_link"/>
+        <param name="inverted" value="false"/>
+        <param name="angle_compensate" value="true"/>
+    </node>
 
     <!-- ================= ZED Camera (ZED Mini) ================= -->
     <include file="$(find-pkg-share zed_wrapper)/launch/zed_camera.launch.py">

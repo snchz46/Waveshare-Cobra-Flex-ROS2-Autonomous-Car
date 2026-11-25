@@ -220,7 +220,7 @@ measured, assumed or open where applicable.
 | --- | --- | --- |
 | Compute | NVIDIA Jetson Orin Nano Developer Kit; JetPack 6, ROS 2 Humble | All on-board nodes |
 | Chassis controller | ESP32-S3 driver board, JSON over USB serial at 115200 baud | `cobraflex_ros_driver` |
-| LiDAR | Slamtec RPLIDAR A2M8, 360°, 0.15–8 m, 10 Hz | `sllidar_ros2` |
+| LiDAR | Slamtec RPLIDAR A2M8 (0.15–8 m, 115200 baud) or A2M12 (0.2–12 m, 256000 baud), 360°, 10 Hz | `sllidar_ros2` |
 | Stereo camera | Stereolabs ZED Mini, visual odometry and depth | `zed_wrapper` |
 | Lane camera | IMX219-160 on CSI, 90° HFOV, 640 × 360 at 20 Hz | `csi_camera_node` |
 | Power | 99 Wh powerbank (Jetson); 3S Li-ion pack (motors) | `/cobraflex/battery` |
@@ -258,7 +258,7 @@ settings, fasteners and assembly order:
 ```mermaid
 flowchart LR
     subgraph Sense
-        L["RPLIDAR A2M8<br/>/scan"]
+        L["RPLIDAR A2M8 / A2M12<br/>/scan"]
         Z["ZED Mini<br/>visual odometry"]
         C["CSI lane camera<br/>640x360, 20 Hz"]
     end

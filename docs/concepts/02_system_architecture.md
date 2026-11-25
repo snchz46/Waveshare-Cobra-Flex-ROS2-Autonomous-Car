@@ -57,7 +57,7 @@ planning and actuation can override the controller.
 | --- | --- | --- | --- |
 | Compute | NVIDIA Jetson Orin Nano Developer Kit | — | All on-board nodes |
 | Chassis controller | ESP32-S3 driver board | USB serial, 115200 baud, JSON lines | `cobraflex_ros_driver` |
-| LiDAR | Slamtec RPLIDAR A2M8, 360°, 10 Hz | USB serial | `sllidar_ros2` |
+| LiDAR | Slamtec RPLIDAR A2M8 or A2M12, 360°, 10 Hz | USB serial; 115200 baud (A2M8), 256000 baud (A2M12) | `sllidar_ros2` |
 | Stereo camera | Stereolabs ZED Mini | USB 3 | `zed_wrapper` (`camera_model:=zedm`) |
 | Lane camera | IMX219-160 on CSI, 90° HFOV | CSI, GStreamer `nvarguscamerasrc` | `csi_camera_node` or `lane_keeper_node` |
 | Power | Powerbank XTPower XT-27000 (99 Wh) for the Jetson; 3S Li-ion pack for the motors | DC | Battery voltage on `/cobraflex/battery` |

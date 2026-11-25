@@ -23,7 +23,7 @@ All pages share the same structure:
 ```mermaid
 flowchart LR
     subgraph Sense
-        L["RPLIDAR A2M8<br/>/scan"]
+        L["RPLIDAR A2M8 / A2M12<br/>/scan"]
         Z["ZED Mini<br/>visual odometry"]
         C["CSI lane camera<br/>640x360, 20 Hz"]
     end
